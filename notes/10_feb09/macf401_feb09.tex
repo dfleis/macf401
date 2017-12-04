@@ -1,0 +1,636 @@
+% --------------------------------------------------------------
+% This is all preamble stuff that you don't have to worry about.
+% Head down to where it says "Start here"
+% --------------------------------------------------------------
+ 
+\documentclass[12pt]{article}
+ 
+\usepackage[margin=1in]{geometry} 
+\usepackage{bm} % bold in mathmode \bm
+\usepackage{amsmath,amsthm,amssymb,mathtools}
+\usepackage{dsfont} % for indicator function \mathds 1
+\usepackage{tikz,pgf,pgfplots}
+\usepackage{enumerate} 
+\usepackage[multiple]{footmisc} % for an adjascent footnote
+\usepackage{graphicx,float} % figures
+\usepackage{framed} % surround a text with a box 
+
+\newtheorem{definition}{Definition}
+\let\olddefinition\definition
+\renewcommand{\definition}{\olddefinition\normalfont}
+\newtheorem{lemma}{Lemma}
+\let\oldlemma\lemma
+\renewcommand{\lemma}{\oldlemma\normalfont}
+\newtheorem{proposition}{Proposition}
+\let\oldproposition\proposition
+\renewcommand{\proposition}{\oldproposition\normalfont}
+\newtheorem{corollary}{Corollary}
+\let\oldcorollary\corollary
+\renewcommand{\corollary}{\oldcorollary\normalfont}
+\newtheorem{theorem}{Theorem}
+\let\oldtheorem\theorem
+\renewcommand{\theorem}{\oldtheorem\normalfont}
+
+%%% PLOTTING PARAMETERS
+\tikzstyle{bag} = [text width=7em, text centered] %binomial tree node width
+\tikzstyle{end} = []
+%%%
+
+%% set noindent by default and define indent to be the standard indent length
+\newlength\tindent
+\setlength{\tindent}{\parindent}
+\setlength{\parindent}{0pt}
+\renewcommand{\indent}{\hspace*{\tindent}}
+
+\newcommand*{\vv}[1]{\vec{\mkern0mu#1}} % \vec command
+
+%% DAVIDS MACRO KIT %%
+\newcommand{\R}{\mathbb R}
+\newcommand{\N}{\mathbb N}
+\newcommand{\Z}{\mathbb Z}
+\renewcommand{\P}{\mathbb P}
+\newcommand{\Q}{\mathbb Q}
+\newcommand{\E}{\mathbb E}
+\newcommand{\var}{\mathrm{Var}}
+\newcommand{\indist}{\,{\buildrel \mathcal D \over \sim}\,}
+
+\newcommand{\bigtau}{\text{{\large $\bm \tau$}}}
+
+\begin{document}
+ 
+% --------------------------------------------------------------
+%                         Start here
+% --------------------------------------------------------------
+ 
+\title{Mathematical \& Computational Finance I\\Lecture Notes}
+\author{Utility Maximization \& CAPM}
+\date{February 9 2016 \\ Last update: \today{}}
+\maketitle
+
+% SECTION: 
+\section{Utility Maximization}
+
+\indent One way to use the tools that we have developed in the previous lectures is in utility maximization. We use the risk-neutral measure \& risk-neutral pricing to price derivatives which permits us to hedge risk. However, risk-neutral pricing works best for ``complete'' financial markets where derivative securities can be hedged by replication. It turns out that most/many markets are incomplete because it is either impossible to short the underlying asset, or even completely impossible to trade in (i.e. insurance with people's lives, some commodity markets, etc...). For such incomplete markets a \underline{unique} risk-neutral measure may not exist and so we should approach the problem differently. \\
+
+\indent An alternative approach is to maximize the utility of a potential investment by the investor. We will first consider utility maximization in simplified complete markets, despite having use in all market types.
+
+\begin{definition} A \underline{utility function} is a non-decreasing and concave function $U:\R \to \R\cup\{-\infty\}$. Recall that a function is concave if
+\begin{equation*}
+	U(\alpha x + (1 - \alpha) y) \geq \alpha U(x) + (1 - \alpha)U(y) \quad \forall_{x,y \in \R},~\alpha\in(0,1)
+\end{equation*}
+
+\indent We require this definition for a utility function since we expect that marginal utility should be decreasing because we observe that \$1 means less to an investor with high wealth than an investor with lower wealth.
+\end{definition}
+
+\underline{Example}: Log-utility \\
+\begin{equation*}
+	U(x) = 
+	\begin{cases}
+		\ln x & \text{if } x > 0 \\
+		-\infty & \text{if } x \leq 0
+	\end{cases}
+\end{equation*}
+
+\underline{Example}: Hyperbolic Absolute Risk Aversion (HARA) utility \\
+
+The hyperbolic absolute risk aversion (HARA) class of utility functions is given by\footnote{We interpret $c$ as the baseline of cash we require. Typically we consider $c = 0, p \neq 0$.}
+\begin{equation*}
+	U_p(x) = 
+	\begin{cases}
+		\frac{1}{p}(x - c)^p & \text{if } x > c \\
+		0 & \text{if } 0 < p < 1 \text{ and } x = c \\
+		-\infty & \text{if } p < 0 \text{ and } x = c \\
+		-\infty & \text{if } x < c
+	\end{cases}
+\end{equation*}
+
+for $p < 1, p \neq 0, c \in \R$. With $p \neq 0$ and $c = 0$ we often refer to
+\begin{equation*}
+	U_p(x) = \frac{x^p}{p}
+\end{equation*}
+
+as a {\em power utility} function. If we take the limit $p \to 0$ we recover the log-utility function if we modify $U$ slightly to $U(x) = \frac{x^p - 1}{p}$. \\
+
+\begin{definition} The \underline{index of absolute risk aversion} for a utility function $U(x)$ is
+\begin{equation*}
+	-\frac{U''(x)}{U'(x)}
+\end{equation*}
+\end{definition}
+
+For the HARA utility function $U_p(x)$ we have
+\begin{equation*}
+	-\frac{U''(x)}{U'(x)} = \frac{1 - p}{x - c} \quad \text{for } x > c
+\end{equation*}
+
+\indent The concavity of a utility function gives us a measure of the trade-off between risk and return for the particular agent. The special case of $p = 1$ corresponds to risk-neutrality of an investor since we find a linear utility function. \\
+
+\underline{Example}: Consider an investment with the following payoffs
+\begin{equation*}
+	X = 
+	\begin{cases}
+		1 & \text{if } \omega_1 = H \\
+		99 & \text{if } \omega_1 = T
+	\end{cases}
+\end{equation*}
+
+where $\P(\omega_1 = H) = \frac{1}{2}$. We easily find that $\E[X] = 50$, and using Jensen's inequality
+\begin{equation*}
+	\phi(\E[X]) \leq \E[\phi(X)] \quad \text{for convex function $\phi$}
+\end{equation*}
+
+consider $\-U(x)$ as our convex function (since $U$ is concave) we find
+\begin{align*}
+	-U(\E[X]) &\leq \E[-U(X)] \\
+	-U(\E[X]) &\leq -\E[U(X)] \\
+	\E[U(X)] &\leq U(\E[X]) \\
+\end{align*}
+
+\indent Thus, we see that the utility of a guaranteed \$50 exceeds the expected utility of the random amount given by $X$. 
+
+\subsection{Problem A}
+
+\indent Consider the $N$-period binomial asset pricing model with $0 < d< 1 + r < u$ and an initial endowment $X_0$. Using an adapted portfolio process $\{\Delta_n\}^{N - 1}_{n = 0}$ along with a stock \& bank account we wish to maximize our terminal utility generated by the wealth at time $N$. Our goal is to solve the following
+
+\begin{framed}
+{\bf Problem A:} Find an adapted portfolio process $\{\Delta_n\}^{N - 1}_{n = 0}$ that maximizes
+\begin{equation*}
+	\E[U(X_N)]
+\end{equation*}
+
+subject to the wealth equation
+\begin{equation*}
+	X_{n + 1} = \Delta_nS_{n + 1} + (1 + r)(X_n - \Delta_nS_n)
+\end{equation*}
+
+for $n = 0, 1,..., N - 1$.
+\end{framed}
+
+\indent In Problem A the expectation is calculated with respect to the real-world measure $\P$. If $\tilde{\P}$ was used then the stock and bank account with both have expected return equal to $r$, hence we would only end up investing in the riskless bank account. \\
+
+\underline{Example}: Consider the 2-period binomial model with $u = 2, d = \frac{1}{2}, S_0 = 4, r = \frac{1}{4}$ and assume the following probabilities:
+\begin{align*}
+	\P(HH) &= \frac{4}{9} \\
+	\P(HT) = \P(TH) &= \frac{2}{9} \\
+	\P(TT) &= \frac{1}{9}
+\end{align*}
+
+\indent Now, assume that we have the utility function $U(x) = \ln x$ and assume that we begin with initial wealth $X_0 = 4$ and must choose values $\Delta_0, \Delta_1(H), \Delta_1(T)$ to maximize the expected utility $\E[\ln(X_2)]$. At time $N = 1$ our wealth is
+\begin{align*}
+	X_1(H) &= \Delta_0S_1(H) + (1 + r)(X_0 - \Delta_0S_0) \quad \text{(from the wealth equation)} \\
+	&= \Delta_0(uS_0) + (1 + r)(X_0 - \Delta_0S_0) \\
+	&= \Delta_0 \cdot (2 \cdot 4) + \left(1 + \frac{1}{4} \right)(4 - \Delta_0 \cdot 4) \\
+	&= 8\Delta_0 + \frac{5}{4}(4 - 4\Delta_0) \\
+	&= 3\Delta_0 + 5 \\
+	X_1(T) &= \Delta_0S_1(T) + (1 + r)(X_0 - \Delta_0S_0) \\
+	&= \Delta_0(dS_0) + (1 + r)(X_0 - \Delta_0S_0) \\
+	&= \Delta_0 \cdot \left(\frac{1}{2} \cdot 4\right) + \left(1 + \frac{1}{4}\right)(4 - \Delta_0 \cdot 4) \\
+	&= 2\Delta_0 + \frac{5}{4}(4 - 4\Delta_0) \\
+	&= -3\Delta_0 + 5
+\end{align*}
+
+and at time $N = 2$ we find
+\begin{align*}
+	X_2(HH) &= \Delta_1(H)S_2(HH) + (1 + r)(X_1(H) - \Delta_1(H)S_1(H)) \\
+	&= \Delta_1(H)(uS_1(H)) + (1 + r)(X_1(H) - \Delta_1(H)S_1(H)) \\
+	&= \Delta_1(H) \cdot (2 \cdot 8) + \left(1 + \frac{1}{4}\right)([3\Delta_0 + 5] - \Delta_1(H)\cdot 8) \\
+	&= 16\Delta_1(H) + \frac{5}{4}(3\Delta_0 - 8\Delta_1(H) + 5) \\
+	&= 6\Delta_1(H) + \frac{15}{4}\Delta_0 + \frac{25}{4}
+\end{align*}
+
+similarly, we may compute
+\begin{align*}
+	X_2(HT) &= -6\Delta_1(H) + \frac{15}{4}\Delta_0 + \frac{25}{4} \\
+	X_2(TH) &= \frac{3}{2}\Delta_1(T) - \frac{15}{4}\Delta_0 + \frac{25}{4} \\
+	X_2(TT) &= -\frac{3}{2}\Delta_1(T) - \frac{15}{4}\Delta_0 + \frac{25}{4}
+\end{align*}
+
+Then, our objective function to maximize, $\E[\ln X_2]$, becomes
+\begin{align*}
+	\E[\ln X_2] &= \sum_{\omega_1\omega_2 \in \Omega} \ln \left( X_2(\omega_1\omega_2) \right) \P(\omega_1\omega_2) \\
+	&= \ln(X_2(HH))\P(HH) + \ln(X_2(HT))\P(HT) +  \\
+	&\hphantom{{}={--}} \ln(X_2(TH))\P(TH) + \ln(X_2(TT))\P(TT) \\
+	&= \frac{4}{9} \ln \left[ 6\Delta_1(H) + \frac{15}{4}\Delta_0 + \frac{25}{4} \right] + \frac{2}{9} \ln \left[ -6\Delta_1(H) + \frac{15}{4}\Delta_0 + \frac{25}{4} \right] \\
+	&\hphantom{{}={--}} + \frac{2}{9} \ln \left[ \frac{3}{2}\Delta_1(T) - \frac{15}{4}\Delta_0 + \frac{25}{4} \right] \frac{1}{9} \ln \left[ -\frac{3}{2}\Delta_1(T) - \frac{15}{4}\Delta_0 + \frac{25}{4} \right] 
+\end{align*}
+
+To look for a maximum we should take partial derivatives with respect to $\Delta_0, \Delta_1(H), \Delta_1(T)$
+\begin{align*}
+	\frac{ \partial }{\partial\Delta_0} \E[\ln X_2] &= \frac{4}{9}\frac{14}{4}\frac{1}{X_2(HH)} + \frac{2}{9}\frac{15}{4}\frac{1}{X_2(HT)} - \\
+	&\hphantom{{}={--}} \frac{2}{9}\frac{15}{4}\frac{1}{X_2(TH)} - \frac{1}{9}\frac{15}{4}\frac{1}{X_2(TT)} \\
+	&= \frac{5}{3X_2(HH)} + \frac{5}{6X_2(HT)} - \frac{5}{6X_2(TH)} - \frac{15}{36X_2(TT)} \\
+	&= \frac{5}{12} \left[ \frac{4}{X_2(HH)} + \frac{2}{X_2(HT)} - \frac{2}{X_2(TH)} - \frac{1}{X_2(TT)} \right] \\
+	\frac{ \partial }{\partial\Delta_1(H)} \E[\ln X_2] &= \frac{4}{3} \left[ \frac{2}{X_2(HH)} - \frac{1}{X_2(HT)} \right] \\
+	\frac{ \partial }{\partial\Delta_1(T)} \E[\ln X_2] &= \frac{1}{6} \left[ \frac{2}{X_2(TH)} - \frac{1}{X_2(TT)} \right]
+\end{align*}
+
+and setting these equal to zero gives us
+\begin{align*}
+	\frac{4}{X_2(HH)} + \frac{2}{X_2(HT)} &= \frac{2}{X_2(TH)} + \frac{1}{X_2(TT)} \quad \text{(from } \frac{ \partial }{\partial\Delta_0} \E[\ln X_2]) \\
+	\frac{2}{X_2(HH)} &= \frac{1}{X_2(HT)} \quad \text{(from } \frac{ \partial }{\partial\Delta_1(H)} \E[\ln X_2]) \\
+	\frac{2}{X_2(TH)} &= \frac{1}{X_2(TT)} \quad \text{(from } \frac{ \partial }{\partial\Delta_1(T)} \E[\ln X_2]) 
+\end{align*}
+
+The last two equations in this system give us
+\begin{align*}
+	2X_2(HT) &= X_2(HH) \\
+	2X_2(TT) &= X_2(TH)
+\end{align*}
+
+and substituting this into the first equation in the system
+\begin{align*}
+	\frac{4}{X_2(HH)} + \frac{2}{X_2(HT)} &= \frac{2}{X_2(TH)} + \frac{1}{X_2(TT)} \\
+	\implies \frac{4}{2X_2(HT)} + \frac{2}{X_2(HT)} &= \frac{2}{2X_2(TT)} + \frac{1}{X_2(TT)} \\
+	\frac{4}{X_2(HT)} &= \frac{2}{X_2(TT)} \\
+	4X_2(TT) &= 2X_2(HT) \\
+	2X_2(TT) &= X_2(HT)
+\end{align*}
+
+So, we have
+\begin{equation*}
+	\begin{cases}
+		X_2(HH) = 2X_2(HT) \\
+		X_2(TH) = 2X_2(TT) \\
+		X_2(HT) = 2X_2(TT)
+	\end{cases}
+\end{equation*}
+
+\indent In principle we could expand these terms to solve a system of three wealth equations in three unknowns $\Delta_0, \Delta_1(H), \Delta_1(T)$, though this would be quite tedious. However, we know that under the risk-neutral measure $\tilde{\P}$ the discounted portfolio value process $\left\{ \frac{X_n}{(1 + r)^n} \right\}^N_{n = 0}$ is a martingale and that
+\begin{equation*}
+	\tilde{\E} \left[ \frac{X_n}{(1 + r)^n} \right] = X_0
+\end{equation*}
+
+so, with $\tilde{p} = \frac{1}{2}$, we find
+\begin{align*}
+	X_0 = 4 &= \tilde{\E} \left[ \frac{X_2}{(1 + r)^2} \right] \\
+	&= \left(\frac{4}{5}\right)^2 \left[ \frac{1}{4}X_2(HH) + \frac{1}{4}X_2(HT) + \frac{1}{4}X_2(TH) + \frac{1}{4}X_2(TT) \right]
+\end{align*}
+
+However, we found above that
+\begin{equation*}
+	\begin{cases}
+		X_2(HH) = 2X_2(HT) = 2(2X_2(TT)) \\
+		X_2(TH) = 2X_2(TT) \\
+		X_2(HT) = 2X_2(TT)
+	\end{cases}
+\end{equation*}
+
+So,
+\begin{align*}
+	4 &= \left( \frac{4}{5} \right)^2 \left[ \frac{1}{4}(4X_2(TT)) + \frac{1}{4}(2X_2(TT) + \frac{1}{4}(2X_2(TT)) + \frac{1}{4}X_2(TT) \right] \\
+	&= \frac{16}{25} \left[ X_2(TT) + \frac{1}{2}X_2(TT) + \frac{1}{2}X_2(TT) + \frac{1}{4}X_2(TT) \right] \\
+	&= \frac{16}{25}\frac{9}{4}X_2(TT) \\
+	&= \frac{36}{25}X_2(TT) \\
+	\implies \frac{25}{9} &= X_2(TT) \\
+	\implies
+	&\begin{cases}
+		X_2(HH) = \frac{100}{9} \\
+		X_2(HT) = \frac{50}{9} \\
+		X_2(TH) = \frac{50}{9} \\
+		X_2(TT) = \frac{25}{9} \\
+	\end{cases}
+\end{align*}
+
+\indent Treating these terminal portfolio values as the payoff of a derivative security we may find the replicated portfolio process satisfying
+\begin{align*}
+	\Delta_1(H) &= \frac{ X_2(HH) - X_2(HT) }{ S_2(HH) - S_2(HT) } = \frac{25}{54} \\
+	\Delta_1(T) &= \frac{ X_2(TH) - X_2(TT) }{ S_2(TH) - S_2(TT) } = \frac{25}{27} 
+\end{align*}
+
+Using the martingale property again 
+\begin{align*}
+	\tilde{\E}_1 \left[ \frac{X_2}{(1 + r)^2} \right] &= \frac{X_1}{(1 + r)} \\
+	\implies \tilde{\E}_1 \left[ \frac{X_2}{(1 + r)} \right] &= X_1
+\end{align*}
+
+Hence
+\begin{align*}
+	X_1(H) &= \frac{1}{1 + \frac{1}{4}} \left[ \frac{1}{2}X_2(HH) + \frac{1}{2}X_2(HT) \right] = \frac{20}{3} \\
+	X_1(T) &= \frac{1}{1 + \frac{1}{4}} \left[ \frac{1}{2}X_2(HT) + \frac{1}{2}X_2(TT) \right] = \frac{10}{3} \\
+\end{align*}
+
+and once again finding the corresponding time zero portfolio process
+\begin{equation*}
+	\Delta_0 = \frac{X_1(H) - X_1(T)}{S_1(H) - S_1(T)} = \frac{5}{9}
+\end{equation*}
+
+\subsection{Problem B}
+
+\indent We may generalize the previous process in Problem A to form a new utility maximization problem:
+
+\begin{framed}
+{\bf Problem B:} Given $X_0$ find a random variable $X_N$ (without regard to the portfolio process) that maximizes
+\begin{equation*}
+	\E[U(X_N)]
+\end{equation*}
+
+subject to
+\begin{equation*}
+	\tilde{\E} \left[ \frac{X_N}{(1 + r)^N} \right] = X_0
+\end{equation*}
+
+That is, subject to the constraint that $X_n$ must be a discounted martingale.
+\end{framed}
+
+\begin{lemma} Suppose $\Delta^*_0, \Delta^*_1,...,\Delta^*_{N - 1}$ is an optimal portfolio process for Problem A and $X^*_N$ is the corresponding time $N$ optimal terminal wealth. Then $X^*_N$ is optimal for Problem B.
+
+\begin{proof} Assume that $\Delta^*_0, ..., \Delta^*_{N - 1}$ is the optimal wealth process for Problem A and that $X^*_N$ is the corresponding terminal wealth, that is, $X^*_N$ is the wealth generated by $X_0$. We have that
+\begin{equation*}
+	X^*_{n + 1} = \Delta^*_nS_{n + 1} + (1 + r)(X^*_n - \Delta^*_nS_n) \quad n = 0,..., N - 1
+\end{equation*}
+
+\indent We must first show that the portfolio process generating $X^*_N$ is feasible, that is, the portfolio process satisfies the constraint
+\begin{equation*}
+	\tilde{\E} \left[ \frac{X_N}{(1 + r)^N} \right] = X_0
+\end{equation*}
+
+\indent Note that since $X^*_N$ is generated by an adapted portfolio process $\Delta^*_0,...,\Delta^*_{N - 1}$ which solves Problem A then we have that it is a discounted martingale\footnote{It's obviously adapted, but I'm not sure how I see it necessarily satisfies the martingale property. Was this a consequence of having $\Delta^*_0,..., \Delta^*_{N - 1}$ solved Problem A?}, that is,
+\begin{equation*}
+	\tilde{\E} \left[ \frac{X^*_N}{(1 + r)^N} \right] = X_0
+\end{equation*}
+
+\indent Now that we have that this process is feasible we must show that it is the optimal solution for Problem B. Assume instead that we have better solution. Let $X_N$ be any other random variable satisfying the martingale property
+\begin{equation*}
+	\tilde{\E} \left[ \frac{X_N}{(1 + r)^N} \right] = X_0
+\end{equation*}
+
+\indent Consider $X_N$ to be equal to the payoff of some derivative security. Then, by the risk-neutral pricing theorem we have that the time zero price must be $X_0$. As such, we can calculate the corresponding portfolio process 
+\begin{equation*}
+	\Delta_0, \Delta_1, ..., \Delta_{N - 1}
+\end{equation*}
+
+However, since $X^*_N$ was the optimal solution for Problem A we have that\footnote{Was this because both wealth processes were generated by the same initial wealth $X_0$?}
+\begin{equation*}
+	\E[U(X_N)] \leq \E[U(X^*_N)]
+\end{equation*}
+
+since $\E[U(X)]$ was the constraint for Problem A. Therefore, we conclude that $X^*_N$ must be optimal for Problem B, as desired.
+\end{proof}
+\end{lemma}
+
+\begin{lemma} Suppose $X^*_N$ is optimal for Problem B. Then there exists a portfolio process $\Delta^*_0, \Delta^*_1,..., \Delta^*_{N - 1}$ that starts with initial wealth $X_0$ generating time $N$ terminal value $X^*_N$ that is optimal for Problem A.
+
+\begin{proof} If $X^*_N$ is optimal for Problem B then we should consider a derivative security with time $N$ payoff $V_N = X^*_N$. By going recursively backwards in time, we have
+\begin{equation*}
+	V_n(\omega_1\cdots\omega_n) = \frac{1}{1 + r}[\tilde{p}V_{n + 1}(\omega_1\cdots\omega_n H) + \tilde{q}V_{n + 1}(\omega_1\cdots\omega_n T)] \quad n =  N - 1, N - 2, ..., 0
+\end{equation*}
+
+Then,\footnote{How can we get to this step? I'm sure this is discussed in Chapter 1.}
+\begin{equation*}
+	\Delta^*_n(\omega_1\cdots\omega_n) = \frac{ V_{n + 1}(\omega_1\cdots\omega_n H) - V_{n + 1}(\omega_1\cdots\omega_n T) }{ S_{n + 1}(\omega_1\cdots\omega_n H) - S_{n + 1}(\omega_1\cdots\omega_n T)} \quad n = 0,1,..., N - 1
+\end{equation*}
+
+and we obtain the portfolio process $\Delta^*_0, \Delta^*_1, ..., \Delta^*_N$. From the {\bf replication theorem for the multiperiod binomial model}\footnote{See Theorem 1.2.2 from Chapter 1}, starting with initial wealth $V_0 = X_0$, the portfolio process $\Delta^*_0, ..., \Delta^*_{N - 1}$ will achieve time $N$ wealth $X^*_N$, that is, $X^*_N$ is feasible for Problem A. \\
+
+\indent Now, let $\Delta_0, \Delta_1 ..., \Delta_{N - 1}$ be any other portfolio process starting with initial wealth $X_0$, investing according to the wealth equation, leading to time $N$ terminal wealth $X_N$ (i.e. feasible \& optimal for Problem A). Under the risk neutral measure $\tilde{\P}$ we have that the discounted process $\frac{X_n}{(1 + r)^n}$ is a martingale, hence, $X_N$ satisfies
+\begin{equation*}
+	\tilde{\E} \left[ \frac{X_N}{(1 + r)^N} \right] = X_0
+\end{equation*}
+
+\indent Therefore, $X_N$ is a feasible solution to Problem B. However, we were given that $X^*_N$ is optimal for Problem B, so
+\begin{equation*}
+	\E[U(X_N)] \leq \E[U(X^*_N)]
+\end{equation*}
+
+Therefore, $\Delta^*_0, \Delta^*_1, ..., \Delta^*_{N - 1}$ is optimal for Problem A, as desired.
+\end{proof}
+\end{lemma}
+
+\indent We say that Problem A is the {\em primal problem} and Problem B is the corresponding {\em dual problem}. By transforming Problem A we end up with the dual Problem B that ends up being easier in practice to solve. Typically by doing such a transformation the dual problem ends up being in a different space to the primal problem. In this case we had Problem A:
+\begin{equation*}
+	\max_{\Delta_0, \Delta_1, ..., \Delta_{N - 1}}~\E[U(X)]
+\end{equation*}
+
+with corresponding dual problem:
+\begin{equation*}
+	\max_{x \in \mathbb X}~\E[U(x)], \quad \mathbb X = \left\{x~:~ \tilde{\E}\left[ \frac{x}{(1 + r)^N} \right] = X_0 \right\}
+\end{equation*}
+
+\indent In Problem B it is inconvenient for our computations that the objective function is under the real-world measure while the constraint is under the risk-neutral measure. We may reformulate Problem B using the change of measure techniques developed earlier to write
+\begin{equation*}
+	X_0 = \tilde{\E} \left[ \frac{X_N}{(1 + r)^N} \right] = \E \left[ \frac{Z_N \cdot X_N}{(1 + r)^N} \right]
+\end{equation*}
+
+where $Z$ is the Radon-Nikod\'{y}m derivative of $\tilde{\P}$ with respect to $\P$. Alternatively, we may use the state-price density $\zeta_n = \frac{Z_n}{(1 + r)^n}$ to write our Problem B maximization problem as
+\begin{align*}
+	\max \quad &\E[U(X_N)] \\
+	\text{s.t. } &\E[\zeta_N X_N] = X_0
+\end{align*}
+
+\underline{Example}: Now, the question remains how to solve Problem B with respect to $\P$? Consider the Radon-Nikod\'{y}m derivative 
+\begin{equation*}
+	Z = \frac{ d\tilde{\P} }{ d\P } = \frac{ \tilde{\P}(\omega) }{ \P(\omega) }
+\end{equation*}
+
+We have, using the values from our previous examples in the book\footnote{I forget which one exactly...}
+\begin{align*}
+	Z(HH) &= \frac{ \tilde{\P}(HH) }{ \P(HH) } = \frac{9}{16} \\
+	Z(HT) = Z(TH) &= \frac{9}{8} \\
+	Z(TT) &= \frac{9}{4}
+\end{align*}
+
+and corresponding state-price densities
+\begin{align*}
+	\zeta_1 &:= \zeta(HH) = \frac{Z(HH)}{(1 + r)^2} = \frac{9}{25} \\
+	\zeta_2 &:= \zeta_2(HT) = \frac{18}{25} \\
+	\zeta_3 &:= \zeta(TH) = \frac{18}{25} \\
+	\zeta_4 &:= \zeta_2(TT) = \frac{36}{25}
+\end{align*}
+
+Now, recall that we had the change of measure result
+\begin{align*}
+	X_0 &= \tilde{\E} \left[ \frac{X_N}{(1 + r)^N} \right] \\
+	&= \E \left[ \frac{X_NZ_N}{(1 + r)^N} \right] \\
+	&= \E \left[ \zeta_N X_N \right]
+\end{align*}
+
+and so with
+\begin{align*}
+	x_1 &:= X_2(HH),~p_1 := \P(HH) \\
+	x_2 &:= X_2(HT),~p_2 := \P(HT) \\
+	x_3 &:= X_2(TH),~p_3 := \P(TH) \\
+	x_4 &:= X_2(TT),~p_4 := \P(TT)
+\end{align*}
+
+we may compute Problem B by rewriting it as
+\begin{align*}
+	\max_{(x_1,x_2,x_3,x_4)}~&\E[U(X)] = \sum^4_{m = 1} p_mU(x_m) = \sum^4_{m = 1} p_m \ln x_m \\
+	\text{subject to }~&X_0 = \E[\zeta X] = \sum^4_{m = 1} p_m\zeta_mx_m
+\end{align*}
+
+\indent How do we solve such constrained optimization problems? We use Lagrange multipliers! With the utility function $U(x) = ln x$ we have the objective function
+\begin{align*}
+	f(x_1,x_2,x_3,x_4) &= \E[\ln(X)] \\
+	&= p_1 \ln x_1 + p_2 \ln x_2 + p_3 \ln x_3 + p_4 \ln x_4 \\
+	&= \frac{4}{9} \ln x_1 + \frac{2}{9} \ln x_2 + \frac{2}{9} \ln x_3 + \frac{1}{9} \ln x_4
+\end{align*}
+
+subject to the constraint
+\begin{align*}
+	g(x_1, x_2, x_3, x_4) &= \E[\zeta X] \\
+	&= p_1 \zeta_1x_1 + p_2\zeta_2x_2 + p_3\zeta_3x_3 + p_4\zeta_4x_4 \\
+	&= \frac{4}{9}\frac{9}{25}x_1 + \frac{2}{9}\frac{18}{25}x_2 + \frac{2}{9}\frac{18}{25}x_3 + \frac{1}{9}\frac{36}{25}x_4 \\
+	&= \frac{4}{25}x_1 + \frac{4}{25}x_2 + \frac{4}{25}x_3 + \frac{4}{25}x_4 \\
+	&= X_0 
+\end{align*}
+
+That is, we must solve
+\begin{align*}
+	\max~&f \\
+	\text{s.t.}~&g = X_0
+\end{align*}
+
+Let $\lambda$ be a Lagrange multiplier. We wish to find all values $x_1, x_2, x_3, x_4, \lambda$ such that
+\begin{align*}
+	\text{grad}~f = \nabla f &= \lambda \nabla g \\
+	\text{and } g = X_0
+\end{align*}
+
+That is, we solve
+\begin{equation*}
+	0 = \frac{ \partial f }{ \partial x_i } = \lambda \frac{ \partial g }{ \partial x_i } \quad i = 1, 2, 3, 4
+\end{equation*}
+
+yielding
+\begin{align*}
+	\frac{4}{9x_1} &= \lambda \frac{4}{25} \implies x_1 = \frac{25}{9\lambda} \\
+	\frac{2}{9x_2} &= \lambda \frac{4}{25} \implies x_2 = \frac{25}{18\lambda} \\
+	\frac{2}{9x_3} &= \lambda \frac{4}{25} \implies x_3 = \frac{25}{18\lambda} \\
+	\frac{1}{9x_4} &= \lambda \frac{4}{25} \implies x_4 = \frac{25}{36\lambda}
+\end{align*}
+
+Plugging in these values for $x_1, x_2, x_3, x_4$ into our constraint $g = X_0$ we find
+\begin{align*}
+	\frac{4}{25}x_1 + \frac{4}{25}x_2 + \frac{4}{25}x_3 + \frac{4}{25}x_4 &= X_0 = 4 \\
+	\frac{4}{25}\frac{25}{9\lambda} + \frac{4}{25}\frac{25}{18\lambda} + \frac{4}{25}\frac{25}{18\lambda} + \frac{4}{25}\frac{25}{36\lambda} &= 4 \\
+	\frac{4}{9\lambda} + \frac{2}{9\lambda} + \frac{2}{9\lambda} + \frac{1}{9\lambda} &= 4 \\
+	\frac{1}{\lambda} &= 4 \\
+	\implies \lambda &= \frac{1}{4}
+\end{align*}
+
+Hence, plugging in our value for $\lambda$ into $\frac{ \partial f }{\partial x_i} = 0$
+\begin{align*}
+	x_1 &= X_2(HH) = \frac{25}{9\lambda} = \frac{25}{9} \cdot 4 = \frac{100}{9} \\
+	x_2 &= X_2(HT) = \frac{25}{18\lambda} = \frac{25}{18} \cdot 4 = \frac{50}{9} \\
+	x_3 &= X_2(TH) = \frac{25}{18\lambda} = \frac{25}{18} \cdot 4 = \frac{50}{9} \\
+	x_4 &= X_2(TT) = \frac{25}{36\lambda} = \frac{25}{36} \cdot 4	= \frac{25}{9}
+\end{align*}
+
+\indent With these values for $X_2(HH), X_2(HT), X_2(TH), X_2(TT)$ we may compute $\Delta_1(H), \Delta_1(T), \Delta_0$ by using our formula from risk-neutral valuation \& the wealth equation
+\begin{align*}
+	\Delta_1(H) &= \frac{ X_2(HH) - X_2(HT) }{ S_2(HH) - S_2(HT) } \\
+	\Delta_1(T) &= \frac{ X_2(TH) - X_2(TT) }{ S_2(TH) - S_2(TT) } \\
+	X_1(H) &= \frac{1}{1 + r} \left[ \tilde{\P}(H)X_2(HH) + \tilde{\P}(T)X_2(HT) \right] \\
+	X_1(T) &= \frac{1}{1 + r} \left[ \tilde{\P}(H)X_2(TH) + \tilde{\P}(T)X_2(TT) \right] \\
+	\Delta_0 &= \frac{ X_1(H) - X_1(T) }{ S_1(H) - S_1(T) }
+\end{align*}
+
+which would complete the problem.
+
+\subsection{Problem C}
+
+\indent We may generalize the previous example. Note that in the $N$-period binomial model there are $M = 2^N$ possible coin toss sequences in our sample space $\Omega$ which we may enumerate by
+\begin{equation*}
+	\Omega = \left\{ \omega^1, \omega^2, ..., \omega^M \right\}
+\end{equation*}
+
+and define
+\begin{align*}
+	\zeta_m &= \zeta_N(\omega^m) \\
+	p_m &= \P(\omega^m) \\
+	x_m &= X_N(\omega^m)
+\end{align*}
+
+then, we may reformulate Problem B as the following:
+
+\begin{framed}
+{\bf Problem C:} Given $X_0$ find a vector $(x_1,..., x_M)$ that maximizes
+\begin{equation*}
+	\E[U(X_N)] = \sum^M_{m = 1} p_mU(x_m)
+\end{equation*}
+
+subject to
+\begin{equation*}
+	\E[\zeta_NX_N] = \sum^M_{m = 1}p_mx_m\zeta_m = X_0
+\end{equation*}
+\end{framed}
+
+\begin{theorem} Let $I(x) = \left( U' \right)^{-1}(x)$. The solution of Problem A can be found by solving
+\begin{equation*}
+	\E \left[ \frac{Z_N}{(1 + r)^N} I \left( \frac{ \lambda Z_N }{(1 + r)^N} \right) \right] = X_0
+\end{equation*}
+
+for $\lambda$ and then substituting this value for $\lambda$ to solve
+\begin{equation*}
+	X_N = I \left( \frac{\lambda Z}{(1 + r)^N} \right)
+\end{equation*}
+
+\indent Then, with this value for $X_N$, the optimal portfolio process $\left\{\Delta_n\right\}^{N - 1}_{n = 0}$ and wealth $\{X_n\}^{N - 1}_{n = 0}$ can be calculated by considering the replication of a derivative security with payoff $V_N = X_N$ using our backwards induction method.
+
+\begin{proof} Consider the Lagrangian
+\begin{align*}
+	L(x_1, ..., x_M, \lambda) &= f(x_1, ... x_M) - \lambda(g(x_1,..., x_M) - X_0) \\
+	&= \E[U(X_N)] - \lambda\left(\E[\zeta_N X_N] - X_0 \right) \\
+	&= \sum^M_{m = 1} p_mU(x_m) - \lambda \left( \sum^M_{m = 1} p_m\zeta_mx_m - X_0 \right) \\
+\end{align*}
+
+Then, the Lagrange multiplier equations are
+\begin{align*}
+	\nabla f &= \lambda \nabla g \\
+	\implies \frac{ \partial L }{ \partial x_m } &= 0, \quad m = 1, ..., M 
+\end{align*}
+
+which is equivalent to
+\begin{align*}
+	p_m U'(x_m) - \lambda p_m \zeta_m &= 0 \\
+	U'(x_m) &= \lambda\zeta_m \\
+	\iff U'\left( X_N \right) = \frac{\lambda Z_N }{(1 + r)^N}
+\end{align*}
+
+\indent Note that $U$ is strictly concave everywhere by its construction and that $U(X_N)$ is finite\footnote{$U$ may be continuous, but since $X$ is defined on a finite probability space we have that $U(X)$ is finite.}. Then we have that $U'$ must be a decreasing function $\implies U'$ is invertible.\footnote{We have from Analysis that a monotonically decreasing function is invertible} Hence,
+\begin{align*}
+	I(x) &:= \left( U' \right)^{-1}(x) \quad \text{exists, and} \\
+	X_N &= I \left( \frac{\lambda Z}{(1 + r)^N} \right)
+\end{align*}
+
+Substituting this value for $X_N$ into our constraint yields
+\begin{align*}
+	\E \left[ \frac{Z_NX_N}{(1 + r)^N} \right] &= \sum^M_{m = 1} p_m\zeta_m x_m \\
+	&= \E \left[ \frac{Z}{(1 + r)^N} I\left( \frac{\lambda Z}{(1 + r)^N} \right) \right] \\
+	&= X_0
+\end{align*}
+
+\indent If we can solve this equation for the Lagrange multiplier $\lambda$ then we should substitute this quantity into 
+\begin{equation*}
+	X_N = I \left( \frac{\lambda Z}{(1 + r)^N} \right)
+\end{equation*}
+
+and find the corresponding portfolio process $\Delta_{N - 1}, \Delta_{N - 2},..., \Delta_0$ that generates $X_N$ from $X_0$ by our usual backwards induction methods, as desired.
+\end{proof}
+\end{theorem}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\end{document}

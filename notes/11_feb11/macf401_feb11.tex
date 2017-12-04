@@ -1,0 +1,313 @@
+% --------------------------------------------------------------
+% This is all preamble stuff that you don't have to worry about.
+% Head down to where it says "Start here"
+% --------------------------------------------------------------
+ 
+\documentclass[12pt]{article}
+ 
+\usepackage[margin=1in]{geometry} 
+\usepackage{bm} % bold in mathmode \bm
+\usepackage{amsmath,amsthm,amssymb,mathtools}
+\usepackage{dsfont} % for indicator function \mathds 1
+\usepackage{tikz,pgf,pgfplots}
+\usepackage{enumerate} 
+\usepackage[multiple]{footmisc} % for an adjascent footnote
+\usepackage{graphicx,float} % figures
+\usepackage{framed} % surround a text with a box 
+
+\newtheorem{definition}{Definition}
+\let\olddefinition\definition
+\renewcommand{\definition}{\olddefinition\normalfont}
+\newtheorem{lemma}{Lemma}
+\let\oldlemma\lemma
+\renewcommand{\lemma}{\oldlemma\normalfont}
+\newtheorem{proposition}{Proposition}
+\let\oldproposition\proposition
+\renewcommand{\proposition}{\oldproposition\normalfont}
+\newtheorem{corollary}{Corollary}
+\let\oldcorollary\corollary
+\renewcommand{\corollary}{\oldcorollary\normalfont}
+\newtheorem{theorem}{Theorem}
+\let\oldtheorem\theorem
+\renewcommand{\theorem}{\oldtheorem\normalfont}
+
+%%% PLOTTING PARAMETERS
+\tikzstyle{bag} = [text width=7em, text centered] %binomial tree node width
+\tikzstyle{end} = []
+%%%
+
+%% set noindent by default and define indent to be the standard indent length
+\newlength\tindent
+\setlength{\tindent}{\parindent}
+\setlength{\parindent}{0pt}
+\renewcommand{\indent}{\hspace*{\tindent}}
+
+\newcommand*{\vv}[1]{\vec{\mkern0mu#1}} % \vec command
+
+%% DAVIDS MACRO KIT %%
+\newcommand{\R}{\mathbb R}
+\newcommand{\N}{\mathbb N}
+\newcommand{\Z}{\mathbb Z}
+\renewcommand{\P}{\mathbb P}
+\newcommand{\Q}{\mathbb Q}
+\newcommand{\E}{\mathbb E}
+\newcommand{\var}{\mathrm{Var}}
+\newcommand{\Var}{\mathrm{Var}}
+\newcommand{\cov}{\mathrm{Cov}}
+\newcommand{\Cov}{\mathrm{Cov}}
+\newcommand{\indist}{\,{\buildrel \mathcal D \over \sim}\,}
+
+\newcommand{\bigtau}{\text{{\large $\bm \tau$}}}
+
+\begin{document}
+ 
+% --------------------------------------------------------------
+%                         Start here
+% --------------------------------------------------------------
+ 
+\title{Mathematical \& Computational Finance I\\Lecture Notes}
+\author{Utility Maximization \& CAPM}
+\date{February 11 2016 \\ Last update: \today{}}
+\maketitle
+
+% SECTION: 
+\section{Utility Maximization}
+
+\underline{Example:} For $U(x) = 1 - e^{-ax}$, for $a > 0$, find the optimal solution to the portfolio optimization problem/utility maximization problem. \\
+
+\indent We know that the utility maximization problem is equivalent to Problem C in the previous notes. So, consider a parameterization of the sample space
+\begin{equation*}
+	\Omega = \left\{ \omega^1, ..., \omega^M \right\}
+\end{equation*}
+
+where each $\omega^m$ corresponds to a possible coin toss sequence $\omega^m = \omega_1\omega_2\cdots\omega_N$ and define (for brevity)
+\begin{align*}
+	\zeta_m &= \zeta_N(\omega^m) \\
+	p_m &= \P(\omega^m) \\
+	x_m &= X_N(\omega^m)
+\end{align*}
+
+\indent Recall that Problem C specified in the previous notes states: Given $X_0$, find a vector $(x_1, ..., x_M)$ that maximizes
+\begin{equation*}
+	\E[U(X_N)] = \sum^M_{m = 1} p_mU(x_m)
+\end{equation*}
+
+subject to the constraint $\E[\zeta_N X_N] = \sum^M_{m = 1} p_m\zeta_mx_m = X_0$. Let $f$ be the objective function, $\lambda$ the Lagrange multiplier, and $g$ the constraint, then the Lagrangian $L$ for this problem is
+\begin{align*}
+	L &= f - \lambda g \\
+	L &= \E[U(X_N)] - \lambda(\E[\zeta_N X_N] - X_0) \\
+	L(x_1,..., x_m,\lambda) &= \sum^M_{m = 1} p_mU(x_m) - \lambda \left( \sum^M_{m = 1} p_m \zeta_m x_m - X_0 \right) \\
+\end{align*}
+
+Then
+\begin{align*}
+	\nabla L &= 0 \\
+	\iff \frac{ \partial L }{ \partial x_m } &= p_mae^{-ax_m} - \lambda p_m\zeta_m \\
+	\implies e^{-ax_m} &= \frac{\lambda}{a}\zeta_m 
+\end{align*}
+
+Solving for $x_m = X_N(\omega^m)$ gives us
+\begin{align*}
+	x_m &= -\frac{1}{a}\ln \left( \frac{\lambda}{a}\zeta_m \right) \\
+	&= -\frac{1}{a} \ln \left( \frac{\lambda}{a} \right) - \frac{1}{a} \ln \zeta_m
+\end{align*}
+
+and substituting this solution for $x_m$ into the constraint $\E[\zeta_N X_N] = X_0$
+\begin{align*}
+	X_0 &= \sum^M_{m = 1} p_m\zeta_mx_m \\
+	&= \sum^M_{m = 1} p_m \zeta_m \left[ -\frac{1}{a} \ln \left( \frac{\lambda}{a} \right) - \frac{1}{a} \ln \zeta_m \right] \\
+	&= \left[-\frac{1}{a}\ln \left( \frac{\lambda}{a} \right) \right] \sum^M_{m = 1} p_m\zeta_m - \frac{1}{a} \sum^M_{m = 1} p_m\zeta_m \ln \zeta_m \\
+	&= \left[-\frac{1}{a}\ln \left( \frac{\lambda}{a} \right) \right] \E[\zeta] - \frac{1}{a} \E[\zeta\ln\zeta] \\
+	&= \left[-\frac{1}{a}\ln \left( \frac{\lambda}{a} \right) \right] \E \left[ \frac{Z}{(1 + r)^N} \right] - \frac{1}{a} \E \left[ \frac{Z}{(1 + r)^N} \ln \left(\frac{Z}{(1 + r)^N}\right) \right] \\
+	&= \left[-\frac{1}{a}\ln \left( \frac{\lambda}{a} \right) \right] \frac{ \E[Z_n] }{(1 + r)^N} - \frac{1}{a} \E \left[ \frac{Z}{(1 + r)^N} \ln \left(\frac{Z}{(1 + r)^N}\right) \right] \\
+	&= \left[-\frac{1}{a}\ln \left( \frac{\lambda}{a} \right) \right] \frac{ Z_0 }{(1 + r)^N} - \frac{1}{a} \E \left[ \frac{Z}{(1 + r)^N} \ln \left(\frac{Z}{(1 + r)^N}\right) \right] \\
+	&= \left[-\frac{1}{a}\ln \left( \frac{\lambda}{a} \right) \right] \frac{ 1 }{(1 + r)^N} - \frac{1}{a}\frac{1}{(1 + r)^N} \E \left[ Z \ln \left(\frac{Z}{(1 + r)^N}\right) \right] \\
+	\iff -\frac{1}{a}\ln \left( \frac{\lambda}{a} \right) &= X_0(1 + r)^N + \frac{1}{a} \E \left[ Z \ln \left( \frac{Z}{(1 + r)^N} \right) \right]
+\end{align*}
+
+\indent Now, note that the left-hand side to this equation is the only term containing the unknown $\lambda$ and that this expression is close to our value for $x_m = X_N(\omega^m)$. In order to eliminate this unknown $\lambda$ we may substitute the current form for the constraint into our expression for $x_m \equiv X_N(\omega^m) =  -\frac{1}{a} \ln \left( \frac{\lambda}{a} \right) - \frac{1}{a} \ln \zeta_m$. We find
+\begin{align*}
+	x_m &= -\frac{1}{a} \ln \left( \frac{\lambda}{a} \right) - \frac{1}{a} \ln \zeta_m \\
+	&= \left(  X_0(1 + r)^N + \frac{1}{a} \E \left[ Z \ln \left( \frac{Z}{(1 + r)^N} \right) \right] \right) - \frac{1}{a}\ln \zeta_m \\
+	&=  X_0(1 + r)^N + \frac{1}{a} \E \left[ Z \ln \left( \frac{Z}{(1 + r)^N} \right) \right] - \frac{1}{a}\ln \zeta_m
+\end{align*}
+
+which gives us the terminal wealth $X_N$ maximizing $\E[U(X_N)]$ subject to $\E[\zeta X] = X_0$. We could use backwards induction and our results in risk-neutral valuation to find the corresponding wealth process $\{X_n\}$ and portfolio process $\{\Delta_n\}$. We could stop here but instead let us look a little deeper at the result. We have
+\begin{align*}
+	x_m &= X_0(1 + r)^N + \frac{1}{a} \E \left[ Z \ln \left( \frac{Z}{(1 + r)^N} \right) \right] - \frac{1}{a}\ln \zeta_m \\
+	&= X_0(1 + r)^N + \frac{1}{a} \E \left[ Z \ln \left( \frac{Z}{(1 + r)^N} \right) \right] - \frac{1}{a}\ln \left( \frac{Z_N(\omega^m)}{(1 + r)^N} \right) \\
+	&= X_0(1 + r)^N + \frac{1}{a} \tilde{\E} \left[ \ln \left( \frac{Z}{(1 + r)^N} \right) \right] - \frac{1}{a} \ln \left( \frac{Z_N}{(1 + r)^N} \right) \quad \text{(since } \tilde{\E}[Y] = \E[ZY]) \\
+	&= X_0(1 + r)^N + \left[ \frac{1}{a} \tilde{\E} \left[ \ln Z \right] - \frac{1}{a}\ln \left((1 + r)^N\right) \right] - \left[ \frac{1}{a} \ln Z_N - \frac{1}{a} \ln \left((1 + r)^N\right) \right] \\
+	&= X_0(1 + r)^N + \frac{1}{a}\tilde{\E}[\ln Z] - \frac{1}{a}\ln Z_N
+\end{align*}
+
+That is, the optimal attainable terminal utility is achieved at wealth
+\begin{equation*}
+	X^*_N = X_0(1 + r)^N + \frac{1}{a} \left( \tilde{\E}[\ln Z] - \ln Z_N \right)
+\end{equation*}
+
+\indent We may see that $X^*_N$ is composed of a riskless bank account term accruing interest $X_0(1 + r)^N$ and some risky term that is determined by our particular utility function $\frac{1}{a} \left( \tilde{\E}[\ln Z] - \ln Z_N \right)$. The question remains: How can we achieve this terminal wealth? We should treat $X^*_N$ as the payoff of a derivative security at time $N$ (i.e. set $V_N = X^*_N$). We replicate this payoff with the portfolio process
+\begin{equation*}
+	\Delta_{n - 1}(\omega_1\cdots\omega_{n - 1}) = \frac{ V_n(\omega_1\cdots\omega_{n - 1}H) - V_n(\omega_1\cdots\omega_{n - 1}T) }{ S_n(\omega_1\cdots\omega_{n - 1}H) - S_n(\omega_1\cdots\omega_{n - 1}T) }
+\end{equation*}
+
+\indent Doing backwards induction/risk-neutral valuation at each time steps we can find each $X_n = V_n$ at each $n = 1, ..., N$ and since $X_n$ is a martingale in our model we note
+\begin{equation*}
+	X_n = \tilde{\E}_n \left[ \frac{ X^*_N }{(1 + r)^{N - n}} \right] \quad \text{(martingale property)}
+\end{equation*}
+
+Now,
+\begin{align*}
+	X_n &= \tilde{\E}_n \left[ \frac{ X^*_N }{(1 + r)^{N - n}} \right] \\
+	&= \tilde{\E}_n \left[ \frac{ \left( X_0(1 + r)^N + \frac{1}{a} \left( \tilde{\E}[\ln Z] - \ln Z_N \right) \right) }{(1 + r)^{N - n}} \right] \\
+	&= \frac{1}{(1 + r)^{N - n}} \left[ X_0(1 + r)^N + \frac{1}{a} \tilde{\E}_n \left[ \tilde{\E}[\ln Z] \right] - \frac{1}{a} \tilde{\E}_n [\ln Z] \right] \\
+	&= \frac{1}{(1 + r)^{N - n}} \left[ X_0(1 + r)^N + \frac{1}{a} \tilde{\E}[\ln Z] - \frac{1}{a} \tilde{\E}_n [\ln Z] \right] \quad \text{(tower property)} \\
+\end{align*}
+
+So, with $V_n = X_n$ we find
+\begin{align*}
+	\Delta_{n - 1}(\omega_1\cdots\omega_{n - 1}) &= \frac{ X_n(\omega_1\cdots\omega_{n - 1}H) - X_n(\omega_1\cdots\omega_{n - 1}T) }{ (u - d)S_{n - 1}(\omega_1\cdots\omega_{n - 1}) } \\
+	&= \frac{ \tilde{\E}_n[\ln Z](\omega_1\cdots\omega_{n - 1}T) - \tilde{\E}_n[\ln Z](\omega_1\cdots\omega_{n - 1}H) }{ a(1 + r)^{N - n}(u - d)S_{n - 1}(\omega_1\cdots\omega_{n - 1} }
+\end{align*}
+
+since all constant terms in $X_n = \frac{1}{(1 + r)^{N - n}} \left[ X_0(1 + r)^N + \frac{1}{a} \tilde{\E}[\ln Z] - \frac{1}{a} \tilde{\E}_n [\ln Z] \right]$ cancel each other out in the $(\omega_1\cdots\omega_{n - 1}H)$ and $(\omega_1\cdots\omega_{n - 1}T)$ terms. Hence, with this utility function we have an explicit portfolio process $\{\Delta_n\}^N_{n = 1}$. Note that this portfolio process is initial-wealth invariant, that is, $\Delta_n$ is not a function of our initial endowment $X_0$.
+
+\begin{center}
+\rule{\textwidth}{0.5pt}
+	End of midterm material
+\rule{\textwidth}{0.5pt}
+\end{center}
+
+\section{CAPM}
+
+\indent How can we relate our work in this chapter to the capital asset pricing model? Consider the one-step binomial model with the no-arbitrage require $0 < d < 1 + r < u$. We know that for some $0 \leq p \leq 1$
+\begin{equation*}
+	\E[S_1] = pS_1(H) + qS_1(T)
+\end{equation*}
+
+and under $\tilde{\P}$
+\begin{equation*}
+	S_0 = \tilde{\E} \left[ \frac{S_1}{1 + r} \right] = \frac{1}{(1 + r)} \left[ \tilde{p} S_1(H) + \tilde{q}S_1(T) \right]
+\end{equation*}
+
+Define the return of the risk asset $S$ to be
+\begin{align*}
+	r_s := \frac{S_1 - S_0}{S_0} &= 
+		\begin{cases}
+			\frac{ S_1(H) - S_0 }{S_0} & \omega_1 = H \\
+			\frac{ S_1(T) - S_0 }{S_0} & \omega_1 = T
+		\end{cases} \\
+		&=
+		\begin{cases}
+			u - 1 & \omega_1 = H \\
+			d - 1 & \omega_1 = T
+		\end{cases}
+\end{align*}
+
+\begin{lemma} For any $p, \tilde{p} \in (0, 1)$ we have
+\begin{align*}
+	\E[r_s] - \tilde{\E}[r_s] &= (p - \tilde{p})\left[ \frac{S_1(H) - S_1(T)}{S_0} \right] \\
+	&= (p - \tilde{p})(u - d)
+\end{align*}
+
+\begin{proof} to do...
+\end{proof}
+\end{lemma}
+
+Note that $\tilde{\E}[r_s] = r$ by definition, so as corollary we get
+\begin{corollary} \hfill\\
+\begin{enumerate}
+	\item $\E[r_s] - r = (p - \tilde{p})(u - d)$ 
+	\item $\E[r_s] - r_s(H) = (p - 1)(u - d)$
+	\item $\E[r_s] - r_s(T) = p(u - d)$
+\end{enumerate}
+\end{corollary}
+
+For the following suppose that given some measure $\P$ we have two traded assets $S^1$ and $S^2$.
+
+\begin{definition} The \underline{covariance} of the returns for $S^1$ and $S^2$ as
+\begin{align*}
+	V^\P_{S^1, S^2} &= \text{Cov}^\P (r_{S^1}, r_{S^2}) \\
+	&= \E[r_{S^1}, r_{S^2}] - \E[r_{S^1}]\E[r_{S^2}]
+\end{align*}
+\end{definition}
+
+\begin{lemma} We can rewrite the covariance of two assets as
+\begin{equation*}
+	V^\P_{S^1, S^2} = p(1 - p)[u_1 - d_1][u_2 - d_2]
+\end{equation*}
+\end{lemma}
+
+\begin{lemma} Assume that $\E[r_S] \geq r$. We can show that if $0 < p < 1$ then
+\begin{equation*}
+	\E[r_s] - r = \frac{ | p - \tilde{p} | }{\sqrt{p(1 - p)}}\sigma_S
+\end{equation*}
+
+where $\sigma_S$ is a measure of volatility/risk of the asset.
+\begin{proof} to do...
+\end{proof}
+\end{lemma}
+
+\indent We may interpret $\E[r_S] - r$ as the risk premium/expected return above the risk free rate for investing in $S$. If $\sigma_S$ is higher we would expect a higher return for our investment, and when $p = \tilde{p}$ we are insensitive to risk (i.e. risk-neutral). Define
+\begin{equation*}
+	\Lambda(p) = \frac{ |p - \tilde{p}| }{\sqrt{p(1 - p)}}
+\end{equation*}
+
+So we have
+\begin{equation*}
+	S_0 = \frac{ \E[S_1] }{ (1 + r) + \Lambda(p)\sigma_S }
+\end{equation*}
+
+\indent That is, discounting must be risk adjusted if we use the expectation under the real-world measure. We can find that
+\begin{equation*}
+	\E[r_{S^1}] - r = \beta_{S^1,S^2} \left( \E[r_{S^2}] - r \right)
+\end{equation*}
+
+where
+\begin{align*}
+	\beta_{S^1, S^2} &= \frac{ \cov^\P(S^1, S^2) }{ \var^\P(S^1, S^2) }\\
+	&= \frac{ V^\P_{S^1, S^2} }{ V^\P_{S^1, S^2} }
+\end{align*}
+
+\indent We say that $\beta$ is a ``regression coefficient'' for the returns of $S^1$ onto those of $S^2$. Usually we have that $S^2$ is a market index or some proxy for the whole market. Doing so permits us to find idiosyncratic risks associated with a particular asset $S^1$. Note that we can write\footnote{How? Where does this come from? Is this some substitution?}
+\begin{equation*}
+	S^1_0 = \frac{ \E[S^1_1] }{(1 + r) + \beta_{S^1, S^2}(\E[r_{S^2}] - r)}
+\end{equation*}
+
+where we say that $S^1_0$ is a ``relative pricing formula'' (under a subjective measure $\P$). This means that given some information about $S^2$ we can price $S^1$, assuming we know the correlation\footnote{Often we make the simplifying assumption that the correlations between assets are constant in time -- this is typically a bad idea in practice.} of the returns between $S^1$ and $S^2$. We may derive more general versions of CAPM using ``representative agents'' and the utility maximization tools that we had previously explored. Doing so gives us an ``equilibrium pricing model'' which is explored in greater depth in the Shreve book but will not be discussed here.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\end{document}

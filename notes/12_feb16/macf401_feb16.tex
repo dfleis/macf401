@@ -1,0 +1,295 @@
+% --------------------------------------------------------------
+% This is all preamble stuff that you don't have to worry about.
+% Head down to where it says "Start here"
+% --------------------------------------------------------------
+ 
+\documentclass[12pt]{article}
+ 
+\usepackage[margin=1in]{geometry} 
+\usepackage{bm} % bold in mathmode \bm
+\usepackage{amsmath,amsthm,amssymb,mathtools}
+\usepackage{dsfont} % for indicator function \mathds 1
+\usepackage{tikz,pgf,pgfplots}
+\usepackage{enumerate} 
+\usepackage[multiple]{footmisc} % for an adjascent footnote
+\usepackage{graphicx,float} % figures
+\usepackage{framed} % surround a text with a box 
+
+\newtheorem{definition}{Definition}
+\let\olddefinition\definition
+\renewcommand{\definition}{\olddefinition\normalfont}
+\newtheorem{lemma}{Lemma}
+\let\oldlemma\lemma
+\renewcommand{\lemma}{\oldlemma\normalfont}
+\newtheorem{proposition}{Proposition}
+\let\oldproposition\proposition
+\renewcommand{\proposition}{\oldproposition\normalfont}
+\newtheorem{corollary}{Corollary}
+\let\oldcorollary\corollary
+\renewcommand{\corollary}{\oldcorollary\normalfont}
+\newtheorem{theorem}{Theorem}
+\let\oldtheorem\theorem
+\renewcommand{\theorem}{\oldtheorem\normalfont}
+
+%%% PLOTTING PARAMETERS
+\tikzstyle{bag} = [text width=7em, text centered] %binomial tree node width
+\tikzstyle{end} = []
+%%%
+
+%% set noindent by default and define indent to be the standard indent length
+\newlength\tindent
+\setlength{\tindent}{\parindent}
+\setlength{\parindent}{0pt}
+\renewcommand{\indent}{\hspace*{\tindent}}
+
+\newcommand*{\vv}[1]{\vec{\mkern0mu#1}} % \vec command
+
+%% DAVIDS MACRO KIT %%
+\newcommand{\R}{\mathbb R}
+\newcommand{\N}{\mathbb N}
+\newcommand{\Z}{\mathbb Z}
+\renewcommand{\P}{\mathbb P}
+\newcommand{\Q}{\mathbb Q}
+\newcommand{\E}{\mathbb E}
+\newcommand{\var}{\mathrm{Var}}
+\newcommand{\Var}{\mathrm{Var}}
+\newcommand{\cov}{\mathrm{Cov}}
+\newcommand{\Cov}{\mathrm{Cov}}
+\newcommand{\indist}{\,{\buildrel \mathcal D \over \sim}\,}
+
+\newcommand{\bigtau}{\text{{\large $\bm \tau$}}}
+
+\begin{document}
+ 
+% --------------------------------------------------------------
+%                         Start here
+% --------------------------------------------------------------
+ 
+\title{Mathematical \& Computational Finance I\\Lecture Notes}
+\author{Calibration of the Binomial Model}
+\date{February 16 2016 \\ Last update: \today{}}
+\maketitle
+
+% SECTION: 
+\section{Implementation of the Binomial Model}
+
+\indent Question: We've built up the binomial models and found out that it has nice properties. However, how do we estimate the model parameters in the real world?
+\begin{enumerate}[(1)]
+	\item Statistical Approaches: We could use historical time series to see what the parameters should be if we were to fit our model to the past. It turns out that statistical approaches are not particularly popular (or useful).
+	
+	\item Calibration Approaches: We calibrate our binomial model to existing prices so that we may generate parameters corresponding to observable derivative securities in the market. We then used these parameters to price options that do not exist in the market in a way that is consistent with known/observed prices. We should take a moment that this approach is consistent with the Efficient Market Hypothesis. We will focus on calibration approaches in this lecture.
+\end{enumerate}
+
+\subsection{Calibration}
+
+\indent Suppose that we wish to approximate the price of a risky asset over time period $[t_0,T]$ with an $M$ step binomial model. Define
+\begin{equation*}
+	\Delta t = \frac{ T - t_0 }{M}
+\end{equation*}
+
+and let
+\begin{equation*}
+	t_m = t_0 + m\Delta t
+\end{equation*}
+
+for $m = 0,1,...,M$. At the $m^{\text{th}}$ time step there are $(m + 1)$ nodes to our recombining tree and the price at a given node is found by
+\begin{equation*}
+	S^n_m = u^nd^{m - n}S_0
+\end{equation*}	
+
+for $n = 0,1,...,m$ the number of up steps.\footnote{That is, $n = \#H(\omega_1\cdots\omega_m)$.} We observe the current time $t = t_0$ price $S(t_0)$ and set
+\begin{equation*}
+	S^0_0 = S(t_0)
+\end{equation*}
+
+\indent As usual, let $\tilde{p}$ denote the risk-neutral probability. Conditional on the $m^\text{th}$ coin toss\footnote{That is, the information available at time $m$.} we find
+\begin{align*}
+	\tilde{\E}_m[S_{m + 1}]&= \tilde{p} u S_m + (1 - \tilde{p}) d S_m \quad \text{(by definition of the binomial model)} \\
+	&= S_m[\tilde{p}u + (1 - \tilde{p})d]
+\end{align*} 
+
+
+which must hold for all $n = 0,1,...,m$ nodes by construct of the binomial model. Now, note
+\begin{align*}
+	\tilde{\E}_m[(S_{m + 1})^2] &= \tilde{p}(uS_m)^2 + (1 - \tilde{p})(dS_m)^2 \\
+	&= (S_m)^2[\tilde{p}u^2 + (1 - \tilde{p})d^2]
+\end{align*}
+
+\indent Therefore, the conditional variance of our risky asset $S_{m + 1}$ conditional on the time-$m$ information is
+\begin{align*}
+	\Var_m(S_{m + 1}) &= \tilde{\E}_m[(S_{m + 1})^2] - \left( \tilde{\E}_m[(S_{m + 1})^2] \right)^2 \\
+	&= (S_m)^2[\tilde{p}u^2 + (1 - \tilde{p})d^2] - (S_m)^2[\tilde{p}u + (1 - \tilde{p})d]^2
+\end{align*}
+
+However, since $\tilde{\P}$ is the risk-neutral measure we have that
+\begin{align*}
+	\tilde{p}u + (1 - \tilde{p})d &= \frac{(1 + r) - d}{u - d}u + \left(1 - \frac{(1 + r) - d}{u - d}\right)d \\
+	&= \frac{(1 + r) - d}{u - d}u + \left(\frac{u - d}{u - d} - \frac{(1 + r) - d}{u - d}\right)d \\
+	&= \frac{(1 + r) - d}{u - d}u + \left(\frac{u - d - (1 + r) + d}{u - d}\right)d \\
+	&= \frac{(1 + r)u - du}{u - d} + \frac{ud - d^2 - (1 + r)d + d^2}{u - d} \\ 
+	&= \frac{(1 + r)u - du + ud - d^2 - (1 + r)d + d^2}{u - d} \\ 
+	&= (1 + r)\frac{u - d}{u - d} \\
+	&= (1 + r)
+\end{align*}
+
+where $r$ is the one-period riskless interest rate in our bank account. In particular, a one-period time step in the binomial model corresponds to a time interval of
+\begin{equation*}
+	[t_m,t_{m + 1}] \quad \text{that is, an interval length of $\Delta t$}
+\end{equation*}
+
+If we let $R$ be the equivalent continuously compounded interest rate satisfying
+\begin{equation*}
+	(1 + r) = e^{R\Delta t}
+\end{equation*}
+
+Then, to avoid arbitrage, we require
+\begin{equation*}
+	\tilde{p}u + (1 - \tilde{p})d = e^{R\Delta t}
+\end{equation*}
+
+We introduce a {\bf volatility parameter} $\sigma > 0$ such that\footnote{The rationale behind this choice for $\sigma$ will be shown in a few lines.}
+\begin{equation*}
+	[u^2\tilde{p} + (1 - \tilde{p}d^2] = e^{(2R + \sigma^2)\Delta t}
+\end{equation*}
+
+Then
+\begin{align*}
+	\Var_m(S_{m + 1}) &= (S_m)^2[\tilde{p}u^2 + (1 - \tilde{p})d^2] - (S_m)^2[\tilde{p}u + (1 - \tilde{p})d]^2 \\
+	&= (S_m)^2[\tilde{p}u^2 + (1 - \tilde{p})d^2] - (S_m)^2[1 + r]^2 \\
+	&= (S_m)^2\left[e^{(2R + \sigma^2)\Delta t}\right] - (S_m)^2\left[e^{R\Delta t}\right]^2 \\
+	&= (S_m)^2\left[e^{(2R + \sigma^2)\Delta t} - e^{2R\Delta t}\right]
+\end{align*}
+
+\indent Why do we make this modelling choice for $\Var_m(S_{m + 1})$ in selecting $\sigma$ above? Consider a stochastic process $\{\tilde{S}_m\}^M_{m = 0}$ with $\tilde{S}_0$ constant and for $m = 0,1,...,M - 1$
+\begin{equation*}
+	\tilde{S}_{m + 1} = \tilde{S}_m e^{(R - \frac{1}{2}\sigma^2)\Delta t + \sigma\sqrt{\Delta t}Z_{m + 1}}
+\end{equation*}
+
+for $Z_i \stackrel{iid}{\sim} N(0,1)$. Then
+\begin{align*}
+	\tilde{\E}_m \left[ \frac{\tilde{S}_{m + 1}}{\tilde{S}_m} \right] &= 	\tilde{\E}_m \left[ \frac{\tilde{S}_m e^{(R - \frac{1}{2}\sigma^2)\Delta t + \sigma\sqrt{\Delta t}Z_{m + 1}}}{ \tilde{S}_m }\right] \\
+	&= \tilde{\E}_m \left[ e^{(R - \frac{1}{2}\sigma^2)\Delta t + \sigma\sqrt{\Delta t}Z_{m + 1}} \right] \\
+	&=  e^{(R - \frac{1}{2}\sigma^2)\Delta t} \tilde{\E}_m \left[ e^{\sigma\sqrt{\Delta t}Z_{m + 1}} \right] \quad \text{(taking out what is known)} \\
+	&=  e^{(R - \frac{1}{2}\sigma^2)\Delta t} \tilde{\E} \left[ e^{\sigma\sqrt{\Delta t}Z_{m + 1}} \right] \quad \text{(independence of $Z_i$ on coin tosses)} 
+\end{align*}
+
+Recall that the moment generating function of $Z \sim N(0,1)$
+\begin{align*}
+	\E[e^{tZ}] &= e^{\frac{1}{2}t^2} \\
+	\implies \E[e^{\sigma\sqrt{\Delta t} Z}] &=  e^{\frac{1}{2}(\sigma\sqrt{\Delta t})^2} \\
+	&= e^{\frac{1}{2}\sigma^2\Delta t}
+\end{align*}
+
+So then
+\begin{align*}
+	\tilde{\E}_m \left[ \frac{\tilde{S}_{m + 1}}{\tilde{S}_m} \right] &=  e^{(R - \frac{1}{2}\sigma^2)\Delta t} \tilde{\E} \left[ e^{\sigma\sqrt{\Delta t}Z_{m + 1}} \right] \\
+	&= e^{(R - \frac{1}{2}\sigma^2)\Delta t} e^{\frac{1}{2}\sigma^2\Delta t} \\
+	&= e^{R\Delta t - \frac{1}{2}\sigma^2\Delta t + \frac{1}{2}\sigma^2\Delta t} \\
+	&= e^{R\Delta t}
+\end{align*}
+
+Also
+\begin{align*}
+	\tilde{\E}_m \left[ \left( \frac{\tilde{S}_{m + 1}}{\tilde{S}_m} \right)^2 \right] &= \tilde{\E}_m \left[ \left( \frac{\tilde{S}_m e^{(R - \frac{1}{2}\sigma^2)\Delta t + \sigma\sqrt{\Delta t}Z_{m + 1}}}{ \tilde{S}_m } \right)^2 \right] \\
+	&= \tilde{\E}_m \left[ \left( e^{(R - \frac{1}{2}\sigma^2)\Delta t + \sigma\sqrt{\Delta t}Z_{m + 1}} \right)^2 \right] \\
+	&= \tilde{\E}_m \left[ e^{2(R - \frac{1}{2}\sigma^2)\Delta t + 2\sigma\sqrt{\Delta t}Z_{m + 1}} \right] \\
+	&= e^{2(R - \frac{1}{2}\sigma^2)\Delta t} \tilde{\E}_m \left[ e^{2\sigma\sqrt{\Delta t}Z_{m + 1}} \right] \\
+	&= e^{2(R - \frac{1}{2}\sigma^2)\Delta t} \tilde{\E} \left[ e^{2\sigma\sqrt{\Delta t}Z_{m + 1}} \right] \quad \text{(independence of $Z_i$)} \\
+	&= e^{2(R - \frac{1}{2}\sigma^2)\Delta t} e^{\frac{1}{2}(2\sigma\sqrt{\Delta t})^2} \\
+	&= e^{2R\Delta t - \sigma^2\Delta t} e^{2\sigma^2\Delta t} \\
+	&= e^{2R\Delta t - \sigma^2\Delta t + 2\sigma^2\Delta t}  \\
+	&= e^{2R\Delta t + \sigma^2\Delta t}  \\
+	&= e^{(2R + \sigma^2)\Delta t}
+\end{align*}
+
+Hence
+\begin{align*}
+	\Var_m\left[ \frac{\tilde{S}_{m + 1}}{\tilde{S}_m} \right] &= \tilde{\E}_m \left[ \left( \frac{\tilde{S}_{m + 1}}{\tilde{S}_m} \right)^2 \right] - \left( \tilde{\E}_m \left[ \frac{\tilde{S}_{m + 1}}{\tilde{S}_m} \right] \right)^2 \\
+	&= e^{(2R + \sigma^2)\Delta t} - \left(e^{R\Delta t}\right)^2 \\
+	&= e^{2R\Delta t + \sigma^2\Delta t} - e^{2R\Delta t} \\
+	&= e^{2R\Delta t}(e^{\sigma^2\Delta t} - 1) \quad \text{(maybe I made a mistake here?)}
+\end{align*}
+
+\indent Hence, the mean and variance of the binomial model and the (discrete time) log-normal model
+\begin{equation*}
+	\tilde{S}_{m + 1} = \tilde{S}_m e^{(R - \frac{1}{2}\sigma^2)\Delta t + \sigma\sqrt{\Delta t}Z_{m + 1}}
+\end{equation*}
+
+are the same. We can prove (done at a later date) that as $\Delta t\to 0$ this binomial model will converge to the continuous-time log-normal model (Black-Scholes model). Now, we have the two equations
+\begin{align*}
+	\tilde{p}u + (1 - \tilde{p})d &= e^{R\Delta t} \\
+	\tilde{p}u^2 + (1 - \tilde{p})d^2 &= e^{(2R + \sigma^2)\Delta t}
+\end{align*}
+
+in three unknowns $d,u,\sigma$. This leads to potentially an infinite number of solutions. To resolve this indeterminacy we must select another constraint. Suppose that we set
+\begin{equation*}
+	\tilde{p} = \frac{1}{2} \quad \text{or} \quad u = \frac{1}{d}
+\end{equation*}
+
+In the case of $\tilde{p} = \frac{1}{2}$ we find that
+\begin{align*}
+	d &= e^{R\Delta t}\left(1 - \sqrt{e^{\sigma^2\Delta t} - 1}\right) \\
+	u &= e^{R\Delta t}\left(1 + \sqrt{e^{\sigma^2\Delta t} - 1}\right)
+\end{align*}
+
+which gives us a recombining binomial tree with upward drift (i.e. nonsymmetric). If we instead choose the constraint $u = \frac{1}{d}$ then we find that the binomial tree specified by our model is symmetric about $S_0$ with parameters
+\begin{align*}
+	u &= \frac{1}{d} \\
+	d &= a - \sqrt{a^2 - 1} \\
+	a &= \frac{ e^{-R\Delta t} + e^{(R + \sigma^2)\Delta t} }{2} \\
+	\tilde{p} &= \frac{ e^{-R\Delta t} + e^{(R + \sigma^2)\Delta t} }{u - d}
+\end{align*}
+
+Using our backwards induction algorithm (risk-neutral pricing) the price of a European option with maturity date $T$ and payoff function $g(S^n_M)$ is given by
+\begin{align*}
+	v^n_M &= g(S^n_M) \\
+	v^n_M &= e^{-R\Delta t} \left( \tilde{p}v^{n + 1}_{m + 1} + (1 - \tilde{p})v^{n + 1}_{m + 1} \right)
+\end{align*}
+
+The price of the option at time $t = t_0$ written on asset $S$ with price $S(t_0) = S_0$ is
+\begin{equation*}
+	v^0_0 = v(S_0,t_0)
+\end{equation*}	
+
+\indent While calibrating the binomial model we use we a single at-the-money (ATM) option price in order to adjust the volatility parameter $\sigma > 0$. We iterate through values of $\sigma$ until we are able to match the calibrated price to the observed price. \\
+
+\indent Such a calibration procedure requires a root-finding algorithm (bisection, Newton's method, ...). That is, we must find a root to the equation
+\begin{equation*}
+	v^0_0(\sigma) = V^{\text{obs}}_0
+\end{equation*}
+
+for a given $R, S_0, \Delta, g$. In fact, we are able to prove existence of a root for both the parameterizations $\tilde{p} = \frac{1}{2}$ and $u = \frac{1}{d}$. \\
+
+\indent Our general goal is to construct a binomial tree that is able to price the target derivative is a manner that is consistent with the observed price. Once we have found the value for $\sigma$ which matches the observed price of a given option we can 
+\begin{enumerate}[1)]
+	\item Compute hedge ratios to replicate the payoff and create a hedging portfolio.
+	\item Estimate the cost of exotic options written on the same underlying asset, with the same maturity, as well as estimate their hedge ratios.
+\end{enumerate} 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\end{document}

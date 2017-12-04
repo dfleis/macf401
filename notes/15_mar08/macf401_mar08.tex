@@ -1,0 +1,471 @@
+% --------------------------------------------------------------
+% This is all preamble stuff that you don't have to worry about.
+% Head down to where it says "Start here"
+% --------------------------------------------------------------
+ 
+\documentclass[12pt]{article}
+ 
+\usepackage[margin=1in]{geometry} 
+\usepackage{bm} % bold in mathmode \bm
+\usepackage{amsmath,amsthm,amssymb,mathtools}
+\usepackage{dsfont} % for indicator function \mathds 1
+\usepackage{tikz,pgf,pgfplots}
+\usepackage{enumerate} 
+\usepackage[multiple]{footmisc} % for an adjascent footnote
+\usepackage{graphicx,float} % figures
+\usepackage{framed} % surround a text with a box 
+
+\newtheorem{definition}{Definition}
+\let\olddefinition\definition
+\renewcommand{\definition}{\olddefinition\normalfont}
+\newtheorem{lemma}{Lemma}
+\let\oldlemma\lemma
+\renewcommand{\lemma}{\oldlemma\normalfont}
+\newtheorem{proposition}{Proposition}
+\let\oldproposition\proposition
+\renewcommand{\proposition}{\oldproposition\normalfont}
+\newtheorem{corollary}{Corollary}
+\let\oldcorollary\corollary
+\renewcommand{\corollary}{\oldcorollary\normalfont}
+\newtheorem{theorem}{Theorem}
+\let\oldtheorem\theorem
+\renewcommand{\theorem}{\oldtheorem\normalfont}
+
+%%% PLOTTING PARAMETERS
+\tikzstyle{bag} = [text width=7em, text centered] %binomial tree node width
+\tikzstyle{end} = []
+%%%
+
+%% set noindent by default and define indent to be the standard indent length
+\newlength\tindent
+\setlength{\tindent}{\parindent}
+\setlength{\parindent}{0pt}
+\renewcommand{\indent}{\hspace*{\tindent}}
+
+\newcommand*{\vv}[1]{\vec{\mkern0mu#1}} % \vec command
+
+%% DAVIDS MACRO KIT %%
+\newcommand{\R}{\mathbb R}
+\newcommand{\N}{\mathbb N}
+\newcommand{\Z}{\mathbb Z}
+\renewcommand{\P}{\mathbb P}
+\newcommand{\Q}{\mathbb Q}
+\newcommand{\E}{\mathbb E}
+\newcommand{\var}{\mathrm{Var}}
+\newcommand{\Var}{\mathrm{Var}}
+\newcommand{\cov}{\mathrm{Cov}}
+\newcommand{\Cov}{\mathrm{Cov}}
+\newcommand{\indist}{\,{\buildrel \mathcal D \over \sim}\,}
+
+\newcommand{\bigtau}{\text{{\large $\bm \tau$}}}
+
+
+%%
+\newcounter{mycounter}
+
+\begin{document}
+ 
+% --------------------------------------------------------------
+%                         Start here
+% --------------------------------------------------------------
+ 
+\title{Mathematical \& Computational Finance I\\Lecture Notes}
+\author{Generalizing American Derivative Securities}
+\date{March 8 2016 \\ Last update: \today{}}
+\maketitle
+
+% SECTION: 
+\section{General American Derivative Securities}
+
+\indent In the previous notes we had proven the following propositions: Given the American derivative security price process defined by
+\begin{equation*}
+	V_n = \max_{\tau \in \mathcal S_n} \tilde{\E}_n \left[ \mathds 1_{\{\tau \leq N\}} \frac{1}{(1 + r)^{\tau - n}} G_\tau \right]
+\end{equation*}
+
+has the following properties
+\begin{enumerate}[(i)]
+	\item $V_n \geq \max(G_n, 0)$
+	\item $\left\{ \frac{V_n}{(1 + r)^n} \right\}^N_{n = 0}$ is a $\tilde{\P}$-supermartingale
+	\item If $Y_n$ is any other process satisfying $(i)$ and $(ii)$ then 
+	\begin{equation*}
+		Y_n \geq V_n \quad \forall\,n = 0,1,...,N
+	\end{equation*}
+\end{enumerate}
+
+\indent Property $(i)$ gives us that if the short party construct a hedging portfolio then all possible  can be hedged regardless of when the long party chooses to exercise. \\
+
+\indent Property $(ii)$ gives us that a short party with initial capital $V_0$ is able to construct a hedging portfolio with time $n$ value given by $V_n$. \\
+
+\indent Combining $(i)$ and $(ii)$ together give us that the initial price $V_0$ is an acceptable price for the short party (seller). \\
+
+\indent Finally, with property $(iii)$ we have that $V_0$ is the least price the short party (seller) is willing to accept for such a derivative and therefore is defined to be the \underline{fair price} for the long party (buyer). \\
+
+\subsection{Computational Considerations}
+
+\indent We saw last time that performing the maximization over all $\tau \in \mathcal S_n$ can be computationally intensive/problematic. We can show that we are able to generalize the path-independent American (recursive) pricing algorithm to path-dependent American derivative securities. \\
+
+\begin{theorem} {\bf Recursive Pricing Algorithm for Path-Dependent American Derivative Securities.} Let $V_n$ be the American derivative security price process defined by
+\begin{equation*}
+	V_n = \max_{\tau \in \mathcal S_n} \tilde{\E}_n \left[ \mathds 1_{\{\tau \leq N\}} \frac{1}{(1 + r)^{\tau - n}} G_\tau \right]
+\end{equation*}
+
+then $V_n$ satisfies
+
+\begin{framed}
+{\bf American pricing algorithm 2:} 
+\begin{align*}
+	V_N(\omega_1\cdots\omega_N) &= \max \{ G_N(\omega_1\cdots\omega_N), 0 \} \\
+	V_n(\omega_1\cdots\omega_n) &= \max \left\{ G_n(\omega_1\cdots\omega_n), \frac{1}{1 + r}\left[ \tilde{p}V_{n + 1}(\omega_1\cdots\omega_nH) + \tilde{q}V_{n + 1}(\omega_1\cdots\omega_nT) \right]\right\}
+\end{align*}
+for $n = N - 1, N - 2,...,1, 0$.
+\end{framed}
+
+\begin{proof} First, we wish to show that $V_n$ defined by the algorithm satisfies both properties $(i)$ and $(ii)$ of our first result above. Then we must show that this $V_n$ is indeed the smallest process satisfying $(i)$ and $(ii)$ implying that $V_n$ must be the value corresponding to the stopping time $\tau$ for which this $\tau\in\mathcal S_n$ maximizes the conditional expectation. So, confirming property $(i)$ we seek to show that
+\begin{equation*}
+	V_n \geq \max(G_n, 0) \quad \forall\, n = 0,1,...,N
+\end{equation*}
+
+By the algorithm above we have that, at time $n = N$,
+\begin{equation*}
+	V_N = \max(G_N, 0) \implies V_N \geq \max(G_N, 0)
+\end{equation*}
+
+\indent We proceed inductively (backwards in time). Suppose for some $n \in \{N - 1, N - 2,..., 1, 0\}$ we have that
+\begin{equation*}
+	V_{n + 1} \geq \max(G_{n + 1}, 0)
+\end{equation*}
+
+Then, by our algorithm we have
+\begin{align*}
+	V_n(\omega_1\cdots\omega_n) &= \max \left\{ G_n(\omega_1\cdots\omega_n), \frac{1}{1 + r}\Big[ \tilde{p}V_{n + 1}(\omega_1\cdots\omega_nH) + \tilde{q} V_{n + 1}(\omega_1\cdots\omega_nT) \Big]\right\} \\
+	&\geq \max \Big\{ G_n(\omega_1\cdots\omega_n), \frac{1}{1 + r}\Big[ \tilde{p}\cdot \max\left\{G_{n + 1}(\omega_1\cdots\omega_nH), 0\right\} + \\
+	&\hphantom{{}={----------------}} \tilde{q}\cdot \max \left\{ G_{n + 1}(\omega_1\cdots\omega_nT), 0\right\} \Big]\Big\} \\
+	&\hphantom{{}={-----------------}} \quad \text{(by the inductive hypothesis)} \\
+	&\geq \max \Big\{ G_n(\omega_1\cdots\omega_n), \frac{1}{1 + r}\Big[\tilde{p}\cdot 0 + \tilde{q}\cdot 0 \Big] \Big\} \quad \text{(since we consider the lower bound)} \\
+	&\geq \max \left\{ G_n(\omega_1\cdots\omega_n), 0 \right\}
+\end{align*}
+
+Since the choice of $n \in \{N - 1,N - 2,..., 1, 0\}$ was arbitrary we have that 
+\begin{equation*}
+	V_n \geq \max(G_n, 0) \quad \forall\,n = 0,1,..., N
+\end{equation*}
+
+satisfying $(i)$, as desired. Now, we must show that this process defined by the algorithm above is a discounted $\tilde{\P}$-supermartingale. From the algorithm we have 
+\begin{align*}
+	V_n(\omega_1\cdots\omega_n) &= \max \left\{ G_n(\omega_1\cdots\omega_n), \frac{1}{1 + r}\left[ \tilde{p}V_{n + 1}(\omega_1\cdots\omega_nH) + \tilde{q}V_{n + 1}(\omega_1\cdots\omega_nT) \right]\right\} \\
+	&\geq \frac{1}{(1 + r)}\Big[ \tilde{p}V_{n + 1}(\omega_1\cdots\omega_n H) + \tilde{q}V_{n + 1}(\omega_1\cdots\omega_n T) \Big] \\
+	&= \tilde{E}_n \left[ \frac{1}{1 + r}V_{n + 1}\right](\omega_1\cdots\omega_n) \\
+	\implies \frac{V_n(\omega_1\cdots\omega_n)}{(1 + r)^n} &\geq \tilde{\E}_n \left[ \frac{V_{n + 1}}{(1 + r)^{n + 1}} \right](\omega_1\cdots\omega_n)
+\end{align*}
+
+satisfying the supermartingale property, and since $V_n$ as defined by the algorithm above clearly depends on only the first $n$ coin tosses we may conclude that $V_n$ is indeed a supermartingale, as desired. Finally, we must show that this process is the ``smallest'' process satisfying $(i)$ and $(ii)$. First, by the algorithm we have that
+\begin{equation*}
+	V_N(\omega_1\cdots\omega_N) = \max \left\{ G_N(\omega_1\cdots\omega_N), 0\right\} 
+\end{equation*}
+
+Then it is clear that $V_N$ is indeed the smallest at time $N$ such that
+\begin{equation*}
+	V_N \geq \max \{G_N, 0\}
+\end{equation*}
+
+We once again proceed inductively (backwards). Assume that for some $n \in \{N - 1, ..., 1, 0\}$ that $V_{n + 1}$ is as small as possible while satisfying $(i)$ and $(ii)$. Then, $(ii)$ (supermartingale) gives us that 
+\begin{align*}
+	V_n(\omega_1\cdots\omega_n) &\geq \tilde{\E}_n \left[ \frac{1}{1 + r}V_{n + 1}\right](\omega_1\cdots\omega_n) \\
+	&= \frac{1}{1 + r} \Big[\tilde{p}V_{n + 1}(\omega_1\cdots\omega_nH) + \tilde{q}V_{n + 1}(\omega_1\cdots\omega_nT) \Big] 
+\end{align*}
+
+and by $(i)$ we have
+\begin{equation*}
+	V_n(\omega_1\cdots\omega_n) \geq G_n(\omega_1\cdots\omega_n)
+\end{equation*}
+
+Hence, combining the above two inequalities,
+\begin{equation*}
+	V_n(\omega_1\cdots\omega_n) \geq \max \left\{ G_n(\omega_1\cdots\omega_n), \frac{1}{1 + r} \Big[\tilde{p}V_{n + 1}(\omega_1\cdots\omega_nH) + \tilde{q}V_{n + 1}(\omega_1\cdots\omega_nT) \Big] \right\}
+\end{equation*}
+
+for $n = N - 1,..., 0$. However, the American pricing algorithm above gives us that
+\begin{equation*}
+	V_n(\omega_1\cdots\omega_n) = \max \left\{ G_n(\omega_1\cdots\omega_n), \frac{1}{1 + r} \Big[\tilde{p}V_{n + 1}(\omega_1\cdots\omega_nH) + \tilde{q}V_{n + 1}(\omega_1\cdots\omega_nT) \Big] \right\}
+\end{equation*}
+
+Hence $V_n$ is as small as possible, for arbitrary $n \in \{0, 1,..., N\}$, as desired.
+\end{proof}
+\end{theorem}
+
+\indent This result gives us an alternative algorithm to the maximization over all $\tau\in\mathcal S_n$ by using an algorithm that is essentially identical to the algorithm for the path-independent American option.
+
+\subsection{Replication}
+
+\subsubsection{Short Position}
+	
+\indent It remains to show exactly how we can replicate/hedge the payoff of a path-dependent American derivative security, as well as finding the optimal exercise strategy for the long party.
+	
+\begin{theorem} {\bf Replication of Path-Dependent American Derivative Securities.} Consider an $N$-period binomial asset pricing model with $0 < d < 1 + r < u$. For each $n = 0,1,..., N$ let $G_n$ be an adapted random variable depending on the first $n$ coin tosses. Let $V_n$ be the American derivative security price process defined by
+\begin{equation*}
+	V_n = \max_{\tau \in \mathcal S_n} \tilde{\E}_n \left[ \mathds 1_{\{\tau \leq N\}} \frac{1}{(1 + r)^{\tau - n}} G_\tau \right]
+\end{equation*}
+
+and define $\Delta_n$ and $C_n$ such that
+\begin{align*}
+	\Delta_n(\omega_1\cdots\omega_n) &= \frac{ V_{n + 1}(\omega_1\cdots\omega_nH) - V_{n + 1}(\omega_1\cdots\omega_nT) }{ S_{n + 1}(\omega_1\cdots\omega_nH) - S_{n + 1}(\omega_1\cdots\omega_nT) }\\
+	C_n(\omega_1\cdots\omega_n) &= V_n(\omega_1\cdots\omega_n) - \frac{1}{1 + r}\Big[ \tilde{p}V_{n + 1}(\omega_1\cdots\omega_nH) + \tilde{q}V_{n + 1}(\omega_1\cdots\omega_nT) \Big]
+\end{align*}
+
+for $n = 0,1,..., N - 1$. Then
+\begin{enumerate}
+	\item $C_n \geq 0$ for all $n$.
+	\setcounter{mycounter}{\theenumi}
+\end{enumerate}
+
+Furthermore, if we set $X_0 = V_0$ and define recursively 
+\begin{equation*}
+	X_{n + 1} = \Delta_nS_{n + 1} + (1 + r)[X_n - C_n - \Delta_nS_n]
+\end{equation*}
+
+then we get
+\begin{enumerate}[(i)]
+	\setcounter{enumi}{\themycounter}
+	\item $X_n(\omega_1\cdots\omega_n) = V_n(\omega_1\cdots\omega_n)$ for all $n = 0,1,...,N$ and all $\omega_1\cdots\omega_n\in\Omega$.
+	\item In particular, $X_n \geq G_n$.
+\end{enumerate} \hfill\\
+
+\begin{proof} {\bf {\em (Proof of $\bm{(i)}$)}} In the last result we had shown that $V_n$ as defined by the recursive algorithm is a supermartingale. That is
+\begin{equation*}
+	V_n(\omega_1\cdots\omega_n) \geq \tilde{\E}_n \left[ \frac{V_{n + 1}}{1 + r}\right](\omega_1\cdots\omega_n)
+\end{equation*}
+
+and by the definition of $C_n$ we have
+\begin{align*}
+	C_n(\omega_1\cdots\omega_n) &= V_n(\omega_1\cdots\omega_n) - \frac{1}{1 + r}\Big[ \tilde{p}V_{n + 1}(\omega_1\cdots\omega_nH) + \tilde{q}V_{n + 1}(\omega_1\cdots\omega_nT) \Big] \\
+	&= V_n(\omega_1\cdots\omega_n) - \tilde{\E}_n \left[ \frac{V_{n + 1}}{1 + r}\right](\omega_1\cdots\omega_n) \\
+	&\geq V_n(\omega_1\cdots\omega_n) - V_n(\omega_1\cdots\omega_n) \\
+	&= 0 \\
+	\implies C_n &\geq 0
+\end{align*}
+
+as desired.
+\end{proof}
+
+\begin{proof} {\bf {\em (Proof of $\bm{(ii)}$)}} We will prove this by induction on $n$. For $n = 0$ we have that $V_0 = X_0$ is trivially true by definition. Now assume that
+\begin{equation*}
+	X_n(\omega_1\cdots\omega_n) = V_n(\omega_1\cdots\omega_n) \quad \forall\,n = 0,1,..., N,~\forall\,\omega_1\cdots\omega_n\in\Omega
+\end{equation*}
+
+Then, by the definition of $C_n$ we have that
+\begin{align*}
+	C_n(\omega_1\cdots\omega_n) &= V_n(\omega_1\cdots\omega_n) - \frac{1}{1 + r}\Big[ \tilde{p}V_{n + 1}(\omega_1\cdots\omega_nH) + \tilde{q}V_{n + 1}(\omega_1\cdots\omega_nT) \Big] \\
+	\implies V_n(\omega_1\cdots\omega_n) - C_n(\omega_1\cdots\omega_n) &= \frac{1}{1 + r}\Big[ \tilde{p}V_{n + 1}(\omega_1\cdots\omega_nH) + \tilde{q}V_{n + 1}(\omega_1\cdots\omega_nT) \Big]
+\end{align*}
+
+Assume $\omega_{n + 1} = H$. Using the wealth equation for American derivatives we have
+\begin{align*}
+	X_{n + 1}(H) &= \Delta_nS_{n + 1}(H) + (1 + r)[X_n - C_n - \Delta_nS_n] \\
+	&= \Delta_nS_{n + 1}(H) + (1 + r)[V_n - C_n - \Delta_nS_n] \quad \text{(by the inductive hypothesis)} \\
+	&= \Delta_nS_{n + 1}(H) + (1 + r)\left[ \frac{1}{1 + r}\left( \tilde{p}V_{n + 1}(H) + \tilde{q}V_{n + 1}(T) \right) - \Delta_nS_n \right] \\
+	&= \Delta_nS_{n + 1}(H) + \left[ \tilde{p}V_{n + 1}(H) + \tilde{q}V_{n + 1}(T) - (1 + r)\Delta_nS_n \right] \\
+	&= \Delta_nS_{n + 1}(H) - (1 + r)\Delta_nS_n + \tilde{p}V_{n + 1}(H) + \tilde{q}V_{n + 1}(T) \\
+	&= \Delta_nuS_n - (1 + r)\Delta_nS_n + \tilde{p}V_{n + 1}(H) + \tilde{q}V_{n + 1}(T) \\
+	&= \Delta_nS_n(u - (1 + r)) + \tilde{p}V_{n + 1}(H) + \tilde{q}V_{n + 1}(T) \\
+	&= \frac{V_{n + 1}(H) - V_{n + 1}(T)}{(u - d)S_n}S_n(u - (1 + r)) + \tilde{p}V_{n + 1}(H) + \tilde{q}V_{n + 1}(T) \\
+	&= \Big[V_{n + 1}(H) - V_{n + 1}(T)\Big] \frac{u - (1 + r)}{u - d} + \tilde{p}V_{n + 1}(H) + \tilde{q}V_{n + 1}(T)
+\end{align*}
+
+and recalling that
+\begin{align*}
+	\tilde{p} &= \frac{(1 + r) - d}{u - d} \\
+	\tilde{q} &= \frac{u - (1 + r)}{u - d}
+\end{align*}
+
+we find
+\begin{align*}
+	X_{n + 1}(H) &= \Big[V_{n + 1}(H) - V_{n + 1}(T)\Big] \tilde{q} + \tilde{p}V_{n + 1}(H) + \tilde{q}V_{n + 1}(T) \\
+	&= \tilde{q}V_{n + 1}(H) - \tilde{q}V_{n + 1}(T) + \tilde{p}V_{n + 1}(H) + \tilde{q}V_{n + 1}(T) \\
+	&= \tilde{p}V_{n + 1}(H) + \tilde{q}V_{n + 1}(H) \\
+	&= V_{n + 1}(H) \\
+	\implies X_{n + 1}(H) &= V_{n + 1}(H)
+\end{align*}
+
+We can show an equivalent result holds for $\omega_{n + 1} = T$. Therefore, since the choice for $n$ was arbitrary, we have that by induction
+\begin{equation*}
+	X_n(\omega_1\cdots\omega_n) = V_n(\omega_1\cdots\omega_n)
+\end{equation*}
+\end{proof}
+
+\begin{proof} {\bf {\em (Proof of $\bm{(iii)}$)}} Finally, we seek to confirm that
+\begin{equation*}
+	X_n \geq G_n
+\end{equation*}
+
+Since we have just shown that
+\begin{equation*}
+	X_n(\omega_1\cdots\omega_n) = V_n(\omega_1\cdots\omega_n)
+\end{equation*}
+
+we may use this result together with the result $V_n \geq \max (G_n, 0) \geq G_n$ to give
+\begin{equation*}
+	X_n \geq G_n
+\end{equation*}
+
+as desired.
+\end{proof}
+
+\indent Therefore, by $(i), (ii)$, and $(iii)$ we have that we may replicated a general American derivative security, and thereby hedge our \underline{\bf short} position.
+\end{theorem}
+
+\subsubsection{Long Position}
+
+\indent We now wish to consider the perspective of a long party in an American derivative contract. Fix $n \leq N$ and suppose that the American derivative security has not yet been exercised. Let $\tau^* \in \mathcal S_n$ be the optimal exercise satisfying
+\begin{equation*}
+	V_n = \tilde{\E}_n \left[ \mathds 1_{\{\tau^*\leq N\}} \frac{1}{(1 + r)^{\tau^* - n}} G_{\tau^*} \right]
+\end{equation*}
+
+For $k = n, n + 1,..., N$ define
+\begin{equation*}
+	C_k = \mathds 1_{\{ \tau^* = k \}} G_k
+\end{equation*}
+
+\indent If the long party exercises according to the optimal stopping time $\tau^*$ then the long party will receive cash flows
+\begin{equation*}
+	C_n,C_{n + 1},...,C_N
+\end{equation*}
+
+at times $n,n + 1,...,N$, and we find that \underline{at most one} of the $C_k > 0$. We find that if the option is exercised at or before time $N$ then the $C_k$ corresponding to the time at which the derivative is exercised will be the only nonzero cash flow. However, along different paths $\omega_1\cdots\omega_N$ the payment $C_k$ may come at different times. So, the value of this cash-flow stream at time $n$ is given by
+\begin{align*}
+	V_n &= \tilde{\E}_n \left[ \sum^N_{k = n} \mathds 1_{\{\tau^* = k\}} \frac{1}{(1 + r)^{k - n}}G_k \right] \\
+	&= \tilde{\E}_n \left[ \sum^N_{k = n} \frac{C_k}{(1 + r)^{k - n}} \right]
+\end{align*}
+
+\indent This is essentially just a present value calculation, as was discussed in the later portion of Chapter 2, of the cash flows received at times $n,n + 1,...,N$. Once the long party selects the exercise strategy according to $\tau^*$ then the conditional expectation of the cash flows above is precisely the contract given by the derivative. Therefore $V_n$ must be an acceptable price for the long position in this contract.
+
+\subsubsection{Optimal Exercise}
+
+\indent It remains to show precisely how the long party of an American derivative security may find the optimal exercise strategy. We will consider the problem of selecting an optimal exercise strategy/time given by $\tau^* \in \mathcal S_0$ at time $n = 0$.
+
+\begin{theorem} {\bf Optimal Exercise.} With
+\begin{equation*}
+	V_0 = \max_{\tau\in\mathcal S_0} \tilde{\E} \left[ \mathds 1_{\{\tau \leq N\}} \frac{1}{(1 + r)^\tau} G_\tau \right]
+\end{equation*}
+
+and
+\begin{equation*}
+	\tau^* = \min \left\{n:V_n = G_n\right\}
+\end{equation*}
+
+then
+\begin{equation*}
+	V_0 = \tilde{\E} \left[ \mathds 1_{\{\tau^* \leq N\}} \frac{1}{(1 + r)^{\tau^*}} G_{\tau^*} \right]
+\end{equation*}
+
+\indent That is, the $\tau^*$ maximizing our conditional expectation is given by the first time for which the risk-neutral price of the option is equal to its intrinsic value. If no such time exists (i.e. minimizing for the first time $V_n = G_n$ over the empty set $\emptyset$) then $\tau^* = \infty$.
+
+\begin{proof} Consider the stopped process 
+\begin{equation*}
+	\left\{ \frac{V_{n\land\tau^*} }{(1 + r)^{n\land\tau^*}} \right\}^N_{n = 0}
+\end{equation*}
+
+\indent Clearly our process is adapted since $V_n$ is adapted, $\tau^*$ is adapted, and stopping a process does not introduce any dependency on further coin tosses. Now, fix the first $n$ tosses $\omega_1\cdots\omega_n$ and suppose we have not yet exercised the derivative (i.e. $\tau^* \geq n + 1$). Then
+\begin{equation*}
+	\tau^* \geq n + 1 \implies V_n(\omega_1\cdots\omega_n) > G_n(\omega_1\cdots\omega_n)
+\end{equation*}
+
+must be true by the definition of the optimal/maximizing stopping time $\tau^*$. By the recursive American algorithm we have
+\begin{align*}
+	V_{n\land\tau^*}(\omega_1\cdots\omega_n) &= V_n(\omega_1\cdots\omega_n) \\
+	&= \max \left\{ G_n(\omega_1\cdots\omega_n), \frac{1}{1 + r}\Big[\tilde{p}V_{n + 1}(\omega_1\cdots\omega_nH) + \tilde{q}V_{n + 1}(\omega_1\cdots\omega_nT) \Big]\right\}
+\end{align*}
+
+But $V_n > G_n$ (shown above) so
+\begin{align*}
+	V_{n\land\tau^*}(\omega_1\cdots\omega_n) &= \max \left\{ G_n(\omega_1\cdots\omega_n), \frac{1}{1 + r}\Big[\tilde{p}V_{n + 1}(\omega_1\cdots\omega_nH) + \tilde{q}V_{n + 1}(\omega_1\cdots\omega_nT) \Big]\right\} \\
+	&= \frac{1}{1 + r}\Big[\tilde{p}V_{n + 1}(\omega_1\cdots\omega_nH) + \tilde{q}V_{n + 1}(\omega_1\cdots\omega_nT) \Big] \quad \text{{\bf(\em I don't see this...)}} \\
+	&= \frac{1}{1 + r}\Big[\tilde{p}V_{(n + 1)\land\tau^*}(\omega_1\cdots\omega_nH) + \tilde{q}V_{(n + 1)\land\tau^*}(\omega_1\cdots\omega_nT) \Big] \quad \text{(since $\tau^* \geq n + 1$)} \\
+	&= \tilde{\E} \left[ \frac{ V_{(n + 1)\land\tau^*} }{ 1 + r } \right](\omega_1\cdots\omega_n) \\
+	\implies V_{n\land\tau^*}(\omega_1\cdots\omega_n) &= \tilde{\E} \left[ \frac{ V_{(n + 1)\land\tau^*} }{ 1 + r } \right](\omega_1\cdots\omega_n) \\
+	\implies \frac{V_{n\land\tau^*}}{(1 + r)^n} &= \tilde{\E} \left[ \frac{ V_{(n + 1)\land\tau^*} }{ (1 + r)^{n + 1} } \right]
+\end{align*}
+
+so, the stopped process $\left\{ \frac{V_{n\land\tau^*} }{(1 + r)^{n\land\tau^*}} \right\}^N_{n = 0}$ is both adapted and satisfies the martingale property. Therefore, the process is indeed a $\tilde{\P}$-martingale. If, on the other hand, along the path $\omega_1\cdots\omega_n$ we have that
+\begin{equation*}
+	\tau^* \leq n
+\end{equation*}
+
+Then
+\begin{align*}
+	V_{n\land\tau^*}(\omega_1\cdots\omega_n) &= V_{\tau^*}(\omega_1\cdots\omega_{\tau^*}) \\
+	&= \tilde{p}V_{\tau^*}(\omega_1\cdots\omega_{\tau^*}) + \tilde{q}V_{\tau^*}(\omega_1\cdots\omega_{\tau^*}) \\
+	&= \tilde{p}V_{(n + 1)\land\tau^*}(\omega_1\cdots\omega_{\tau^*}\cdots\omega_nH) + \tilde{q}V_{\tau^*}(\omega_1\cdots\omega_{(n + 1)\land\tau^*}\cdots\omega_nT) \\
+	&= \tilde{\E}_n \left[V_{(n + 1)\land\tau^*}\right](\omega_1\cdots\omega_n)
+\end{align*}
+
+However, note that on the path $\omega_1\cdots\omega_n$, for $\tau^* \leq n$, we have
+\begin{equation*}
+	(1 + r)^{(n + 1)\land\tau^*} = (1 + r)^{n \land \tau^*} \quad \big(\,=(1 + r)^{\tau^*}\,\big)
+\end{equation*}
+
+Therefore
+\begin{equation*}
+	\frac{ V_{n\land\tau^*} }{(1 + r)^{n\land\tau^*}} = \tilde{\E}_n\left[ \frac{V_{(n + 1)\land\tau^*}}{(1 + r)^{(n + 1)\land\tau^*}} \right]
+\end{equation*}
+
+\indent So, the stopped process is indeed a martingale for both cases of $\tau^*$. Using this result we may state
+\begin{align*}
+	V_0 &= \tilde{\E}_0 \left[ \frac{1}{(1 + r)^{N\land\tau^*}} V_{N\land\tau^*} \right] \\
+	&= \tilde{\E} \left[ \mathds 1_{\{\tau^* \leq N \}} \frac{1}{(1 + r)^{\tau^*}} G_{\tau^*} \right] + \tilde{\E} \left[ \mathds 1_{\{\tau^* = \infty\}} \frac{1}{(1 + r)^N} V_N \right]
+\end{align*}
+
+\indent Now, since $V_N = \max(G_N, 0)$ we have that on all paths for which $\tau^* = \infty$, that is, paths for which we {\bf do not} exercise (paths for which the option value $>$ intrinsic value)
+\begin{equation*}
+	V_N > G_N
+\end{equation*}
+
+However, since $V_N = \max(G_N, 0)$, this may only happen when 
+\begin{equation*}
+	G_N < 0, \quad V_N = 0
+\end{equation*}
+
+Hence
+\begin{equation*}
+	\mathds 1_{\{\tau^* = \infty\}} V_N = 0
+\end{equation*}
+
+So then we may rewrite our above equation
+\begin{align*}
+	V_0 &= \tilde{\E} \left[ \mathds 1_{\{\tau^* \leq N \}} \frac{1}{(1 + r)^{\tau^*}} G_{\tau^*} \right] + \tilde{\E} \left[ \mathds 1_{\{\tau^* = \infty\}} \frac{1}{(1 + r)^N} V_N \right] \\
+	&= \tilde{\E} \left[ \mathds 1_{\{\tau^* \leq N \}} \frac{1}{(1 + r)^{\tau^*}} G_{\tau^*} \right] 
+\end{align*}
+
+as desired. That is, $\tau^* = \min\{n:V_N = G_n\}$ satisfies
+\begin{equation*}
+	V_0 = \tilde{\E} \left[ \mathds 1_{\{\tau^* \leq N \}} \frac{1}{(1 + r)^{\tau^*}} G_{\tau^*} \right] 
+\end{equation*}
+\end{proof}
+\end{theorem}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\end{document}

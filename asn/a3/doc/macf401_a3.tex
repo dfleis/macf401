@@ -1,0 +1,278 @@
+% --------------------------------------------------------------
+% This is all preamble stuff that you don't have to worry about.
+% Head down to where it says "Start here"
+% --------------------------------------------------------------
+ 
+\documentclass[12pt]{article}
+ 
+\usepackage[margin=1in]{geometry} 
+\usepackage{bm} % bold in mathmode \bm
+\usepackage{amsmath,amsthm,amssymb,mathtools}
+\usepackage{dsfont} % for indicator function \mathds 1
+\usepackage{tikz,pgf,pgfplots}
+\usepackage{enumerate} 
+\usepackage[multiple]{footmisc} % for an adjascent footnote
+\usepackage{graphicx,float} % figures
+
+\newtheorem{definition}{Definition}
+\let\olddefinition\definition
+\renewcommand{\definition}{\olddefinition\normalfont}
+\newtheorem{lemma}{Lemma}
+\let\oldlemma\lemma
+\renewcommand{\lemma}{\oldlemma\normalfont}
+\newtheorem{proposition}{Proposition}
+\let\oldproposition\proposition
+\renewcommand{\proposition}{\oldproposition\normalfont}
+\newtheorem{corollary}{Corollary}
+\let\oldcorollary\corollary
+\renewcommand{\corollary}{\oldcorollary\normalfont}
+\newtheorem{theorem}{Theorem}
+\let\oldtheorem\theorem
+\renewcommand{\theorem}{\oldtheorem\normalfont}
+
+\newcommand\norm[1]{\left\lVert#1\right\rVert} % \norm command 
+
+%%% PLOTTING PARAMETERS
+\tikzstyle{bag} = [text width=7em, text centered] %binomial tree node width
+\tikzstyle{end} = []
+%%%
+
+%% set noindent by default and define indent to be the standard indent length
+\newlength\tindent
+\setlength{\tindent}{\parindent}
+\setlength{\parindent}{0pt}
+\renewcommand{\indent}{\hspace*{\tindent}}
+
+\newcommand*{\vv}[1]{\vec{\mkern0mu#1}} % \vec command
+
+%% DAVIDS MACRO KIT %%
+\newcommand{\R}{\mathbb R}
+\newcommand{\N}{\mathbb N}
+\newcommand{\Z}{\mathbb Z}
+\renewcommand{\P}{\mathbb P}
+\newcommand{\Q}{\mathbb Q}
+\newcommand{\E}{\mathbb E}
+\newcommand{\var}{\mathrm{Var}}
+\newcommand{\indist}{\,{\buildrel \mathcal D \over \sim}\,}
+
+\newcommand{\bigtau}{\text{{\large $\bm \tau$}}}
+
+\begin{document}
+ 
+% --------------------------------------------------------------
+%                         Start here
+% --------------------------------------------------------------
+ 
+\title{Mathematical \& Computational Finance I\\Lecture Notes}
+\author{Assignment 3 -- DRAFT}
+\date{Due: February 11 2016 \\ Last update: \today{}}
+\maketitle
+
+{\bf Solution 3.1.i:} Assume that $\tilde{\P}(\omega) > 0$, so $\P(\omega) > 0$ for all $\omega \in \Omega$, then
+\begin{equation*}
+	Z(\omega) = \frac{ \tilde{\P}(\omega) }{ \P(\omega) } > 0 \implies \frac{1}{Z(\omega)} > 0 \quad \forall_{\omega \in \Omega}
+\end{equation*}
+
+Therefore,
+\begin{align*}
+	\tilde{\P} \left( \frac{1}{Z(\omega)} > 0 \right) &= \sum_{ \left\{\omega~:~\frac{1}{Z(\omega)} > 0 \right\} } \tilde{\P}(\omega) \\
+	&= \sum_{ \left\{\omega~:~Z(\omega) > 0 \right\} } \tilde{\P}(\omega) \\
+	&= \sum_{ \omega \in \Omega } \tilde{\P}(\omega) \\
+	&= 1
+\end{align*}
+
+as desired. \\
+
+{\bf Solution 3.1.ii:}
+\begin{align*}
+	\tilde{\E} \left[ \frac{1}{Z} \right] &= \sum_{\omega \in \Omega} \frac{1}{Z(\omega)} \tilde{\P}(\omega) \\
+	&= \sum_{\omega \in \Omega} \frac{ \P(\omega) }{ \tilde{\P}(\omega) } \tilde{\P}(\omega) \\ 
+	&= \sum_{\omega \in \Omega} \P(\omega) \\
+	&= 1
+\end{align*}
+
+{\bf Solution 3.1.iii:}
+\begin{align*}
+	\E[Y] &= \sum_{\omega \in \Omega} Y(\omega) \P(\omega) \\
+	&= \sum_{\omega \in \Omega} Y(\omega) \frac{ \tilde{\P}(\omega) }{ \tilde{\P}(\omega) } \P(\omega) \\
+	&= \sum_{\omega \in \Omega} Y(\omega) \frac{ \P(\omega) }{ \tilde{\P}(\omega) } \tilde{\P}(\omega) \\
+	&= \sum_{\omega \in \Omega} Y(\omega) \frac{1}{Z(\omega)} \tilde{\P}(\omega) \\
+	&= \tilde{\E} \left[ Y\frac{1}{Z} \right]
+\end{align*}
+
+as desired. \\
+
+%{\bf Solution 3.2.i:} 
+%\begin{align*}
+%	\tilde{\P}(\Omega) &= \sum_{\omega \in \Omega} \tilde{\P}(\omega) \\
+%	&= \sum_{\omega \in \Omega} Z(\omega) \P(\omega) \\
+%	&= \E[Z] \\
+%	&= 1
+%\end{align*}
+%
+%{\bf Solution 3.2.ii:}
+%\begin{align*}
+%	\tilde{\E}[Y] &= \sum_{\omega \in \Omega} Y(\omega)\tilde{\P}(\omega) \\
+%	&= \sum_{\omega \in \Omega} Y(\omega) Z(\omega) \P(\omega) \\
+%	&= \E [YZ]
+%\end{align*}
+%
+%as desired. \\
+%
+%{\bf Solution 3.2.iii:} From the definition of $\tilde{\P}$ we have
+%\begin{equation*}
+%	\tilde{\P}(A) = Z(A)\P(A)
+%\end{equation*}
+%
+%Hence, 
+%\begin{equation*}
+%	\P(A) = 0 \implies \tilde{\P}(A) = Z(A)\P(A) = Z(A) \cdot 0 = 0
+%\end{equation*}
+%
+%as desired.
+
+{\bf Solution 3.4.i:} We have the state price density defined by
+\begin{equation*}
+	\zeta_n(\omega) = \frac{ Z_n(\omega) }{ (1 + r)^n }
+\end{equation*} 
+
+Hence
+\begin{align*}
+	\zeta_3(HHH) = \frac{1}{ \left( 1 + \frac{1}{4} \right)^3 } \cdot \frac{27}{64} = \frac{64}{125} \cdot \frac{27}{64} &= \frac{27}{125} \\
+	\zeta_3(HHT) = \zeta_3(HTH) = \zeta_3(THH) = \frac{1}{ \left( 1 + \frac{1}{4} \right)^3 } \cdot \frac{27}{32} = \frac{64}{125} \cdot \frac{27}{32} &= \frac{54}{125} \\
+	\zeta_3(HTT) = \zeta_3(THT) = \zeta_3(TTH) = \frac{1}{ \left( 1 + \frac{1}{4} \right)^3 } \cdot \frac{27}{16} = \frac{64}{125} \cdot \frac{27}{16} &= \frac{108}{125} \\
+	\zeta_3(TTT) = \frac{1}{ \left( 1 + \frac{1}{4} \right)^3 } \cdot \frac{27}{8} = \frac{64}{125} \cdot \frac{27}{8} &= \frac{216}{125}
+\end{align*}
+{\bf Solution 3.4.ii:} We first compute the payoffs $V_3$ of our Asian call option
+\begin{align*}
+	V_3(HHH) &= \left(\frac{1}{4} 60 - 4\right)^+ = 11 \\
+	V_3(HHT) &= \left(\frac{1}{4} 36 - 4\right)^+ = 5 \\
+	V_3(HTH) &= \left(\frac{1}{4} 24 - 4\right)^+ = 2 \\
+	V_3(HTT) &= \left(\frac{1}{4} 18 - 4\right)^+ = 0.5 \\
+	V_3(THH) &= \left(\frac{1}{4} 18 - 4\right)^+ = 0.5 \\
+	V_3(THT) &= \left(\frac{1}{4} 12 - 4\right)^+ = 0 \\
+	V_3(TTH) &= \left(\frac{1}{4} 9 - 4\right)^+ = 0 \\
+	V_3(TTT) &= \left(\frac{1}{4} 7.5 - 4\right)^+ = 0
+\end{align*}
+
+and from Theorem 3.2.7 we have
+\begin{equation*}
+	V_n = \frac{1}{\zeta_n} \E_n [\zeta_NV_N]
+\end{equation*}
+
+so
+\begin{align*}
+	V_0 &= \frac{1}{\zeta_0} \E_0[\zeta_3V_3] \\
+	&= \frac{1}{Z_0} \E[\zeta_3V_3]
+\end{align*}
+
+but $Z_0 = 1$, hence
+\begin{align*}
+	V_0 &= \E[\zeta_3 V_3] \\
+	&= \zeta_3(HHH)V_3(HHH) \P(HHH) + \zeta_3(HHT)V_3(HHT) \P(HHT)~+ \\ 
+	&\hphantom{{}={--}} \zeta_3(HTH)V_3(HTH) \P(HTH) + \zeta_3(HTT)V_3(HTT) \P(HTT)~+ \\
+	&\hphantom{{}={--}} \zeta_3(THH)V_3(THH) \P(THH) + \zeta_3(THT)V_3(THT) \P(THT)~+ \\
+	&\hphantom{{}={--}} \zeta_3(TTH)V_3(TTH)\P(TTH) + \zeta_3(TTT)V_3(TTT)\P(TTT) \\
+	&= \left[ \frac{27}{125} \cdot 11 \cdot \frac{8}{27} \right] + \left[ \frac{54}{125} \cdot 5 \cdot \frac{4}{27} \right] + \left[ \frac{54}{125} \cdot 2 \cdot \frac{4}{27} \right] + \left[ \frac{108}{125} \cdot 0.5 \cdot \frac{2}{27} \right] + \left[ \frac{54}{125} \cdot 0.5 \cdot \frac{4}{27} \right]~+ \\
+	&\hphantom{{}={--}} \left[ \frac{108}{125} \cdot 0 \cdot \frac{2}{27} \right] + \left[ \frac{108}{125} \cdot 0 \cdot \frac{2}{27} \right] + \left[ \frac{216}{125} \cdot 0 \cdot \frac{1}{27} \right]\\
+	&= \frac{152}{125} \\
+	&= 1.216
+\end{align*}
+
+as desired. \\
+
+{\bf Solution 3.4.iii:} We have
+\begin{align*}
+	\zeta_2(TH) = \zeta_2(HT) &= \frac{Z_2(HT)}{\left(1 + \frac{1}{4} \right)^2} \\
+	&= \frac{ \frac{9}{8} }{ \frac{25}{16} } \quad \text{( $Z_2(HT) = \frac{9}{8}$ from Fig. 3.2.1)} \\
+	&= \frac{18}{25} \\
+	&= 0.72
+\end{align*}
+
+as desired. \\
+
+{\bf Solution 3.4.iv:} We have
+\begin{align*}
+	V_2(HT) &= \frac{1}{\zeta_2(HT)} \E_2[\zeta_3V_3](HT) \\
+	&= \frac{25}{18} \E_2[\zeta_3V_3](HT) \\
+	&= \frac{25}{18} \left[ \zeta_3(HTH)V_3(HTH) \P(H) + \zeta_3(HTT)V_3(HTT) \P(T) \right] \\
+	&= \frac{25}{18} \left[ \left[ \frac{54}{125} \cdot 2 \cdot \frac{2}{3} \right] + \left[ \frac{108}{125} \cdot 0.5 \cdot \frac{1}{3} \right] \right] \\
+	&= 1
+\end{align*}
+
+and for $V_2(TH)$ we have
+\begin{align*}
+	V_2(TH) &= \frac{1}{\zeta_2(TH)} \E_2[\zeta_3V_3](TH) \\
+	&= \frac{25}{18} \E_2[\zeta_3V_3](TH) \\
+	&= \frac{25}{18} \left[ \zeta_3(THH)V_3(THH) \P(H) + \zeta_3(THT)V_3(THT)\P(T) \right] \\
+	&= \frac{25}{18} \left[ \left[ \frac{54}{125} \cdot 0.5 \cdot \frac{2}{3} \right] + \left[ \frac{108}{125} \cdot 0 \cdot \frac{1}{3} \right] \right] \\
+	&= \frac{1}{5} \\
+	&= 0.20
+\end{align*}
+
+as desired. \\
+
+{\bf Solution 3.5.i:} We had the risk-neutral measure
+\begin{equation*}
+	\tilde{\P}(HH) = \frac{1}{4} \quad \tilde{\P}(HT) = \frac{1}{4} \quad \tilde{\P}(TH) = \frac{1}{12} \quad \tilde{\P}(TT) = \frac{5}{12}
+\end{equation*}
+
+hence
+\begin{align*}
+	Z(HH) &= \frac{ \frac{1}{4} }{ \frac{4}{9} } = \frac{9}{16} \\
+	Z(HT) &= \frac{ \frac{1}{4} }{ \frac{2}{9} } = \frac{9}{8} \\
+	Z(TH) &= \frac{ \frac{1}{12} }{ \frac{2}{9} } = \frac{9}{24} = \frac{3}{8} \\
+	Z(TT) &= \frac{ \frac{5}{12} }{ \frac{1}{9} } = \frac{45}{12} = \frac{15}{4}
+\end{align*}
+
+{\bf Solution 3.5.ii:} By Theorem 3.2.1 we have
+\begin{equation*}
+	Z_n = \E_n[Z]
+\end{equation*}
+
+So, with $Z_2 = Z$ and $n = 1$ we have
+\begin{align*}
+	Z_1(H) &= \E_1[Z](H) \\
+	&= Z_2(HH)\P(H|H) + Z_2(HT)\P(T|H) \\
+	&= \frac{9}{16} \cdot \frac{ \P(HH) }{ \P(HH) + \P(HT) } + \frac{9}{8} \cdot \frac{ \P(HT) }{ \P(HH) + \P(HT) }  \\
+	&= \frac{9}{16} \cdot \frac{ \frac{4}{9} }{ \frac{4}{9} + \frac{2}{9} } + \frac{9}{8} \cdot \frac{ \frac{2}{9} }{ \frac{4}{9} + \frac{2}{9} }   \\
+	&= \frac{3}{4} \\
+	Z_1(T) &= \E_1[Z](T) \\
+	&= Z_2(TH)\P(H|T) + Z_2(TT)\P(T|T) \\
+	&= \frac{3}{8} \cdot \frac{ \P(TH) }{ \P(TH) + \P(TT) } + \frac{15}{4} \cdot \frac{ \P(TT) }{ \P(TH) + \P(TT) }  \\
+	&= \frac{3}{8} \cdot \frac{ \frac{2}{9} }{ \frac{2}{9} + \frac{1}{9} } + \frac{15}{4} \cdot \frac{ \frac{1}{9} }{ \frac{2}{9} + \frac{1}{9} }   \\
+	&= \frac{3}{2} \\
+	Z_0 &= \E_0[Z_1] \\
+	&= Z_1(H)\P(\omega_1 = H) + Z_1(T)\P(\omega_1 = T) \\
+	&= \frac{3}{4} \left[ \frac{4}{9} + \frac{2}{9} \right] + \frac{3}{2} \left[ \frac{2}{9} + \frac{1}{9} \right] \\
+	&= 1
+\end{align*}
+
+as desired. \\
+
+{\bf Solution 3.5.iii:} We had payoffs
+\begin{align*}
+	V_2(HH) &= 5 \\
+	V_2(HT) &= 1 \\
+	V_2(TH) &= 1 \\
+	V_2(TT) &= 0
+\end{align*}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\end{document}

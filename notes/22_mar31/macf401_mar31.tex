@@ -1,0 +1,405 @@
+% --------------------------------------------------------------
+% This is all preamble stuff that you don't have to worry about.
+% Head down to where it says "Start here"
+% --------------------------------------------------------------
+ 
+\documentclass[12pt]{article}
+ 
+\usepackage[margin=1in]{geometry} 
+\usepackage{bm} % bold in mathmode \bm
+\usepackage{amsmath,amsthm,amssymb,mathtools}
+\usepackage{dsfont} % for indicator function \mathds 1
+\usepackage{mathdots} % for \iddots
+\usepackage{tikz,pgf,pgfplots}
+\usepackage{enumerate} 
+\usepackage[multiple]{footmisc} % for an adjascent footnote
+\usepackage{graphicx,float} % figures
+\usepackage{framed} % surround a text with a box 
+\usepackage{changepage} % \begin{adjustwidth}{2cm}{} environment
+\usepackage{array}   % for \newcolumntype macro
+
+\newtheorem{definition}{Definition}
+\let\olddefinition\definition
+\renewcommand{\definition}{\olddefinition\normalfont}
+\newtheorem{lemma}{Lemma}
+\let\oldlemma\lemma
+\renewcommand{\lemma}{\oldlemma\normalfont}
+\newtheorem{proposition}{Proposition}
+\let\oldproposition\proposition
+\renewcommand{\proposition}{\oldproposition\normalfont}
+\newtheorem{corollary}{Corollary}
+\let\oldcorollary\corollary
+\renewcommand{\corollary}{\oldcorollary\normalfont}
+\newtheorem{theorem}{Theorem}
+\let\oldtheorem\theorem
+\renewcommand{\theorem}{\oldtheorem\normalfont}
+
+%%% PLOTTING PARAMETERS
+\tikzstyle{bag} = [text width=7em, text centered] %% binomial tree node width
+\tikzstyle{end} = []
+
+\pgfplotsset{soldot/.style={color=black,only marks,mark=*},
+             holdot/.style={color=black,fill=white,only marks,mark=*},
+             compat=1.12}
+%%%
+
+%% I want to be in control of when to indent...
+%% set noindent as the default status and define \indent to indent a line
+\newlength\tindent
+\setlength{\tindent}{\parindent}
+\setlength{\parindent}{0pt}
+\renewcommand{\indent}{\hspace*{\tindent}}
+
+\newcommand*{\vv}[1]{\vec{\mkern0mu#1}} % \vec command
+
+%% DAVIDS MACROS %%
+\newcommand{\R}{\mathbb R}
+\newcommand{\N}{\mathbb N}
+\newcommand{\Z}{\mathbb Z}
+\renewcommand{\P}{\mathbb P}
+\newcommand{\Q}{\mathbb Q}
+\newcommand{\E}{\mathbb E}
+\newcommand{\var}{\mathrm{Var}}
+\newcommand{\Var}{\mathrm{Var}}
+\newcommand{\cov}{\mathrm{Cov}}
+\newcommand{\Cov}{\mathrm{Cov}}
+\newcommand{\indist}{\,{\buildrel \mathcal D \over \sim}\,}
+
+\newcommand{\bigtau}{\text{{\large $\bm \tau$}}}
+
+\newcolumntype{C}{>{$}c<{$}} % math-mode version of "c" column type
+\setlength\extrarowheight{5pt} % taller rows
+
+\begin{document}
+ 
+% --------------------------------------------------------------
+%                         Start here
+% --------------------------------------------------------------
+ 
+\title{Mathematical \& Computational Finance I\\Lecture Notes}
+\author{Interest-Rate-Dependent Assets}
+\date{March 31 2016 \\ Last update: \today{}}
+\maketitle
+
+% SECTION: 
+\section{Forward Measures} 
+
+\indent Last time we had introduced the notion of the forward measure. However, up until now the particular interest rate model was either left unspecified or treated arbitrarily. We wish to specify some model that permits us to fit the observed rates/prices of liquid fixed-income derivatives. We say that doing so gives us a \underline{market-consistent} model which may be used to price other more complicated/less liquid fixed income derivatives. The two most common/best known binomial rate models are the Ho-Lee model and the Black-Derman-Toy (BDT) model. For example, the Ho-Lee model assumes, in its simplest form, that
+\begin{equation*}
+	1 + R_n(\omega_1\cdots\omega_{n - 1}H) = k[1 + R_n(\omega_1\cdots\omega_{n - 1}T)]
+\end{equation*}
+
+We consider now an example of the Ho-Lee model \\
+
+\underline{Example}: {\em (Ho-Lee model)} Suppose $k = 1.04, \tilde{p} = \frac{1}{2}$ and we have given two observed bond prices: $B_{0,1} = 0.95$ and $B_{0,2} = 0.90$. Note that by the definition of $B_{0,1}$ we require
+\begin{equation*}
+	0.95 = B_{0,1} = \frac{1}{1 + R_0} \implies R_0 = \frac{1}{19}
+\end{equation*}
+
+\indent Furthermore, to satisfy the martingale property of assets with respect to the risk neutral measure we find
+\begin{align*}
+	0.90 = B_{0,1} &= \tilde{\E}_0 \left[ \frac{1}{(1 + R_0)(1 + R_1)} \right] \\
+	&= \tilde{\E}_0 \left[ \frac{1}{(1 + \frac{1}{19})(1 + R_1)} \right] \\
+	&= \tilde{\E}_0 \left[ \frac{19}{20(1 + R_1)} \right] \\
+	&= \frac{19}{20} \tilde{\E}_0 \left[ \frac{1}{(1 + R_1)} \right] \\
+	&= \frac{19}{20} \left( \frac{1}{2}\cdot\frac{1}{1 + R_1(H)} + \frac{1}{2} \cdot \frac{1}{1 + R_1(T)} \right) 
+\end{align*}
+
+Therefore, since the Ho-Lee model specifies
+\begin{equation*}
+	1 + R_1(H) = 1.04(1 + R_1(T))
+\end{equation*}
+
+we find
+\begin{equation*}
+	\frac{18}{20} = \frac{19}{40} \left( \frac{1}{ 1.04 (1 + R_1(T)) } + \frac{1}{1 + R_1(T)} \right)
+\end{equation*}
+
+which gives us 
+\begin{align*}
+	R_1(T) &= \frac{11}{312} \approx 0.035264 \\
+	\implies R_1(H) &= \frac{23}{300} \approx 0.076674
+\end{align*}
+
+Using these rates we inferred from $B_{0,1}$ and $B_{0,2}$ we may find intermediate bond prices
+\begin{align*}
+	B_{1,2}(H) &= \frac{1}{(1 + R_1(H)} = \frac{300}{323} \approx 0.9287926 \\
+	B_{1,2}(T) &= \frac{1}{(1 + R_1(T)} = \frac{312}{323} \approx 0.965944
+\end{align*}
+
+\indent Consider now a call option written on a 2-year zero-coupon bond with strike $K = 0.93$ and expiry $N = 1$. We have the time-$1$ payoffs
+\begin{align*}
+	C_1(H) &= \max \left( \frac{300}{323} - 0.93, 0 \right) = 0 \\
+	C_1(T) &= \max \left( \frac{312}{323} - 0.93, 0 \right) = \frac{1161}{32300}
+\end{align*}
+
+Then, from our risk-neutral pricing formula, we have that the time $n = 0$ price of the call is
+\begin{align*}
+	C_0 &= \tilde{\E}_0 \left[ D_1C_1 \right] \\
+	&= \frac{1}{2} \left( \frac{ C_1(H) }{ 1 + R_1(H) } \right) + \frac{1}{2} \left( \frac{ C_1(T) }{ 1 + R_1(T) } \right) \\
+	&= 0 + \frac{1}{2} \left( \frac{ \frac{1161}{32300} }{ 1 + \frac{1}{19} } \right) \\
+	&= \frac{1161}{68000} \approx 0.0170735
+\end{align*} \hfill
+
+In the Ho-Lee model we must be careful when specifying the parameter $k$ in our constraint
+\begin{equation*}
+	1 + R_n(\omega_1\cdots\omega_{n - 1}H) = k[1 + R_n(\omega_1\cdots\omega_{n - 1}T)]
+\end{equation*}
+
+or we may end up with the interest rate quickly collapsing to zero or become negative. Additionally, we note that under this specification of the model we have that bond yields have the same volatility across all maturities, which may not be realistic (long-term bonds typically have higher volatility of yields). We are able to come up with a time-dependent parameterization of the Ho-Lee model
+\begin{equation*}
+	R_n(\omega_1\cdots\omega_n) = a_n + b_n \cdots \# H(\omega_1\cdots\omega_n)
+\end{equation*}
+
+as is given in Example 6.4.4 of our text. The sequence of constants $\{a_n\}$ and $\{b_n\}$ are used to calibrate our model to market observations (making the model market-consistent). \\
+
+A way to get around these limitations is to go with the Black-Derman-Toy (BDT) model. Denote the rate at node $t,n$ by the function $i(t,n)$, then the BDT model specifies
+\begin{align*}
+	i(t, n + 1) = \sigma(t)i(t,n)
+\end{align*}
+
+where $\sigma(t)$ is a time-dependent volatility parameter. \\
+
+\underline{Example:} Again consider the example
+\begin{align*}
+	B_{0,1} &= P(0,1) = 0.95 \\
+	B_{0,2} &= P(0,2) = 0.90
+\end{align*}
+
+and select $\sigma(1) = \frac{11}{10}$. Then
+\begin{equation*}
+	i(0,0) = R_0 = \frac{1}{P(0,1)} - 1 = \frac{1}{19}
+\end{equation*}
+
+We must also satisfy
+\begin{align*}
+	0.90 &= B_{0,2} = P(0,2) = \tilde{\E} \left[ \frac{1}{(1 + R_0)(1 + R_1)} \right] \\
+	&= \left( \frac{1}{(1 + R_0)} \right) \tilde{\E}_0 \left[ \frac{1}{(1 + R_1)} \right] \\
+	&= \frac{19}{20} \left[ \frac{1}{2}\cdot \frac{1}{1 + i(1,1)} + \frac{1}{2}\cdot \frac{1}{1 + i(1,0)} \right] \\
+	&= \frac{19}{40} \left[ \frac{1}{1 + \frac{11}{10}i(1,0)} + \frac{1}{1 + i(1,0)} \right] \\
+	\implies i(1,0) &\approx 0.05291637 \\
+	i(1,1) &\approx 0.05820801
+\end{align*}
+
+With these rates we may compute the remaining prices $B_{1,2} = \tilde{\E}_1 \left [ \frac{1}{1 + R_1} \right]$ so that
+\begin{align*}
+	B_{1,2}(H) &= \tilde{\E}_1 \left [ \frac{1}{1 + R_1} \right](H) \\
+	&= \frac{1}{1 + R_1(H)} \\
+	\implies B_{1,2}(T) &= \frac{1}{1 + R_1(T)}
+\end{align*}
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[sloped]
+  \node (a) at (0,0) [bag] {$B_{0,2} = 0.90$};
+  \node (b) at (4,-2) [bag] {$B_{1,2}(T) = 0.949743$};
+  \node (c) at (4,2) [bag] {$B_{1,2}(H) = 0.944993$};
+  \node (d) at (8,-4) [bag] {$B_{2,2}(TT) = 1$};
+  \node (e) at (8,-0) [bag] {$B_{2,2}(HT) = B_{2,2}(TH) = 1$};
+  \node (f) at (8,4) [bag] {$B_{2,2}(HH) = 1$};
+ 
+  \draw [->] (a) to node [below] {} (b);
+  \draw [->] (a) to node [above] {} (c);
+  \draw [->] (b) to node [below] {} (d);
+  \draw [->] (b) to node [above] {} (e);
+  \draw [->] (c) to node [below] {} (e);
+  \draw [->] (c) to node [below] {} (f);
+\end{tikzpicture}
+\caption{Bond price process given our rates $i(1,0)$ and $i(1,1)$.}
+\end{figure}
+
+and if we wish we may price a call option on such a bond as we did under the Ho-Lee model earlier. \\
+
+\indent Why is the BDT model superior? We are able to make it significantly more realistic than the Ho-Lee counterpart using a stochastic $\sigma(t)$. Implementing the BDT model with more time steps can be done fairly easily if $\sigma(1),\cdots,\sigma(T - 1)$ are known constants. The volatility of the short rate $r$ is given by
+\begin{equation*}
+	\sigma_r(t) = \frac{1}{2} \log \left( \frac{ i(t, n + 1) }{ i(t,n) } \right)
+\end{equation*}
+
+so that
+\begin{equation*}
+	i(t, n + 1) = i(t,n)e^{2\sigma_r(t)} = i(t,n)\sigma(t)
+\end{equation*}
+
+\indent Additionally, different volatilities for different bond yields can be computed. What ends up happening is that we get two different term structures. One for the actual bond yields and a separate term structure for the yield volatilities. We use these term structures in order to calibrate the model (supposedly more in future notes). We are able to fit a very accurate model numerically if we do not assume that the $\sigma(t)$'s are given, however, the actual process of doing so is quite involved. Again, the purpose is that we seek a model that is as market-consistent as possible (matches all observed data\footnote{How does this address the issue of overfitting?}).
+
+\section{Futures Contracts}
+
+\indent At the time of contract initiation (say, time $n$) a forward contract takes the value 0 if the delivery price satisfies
+\begin{equation*}
+	K = Fwd_{n,m}
+\end{equation*}
+
+\indent Clearly, over time, the price of such a contract will fluctuate to nonzero prices through the life of the contract. This gives rise to potential counterparty risk: The counterparty may be inclined to not pay the contract if it is no longer in their interest to do so. \\
+
+\indent In order to address this credit risk we may seek to require the counterparty to deposit money in a collateral/escrow account. By definition this is longer a strict Forward contract! We call such an arrangement a \underline{futures} contract. \\
+
+\indent Futures contracts keeps the value equal to zero by a process called ``marking to market'': Requiring payments/transfers each day (by closing) so that no party as outstanding obligations at the end of the day (typically done via margin accounts through third parties). \\
+
+\begin{definition} Consider an asset with price process $S_0, S_1,...,S_n$. For fixed $0 \leq m \leq N$ the \underline{$m$-futures price process} $F_{n,m}$ for $n = 0,1,...,m$ is an adapted process satisfying
+\begin{enumerate}
+	\item $Fut_{m,m} = S_m$
+	\item For each $n$ such that $0 \leq n \leq m - 1$, the risk-neutral value at time $n$ of the contract that receives payments 
+	\begin{equation*}
+		Fut_{k + 1,m} - Fut_{k,m}
+	\end{equation*}
+	
+	at time $k + 1$, for all $k = n,...,m - 1$, is equal to zero. That is,
+	\begin{equation*}
+		\frac{1}{D_n} \tilde{\E}_n \left[ \sum^{m - 1}_{k = n} D_{k + 1} \left( Fut_{k + 1,m} - Fut_{k,m} \right) \right] = 0
+	\end{equation*}
+\end{enumerate}
+\end{definition}
+
+The long party to the futures contract receives the payments
+\begin{equation*}
+	Fut_{k + 1,m} - Fut_{k,m}
+\end{equation*}
+
+at times $k + 1$, for $k = n,...,m - 1$ and takes delivery (buys) the underlying asset at market (spot) price $S_m$ at time $m$. Conversely, the short party makes payments
+\begin{equation*}
+	Fut_{k + 1,m} - Fut_{k,m}
+\end{equation*}
+
+at time $k + 1$, for $k = n,...,m - 1$ and delivers (sells) the asset at market prices $S_m$ at time $m$. Note that if $Fut_{k + 1,m} - Fut_{k,m} < 0$ then we find that the short party receives payments from the long party. \\
+
+A party holding a long futures position between times $n$ and $m$ will receive the net payments
+\begin{equation*}
+	\sum^m_{k = n} \left( Fut_{k + 1,m} - Fut_{k,m} \right) = Fut_{m,m} - Fut_{n,m} = S_m - Fut_{n,m}
+\end{equation*}
+
+After purchasing the asset at spot $S_m$ the long party has a net balance of 
+\begin{equation*}
+	(S_m - Fut_{n,m} - S_m = -Fut_{n,m}
+\end{equation*}
+
+and is in possession of one unit of the underlying asset $S$. That is, $Fut_{n,m}$ is paid for the asset $S_m$: We have locked in the price at time $n$ for purchase at time $m$. \\
+
+\indent Since the value of the contract is zero at any intermediate time $n$ we can close out our position at any time prior to delivery by entering in an opposing position of the same asset of the same maturity.\footnote{For this reason the majority of futures contract don't lead to physical delivery of the asset.} \\
+
+\begin{theorem} Let $0 \leq m \leq N$ be fixed. Then
+\begin{equation*}
+	Fut_{n,m} = \tilde{\E}_n[S_m], \quad n = 0,1,...,m
+\end{equation*}
+
+is the unique process satisfying the definition of a futures price process.
+
+\begin{proof} {\em Proof of property (i)}:
+\begin{align*}
+	Fut_{m,m} &= \tilde{\E}_m[S_m] \quad \text{(by definition)} \\
+	&= S_m \quad \text{(adaptedness of $S_m$)}
+\end{align*}
+
+{\em Proof of property (ii)}: It should be clear that it is sufficient to show that
+\begin{equation*}
+	\tilde{\E}_n \left[ D_{k + 1} \left( Fut_{k + 1,m} - Fut_{k,m} \right) \right] = 0
+\end{equation*} 
+
+Thus, if $k = n,...,m - 1$
+\begin{align*}
+	\tilde{\E}_n \left[ D_{k + 1} \left( Fut_{k + 1,m} - Fut_{k,m} \right) \right] &= \tilde{\E}_n \left[ D_{k + 1} \left( \tilde{\E}_{k + 1}[S_m] - \tilde{\E}_k[S_m] \right) \right] \quad \text{(by assumption)} \\
+	&= \tilde{\E}_n \left[ \tilde{\E}_k \left[ D_{k + 1} \left( \tilde{\E}_{k + 1}[S_m] - \tilde{\E}_k[S_m] \right) \right] \right] \quad \text{(tower property)} \\
+	&= \tilde{\E}_n \left[ D_{k + 1} \tilde{\E}_k \left[ \tilde{\E}_{k + 1}[S_m] - \tilde{\E}_k[S_m] \right] \right] \quad \text{(predictability of $D_{k + 1}$)} \\
+	&= \tilde{\E}_n \left[ D_{k + 1} \left( \tilde{\E}_k \left[ \tilde{\E}_{k + 1}[S_m] \right] - \tilde{\E}_k \left[ \tilde{\E}_k[S_m] \right] \right) \right] \quad \text{(linearity)} \\
+	&= \tilde{\E}_n \left[ D_{k + 1} \left( \tilde{\E}_k \left[ \tilde{\E}_{k + 1}[S_m] \right] - \tilde{\E}_k \left[ S_m \right] \right) \right] \\
+	&= \tilde{\E}_n \left[ D_{k + 1} \left( \tilde{\E}_k [S_m] - \tilde{\E}_k \left[ S_m \right] \right) \right] \quad \text{(tower property)} \\
+	&= \tilde{\E}_n \left[ D_{k + 1} \left( 0 \right) \right] \\
+	&= 0
+\end{align*}
+
+\indent We must also show uniqueness. That is, we should show that $\tilde{\E}_n[S_m]$ is the only process satisfying the definitions. From above we have
+\begin{align*}
+	\tilde{\E}_n \left[ \sum^{m - 1}_{k = n} D_{k + 1} \left( Fut_{k + 1,m} - Fut_{k,m} \right) \right] &= 0 \\
+	\implies \sum^{m - 1}_{k = n} \tilde{\E}_n \left[ D_{k + 1} \left( Fut_{k + 1,m} - Fut_{k,m} \right) \right] &= 0
+\end{align*}
+
+Now, for $n = 0,1,...,m - 2$ we may replace $n$ by $n + 1$ to obtain the equivalent
+\begin{equation*}
+	\sum^{m - 1}_{k = n + 1} \tilde{\E}_{n + 1} \left[ D_{k + 1} \left( Fut_{k + 1,m} - Fut_{k,m} \right) \right] = 0
+\end{equation*}
+
+and subtracting this from the original equation we get
+\begin{equation*}
+	0 = \sum^{m - 1}_{k = n} \tilde{\E}_n \left[ D_{k + 1} \left( Fut_{k + 1,m} - Fut_{k,m} \right) \right] - \sum^{m - 1}_{k = n + 1} \tilde{\E}_{n + 1} \left[ D_{k + 1} \left( Fut_{k + 1,m} - Fut_{k,m} \right) \right] 
+\end{equation*}
+
+Taking the expectation with respect to time $n$
+\begin{align*}
+	0 &= \tilde{\E}_n \left[ \sum^{m - 1}_{k = n} \tilde{\E}_n \left[ D_{k + 1} \left( Fut_{k + 1,m} - Fut_{k,m} \right) \right] - \sum^{m - 1}_{k = n + 1} \tilde{\E}_{n + 1} \left[ D_{k + 1} \left( Fut_{k + 1,m} - Fut_{k,m} \right) \right] \right] \\
+	&= \sum^{m - 1}_{k = n} \tilde{\E}_n \left[ D_{k + 1} \left( Fut_{k + 1,m} - Fut_{k,m} \right) \right] - \sum^{m - 1}_{k = n + 1} \tilde{\E}_n \left[ \tilde{\E}_{n + 1} \left[ D_{k + 1} \left( Fut_{k + 1,m} - Fut_{k,m} \right) \right] \right] \\
+	&\hphantom{{}={-------------------------------}} \quad \text{(linearity)} \\
+	&= \sum^{m - 1}_{k = n} \tilde{\E}_n \left[ D_{k + 1} \left( Fut_{k + 1,m} - Fut_{k,m} \right) \right] - \sum^{m - 1}_{k = n + 1} \tilde{\E}_n \left[ D_{k + 1} \left( Fut_{k + 1,m} - Fut_{k,m} \right) \right] \\
+	&\hphantom{{}={-----------------------------}} \quad \text{(tower property)} \\
+	&= \tilde{\E}_n \left[ D_{n + 1}(Fut_{n + 1,m} - Fut_{n,m})\right] \quad \text{(telescoping sum)}
+\end{align*}
+
+\indent Note that both $Fut_{n,m}$ and $D_{n + 1}$ depend on only the first $n$ coin tosses\footnote{$Fut_{n,m}$ is adapted by definition.} $\omega_1\cdots\omega_n$, and so we may take out what is known
+\begin{align*}
+	0 &= \tilde{\E}_n \left[ D_{n + 1}(Fut_{n + 1,m} - Fut_{n,m})\right] \\
+	&= D_{n + 1} \tilde{\E}_n \left[ Fut_{n + 1,m} \right]  - D_{n + 1}Fut_{n,m} \\
+	\implies D_{n + 1}Fut_{n,m} &= D_{n + 1}\tilde{\E}_n\left[ Fut_{n + 1,m} \right] \\
+	\implies Fut_{n,m} &= \tilde{\E}_n \left[ Fut_{n + 1,m} \right]
+\end{align*}
+
+which is the martingale property under the risk-neutral measure $\tilde{\P}$ for the futures price $Fut_{n,m}$. However, we had found in (i) that $Fut_{m,m} = S_m$. Therefore, the martingale property implies\footnote{I don't quite see this implication and I don't see how this satisfies uniqueness...}
+\begin{equation*}
+	Fut_{n,m} = \tilde{\E}_n[S_m]
+\end{equation*}
+\end{proof}
+\end{theorem}
+
+\begin{corollary} Let $0 \leq m \leq N$ be fixed. Then
+\begin{equation*}
+	Fwd_{0,m} = Fut_{0,m}
+\end{equation*}
+
+if and only if $D_m$ and $S_m$ are uncorrelated under the risk-neutral probability measure.
+
+\begin{proof} Recall that the definition of correlation of two random variables $X$ and $Y$
+\begin{equation*}
+	\rho_{X,Y} = \frac{ \cov(X,Y) }{\sqrt{\var[X]\var[Y]}} = \frac{ \E[XY] - \E[X]\E[Y] }{\sqrt{\var[X]\var[Y]}}
+\end{equation*}
+
+Thus, if $D_m$ and $S_m$ are uncorrelated then
+\begin{equation*}
+	\tilde{\E}[D_mS_m] = \tilde{\E}[D_m]\tilde{\E}[S_m]
+\end{equation*}
+
+Now, recall our result for forward prices
+\begin{equation*}
+	Fwd_{n,m} = \frac{ S_n }{ B_{n,m} } 
+\end{equation*}
+
+Hence
+\begin{align*}
+	Fwd_{0,m} &= \frac{ S_0 }{ B_{0,m} } \\
+	&= \frac{ S_0 }{ \tilde{\E}[D_m] } \\
+	&= \frac{ \tilde{\E}[D_mS_m] }{ \tilde{\E}[D_m] }
+\end{align*}
+
+Therefore, in order to satisfy $Fwd_{0,m} = Fut_{0,m}$ we require
+\begin{align*}
+	\frac{ \tilde{\E}[D_mS_m] }{ \tilde{\E}[D_m] } &= \tilde{\E}[S_m] \\
+	\implies \tilde{\E}[D_mS_m] &= \tilde{\E}[D_m]\tilde{\E}[S_m]
+\end{align*}
+
+as desired.
+\end{proof}
+\end{corollary}
+
+\indent We should note that the above corollary only holds for investment assets (gold, other investment securities, etc...) and does not hold for consumption assets (wheat, oil, etc...) since for consumption assets we have an additional ``convenience yield'' (which will remain untreated here).
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\end{document}

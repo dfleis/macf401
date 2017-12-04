@@ -1,0 +1,521 @@
+% --------------------------------------------------------------
+% This is all preamble stuff that you don't have to worry about.
+% Head down to where it says "Start here"
+% --------------------------------------------------------------
+ 
+\documentclass[12pt]{article}
+ 
+\usepackage[margin=1in]{geometry} 
+\usepackage{bm} % bold in mathmode \bm
+\usepackage{amsmath,amsthm,amssymb,mathtools}
+\usepackage{dsfont} % for indicator function \mathds 1
+\usepackage{tikz,pgf,pgfplots}
+\usepackage{enumerate} 
+\usepackage[multiple]{footmisc} % for an adjascent footnote
+\usepackage{graphicx,float} % figures
+\usepackage{framed} % surround a text with a box 
+
+\newtheorem{definition}{Definition}
+\let\olddefinition\definition
+\renewcommand{\definition}{\olddefinition\normalfont}
+\newtheorem{lemma}{Lemma}
+\let\oldlemma\lemma
+\renewcommand{\lemma}{\oldlemma\normalfont}
+\newtheorem{proposition}{Proposition}
+\let\oldproposition\proposition
+\renewcommand{\proposition}{\oldproposition\normalfont}
+\newtheorem{corollary}{Corollary}
+\let\oldcorollary\corollary
+\renewcommand{\corollary}{\oldcorollary\normalfont}
+\newtheorem{theorem}{Theorem}
+\let\oldtheorem\theorem
+\renewcommand{\theorem}{\oldtheorem\normalfont}
+
+%%% PLOTTING PARAMETERS
+\tikzstyle{bag} = [text width=7em, text centered] %binomial tree node width
+\tikzstyle{end} = []
+%%%
+
+%% set noindent by default and define indent to be the standard indent length
+\newlength\tindent
+\setlength{\tindent}{\parindent}
+\setlength{\parindent}{0pt}
+\renewcommand{\indent}{\hspace*{\tindent}}
+
+\newcommand*{\vv}[1]{\vec{\mkern0mu#1}} % \vec command
+
+%% DAVIDS MACRO KIT %%
+\newcommand{\R}{\mathbb R}
+\newcommand{\N}{\mathbb N}
+\newcommand{\Z}{\mathbb Z}
+\renewcommand{\P}{\mathbb P}
+\newcommand{\Q}{\mathbb Q}
+\newcommand{\E}{\mathbb E}
+\newcommand{\var}{\mathrm{Var}}
+\newcommand{\Var}{\mathrm{Var}}
+\newcommand{\cov}{\mathrm{Cov}}
+\newcommand{\Cov}{\mathrm{Cov}}
+\newcommand{\indist}{\,{\buildrel \mathcal D \over \sim}\,}
+
+\newcommand{\bigtau}{\text{{\large $\bm \tau$}}}
+
+\begin{document}
+ 
+% --------------------------------------------------------------
+%                         Start here
+% --------------------------------------------------------------
+ 
+\title{Mathematical \& Computational Finance I\\Lecture Notes}
+\author{American Derivative Securities}
+\date{March 1 2016 \\ Last update: \today{}}
+\maketitle
+
+% SECTION: 
+\section{American Options}
+
+When discussion derivative securities we associate geographic names to securities with some common features
+\begin{enumerate}[]
+	\item {\bf European options} may only be exercised at a defined expiration date.
+	\item {\bf American options} can be exercised at {\em any} time up to and including the expiration date. The addition of a possible early exercise to the option can only increase the value of an American option compared to an equivalent European option (early exercise premium).
+	\item {\bf Bermudan options} may be exercised on a particular predefined set of dates. These options are conceptually in between European and American options and can be used to approximate American options with a sufficient number of exercise date. In discrete time a Bermudan option with permissible exercise dates at every time step is also an American option.
+\end{enumerate}
+
+\begin{definition} The payoff from the immediate exercise of an American option is called the \underline{intrinsic value of the option}.
+\end{definition} \hfill\\
+
+\indent We require the price of an American option be {\em always} be greater than or equal to its present intrinsic value, otherwise  we could just exercise the option at that moment. That is,
+\begin{align*}
+	C^{AM}_n &\geq S_n - K \\
+	P^{AM}_n &\geq K - S_n
+\end{align*}
+
+\indent Suppose we are interesting in writing/shorting an American option and we use the proceeds to hedge this short position. Then,
+\begin{enumerate}
+	\item We must be able to pay the counterparty the intrinsic value all at time points.
+	\item The ``worst'' time for for the long party to exercise the option, from our perspective (the short party), must be determined so that we can hedge for this.
+	\item This ``worst-case-scenario'' is the optimal exercise point with respect to the long counterparty
+\end{enumerate}
+
+\subsection{Non-Path-Dependent American Derivatives}
+
+\indent Consider our $N$-period binomial with $0 < d < 1 + r < u$ and a derivative security with a payoff function $g(S_N)$ at time $N$ (i.e. a European option). Recall that the stock price process $S$ is Markovian, permitting us to conclude that the time-$n$ value $V_n$ of the option can be expressed as a function $v_n(S_n)$. That is,
+\begin{equation*}
+	V_n = v_n(S_n) \quad n = 0,1,...,N
+\end{equation*}
+
+\subsubsection{European Algorithm}
+
+\indent Our risk-neutral pricing formula, together with the Markovian property, gives us that for $0 \leq n \leq N$ the function $v_n$ is defined by the following algorithm
+
+\begin{align*}
+	v_N(s) &= g(s) \quad \text{(time $N$ payoff)} \\
+	v_n(s) &= \frac{1}{1 + r}[\tilde{p} v_{n + 1}(us) + \tilde{q}v_{n + 1}(ds)] \quad \text{(risk-neutral valuation, $n = N-1,...,0$)} \\
+	\text{for} \quad \tilde{p} &= \frac{(1 + r) - d}{u - d} \\
+	\text{and} \quad \tilde{q} &= 1 - \tilde{p}
+\end{align*}
+
+Then, the replicating portfolio which hedges the short position is, at each $n = 0,1,...,N$,
+\begin{equation*}
+	\Delta_n = \frac{ v_{n + 1}(uS_n) - v_{n + 1}(dS_n) }{ (u - d)S_n }
+\end{equation*}
+
+\subsubsection{American Algorithm}
+
+\indent We now consider an American derivative with payoff function $g$. Note that from the definition of an American derivative we permit the holder to exercise for payoff $g(S_n)$ at any period $0 \leq n \leq N$. Logically, our hedging portfolio (for our short position) should have value $X_n$ satisfying\footnote{Since we must {\em at least} meet the payoff requirement for the long party at any time point $n$.}
+\begin{equation*}
+	X_n \geq g(S_n) \quad n = 0,1,...,N
+\end{equation*}
+
+\indent Now, we have stated that the value of an American security at each time $n$ must be at least as must as its intrinsic value $g(S_n)$, otherwise the long party would just immediately exercise. Clearly, we require our replicating process $X$ to be equal to the value of the derivative security process. Furthermore, the holder of an American security will never exercise when its payoff is negative (implying the value is nonnegative). From this we construct the following pricing algorithm
+\begin{align*}
+	v_N(s) &= \max (g(s),0) \\
+	v_n(s) &= \max \left(g(s), \frac{1}{1 + r}[\tilde{p}v_{n + 1}(us) + \tilde{q}v_{n + 1}(ds)] \right) \quad n = N - 1,...,1,0 \\
+	\tilde{p} &= \frac{(1 + r) - d}{u - d} \\
+	\tilde{q} &= 1 - \tilde{p}
+\end{align*}
+
+Then, from this algorithm, the time-$n$ price of the American derivative is
+\begin{equation*}
+	V_n = v_n(S_n)
+\end{equation*}
+
+\underline{Example:} Consider our typical binomial model with $S_0 = 4, u = 2, d = \frac{1}{2}, r = \frac{1}{4}$. Price an American option with strike $K = 5$. \\
+
+First, we find that $\tilde{p} = \tilde{q} = \frac{1}{2}$. Then, we have the risky asset process $S$,
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[sloped]
+  \node (a) at ( 0,0) [bag] {$S_0 = 4$};
+  \node (b) at ( 4,-1.5) [bag] {$S_1(T) = 2$};
+  \node (c) at ( 4,1.5) [bag] {$S_1(H) = 8$};
+  \node (d) at ( 8,-3) [bag] {$S_2(TT) = 1$};
+  \node (e) at ( 8,0) [bag] {$S_2(HT) = S_2(TH) = 4$};
+  \node (f) at ( 8,3) [bag] {$S_2(HH) = 16$};
+  \draw [->] (a) to node [below] {} (b);
+  \draw [->] (a) to node [above] {} (c);
+  \draw [->] (c) to node [below] {} (f);
+  \draw [->] (c) to node [above] {} (e);
+  \draw [->] (b) to node [below] {} (e);
+  \draw [->] (b) to node [above] {} (d);
+\end{tikzpicture}
+\caption{Asset price tree $S_n$}
+\end{figure}
+
+\indent With payoff function $g(s) = 5 - s$ we have the terminal nodes for the American derivative security process
+\begin{align*}
+	V_2(HH) &= v_2(16) = \max(g(16),0) \\
+	&= \max(5 - 16, 0) \\
+	&= 0 \\
+	V_2(HT) = V_2(TH) &= v_2(4) = \max(g(4),0) \\
+	&= \max(5 - 4, 0) \\
+	&= 1 \\
+	V_2(TT) &= v_2(1) = \max(g(1),0) \\
+	&= \max(5 - 1, 0) \\
+	&= 4 \\
+\end{align*}
+
+and so, according to our algorithm above
+\begin{align*}
+	V_1(H) &= v_1(8) = \max \left( g(8), \frac{4}{5}\left[\frac{1}{2}v_2(16) + \frac{1}{2}v_2(4)\right] \right) \\
+	&= \max \left(5 - 8, \frac{4}{5}\left[\frac{1}{2}\cdot 0 + \frac{1}{2}\cdot 1\right] \right) \\ 
+	&= \max \left(-3, \frac{2}{5}\right) \\
+	&= \frac{2}{5} \\
+	V_1(T) &= v_1(2) = \max \left( g(2), \frac{4}{5}\left[\frac{1}{2}v_2(4) + \frac{1}{2}v_2(1)\right] \right) \\
+	&= \max \left(5 - 2, \frac{4}{5}\left[\frac{1}{2}\cdot 1 + \frac{1}{2}\cdot 4\right] \right)  \\
+	&= \max (3, 2) \\
+	&= 3 \quad \text{(note here that the long party should prefer to exercise early)} \\
+	V_0 &= v_0(4) = \max \left( g(4), \frac{4}{5}\left[\frac{1}{2}v_1(8) + \frac{1}{2}v_1(2)\right] \right) \\
+	&= \max \left(5 - 4, \frac{4}{5}\left[\frac{1}{2}\cdot \frac{2}{5} + \frac{1}{2}\cdot 3 \right] \right)  \\
+	&= \max \left( 1, 1.36 \right) \\
+	&= 1.36
+\end{align*} 
+
+So our price process $V$ has the tree
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[sloped]
+  \node (a) at ( 0,0) [bag] {$V_0 = 1.36$};
+  \node (b) at ( 4,-1.5) [bag] {$V_1(T) = 3$};
+  \node (c) at ( 4,1.5) [bag] {$V_1(H) = \frac{2}{5}$};
+  \node (d) at ( 8,-3) [bag] {$V_2(TT) = 4$};
+  \node (e) at ( 8,0) [bag] {$V_2(HT) = V_2(TH) = 1$};
+  \node (f) at ( 8,3) [bag] {$V_2(HH) = 0$};
+  \draw [->] (a) to node [below] {} (b);
+  \draw [->] (a) to node [above] {} (c);
+  \draw [->] (c) to node [below] {} (f);
+  \draw [->] (c) to node [above] {} (e);
+  \draw [->] (b) to node [below] {} (e);
+  \draw [->] (b) to node [above] {} (d);
+\end{tikzpicture}
+\caption{American price tree $V_n$}
+\end{figure}
+
+\indent We can find the corresponding European put process $V^E$ tree
+So our price process $V$ has the tree
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[sloped]
+  \node (a) at ( 0,0) [bag] {$V^E_0 = \frac{24}{25}$};
+  \node (b) at ( 4,-1.5) [bag] {$V^E_1(T) = 2$};
+  \node (c) at ( 4,1.5) [bag] {$V^E_1(H) = \frac{2}{5}$};
+  \node (d) at ( 8,-3) [bag] {$V^E_2(TT) = 4$};
+  \node (e) at ( 8,0) [bag] {$V^E_2(HT) = V_2(TH) = 1$};
+  \node (f) at ( 8,3) [bag] {$V^e_2(HH) = 0$};
+  \draw [->] (a) to node [below] {} (b);
+  \draw [->] (a) to node [above] {} (c);
+  \draw [->] (c) to node [below] {} (f);
+  \draw [->] (c) to node [above] {} (e);
+  \draw [->] (b) to node [below] {} (e);
+  \draw [->] (b) to node [above] {} (d);
+\end{tikzpicture}
+\caption{European price tree $V_n$}
+\end{figure}
+
+\indent Note that the value of the American option is greater than the value of the European put at all time periods along the tree. We can show\footnote{But I don't think we do.} that this holds in generality. That is,
+\begin{equation*}
+	v^A_n(s) \geq v^E_n(s) \quad n = 0,...,N,~\forall\,s\in\R^+
+\end{equation*}
+
+\indent We seek to be able to hedge our short position in this American security with initial wealth $X_0 = 1.36$ received by our position's proceeds. Recall the wealth equation in the European case
+\begin{equation*}
+	X_{n + 1} = \Delta_nS_{n + 1} + (1 + r)(X_n - \Delta_nS_n)
+\end{equation*}
+
+\indent Can we find the values for $\Delta_i$ using this equation for the American case? Suppose first that $\omega_1 = H$. We want that $X_1(H) = V_1(S_1(H))$, so
+\begin{align*}
+	V_1(S_1(H)) = v_1(8) = \frac{2}{5} &= X_1(H) \\
+	 &= \Delta_0S_1(H) + (1 + r)(X_0 - \Delta_0S_0) \\
+	 &= 8\Delta_0 + \frac{5}{4}(1.36 - 4\Delta_0) \\
+	\implies \frac{2}{5} &= 8\Delta_0 + 1.7 - 5\Delta_0 \\
+	\implies -3\Delta_0 &= 1.3 \\
+	\implies \Delta_0 &= -0.4\overline{333}
+\end{align*}
+
+Suppose now that $\omega_1 = T$ then
+\begin{align*}
+	V_1(S_1(T)) = v_1(2) = 3 &= X_1(T) \\
+	&= \Delta_0S_1(T) + (1 + r)(X_0 - \Delta_0S_0) \\
+	&= 2\Delta_0 + \frac{5}{4}(1.36 - 4\Delta_0) \\
+	\implies 3 &= 2\Delta_0 + 1.7 - 5\Delta_0 \\
+	\implies 3\Delta_0 &= -1.3 \\
+	\implies \Delta_0 &= -0.4\overline{333}
+\end{align*}
+
+Thankfully, we find that $\Delta_0 = -0.4\overline{333}$ in both cases. This is a good start. We wish now to check that if this is the same value of $\Delta_0$ as defined by
+\begin{equation*}
+	\Delta_0 = \frac{V_1(H) - V_1(T)}{S_1(H) - S_1(T)}
+\end{equation*}
+
+So
+\begin{align*}
+	\Delta_0 &= \frac{ \frac{2}{5} - 3 }{ 8 - 2} \\
+	&= -\frac{2.6}{6} \\
+	&= -0.4\overline{333}
+\end{align*}
+
+as desired! If we again suppose that $\omega_1 = T$ then the optimal action taken by the long party at time $n = 1$ is to exercise the option early for a payoff of $g(2) = 5 - 2 = 3$. That is, if $\omega_1 = T$ then we wish to be hedged for a delivery of $X_1(T) = 3$. Thankfully, we found that $X_1(T) = 3$ for $\Delta_0 = -0.4\overline{333}$. Furthermore, if this action were to take place then no further hedging would be required since the option would have been terminated after exercise. \\
+
+\indent However, not all counterparties will exercise optimally. We wish to be hedged if we we continue our hedging procedure in the case of suboptimal actions by the long party. In this example, if $\omega_1 = T$ and our counterparty doesn't exercise then
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[sloped]
+  \node (a) at ( 0,0) [bag] {$v_1(2) = 3$};
+  \node (b) at ( 4,-1.5) [bag] {$v_1(4) = 1$};
+  \node (c) at ( 4,1.5) [bag] {$v_1(1) = 4$};
+  \draw [->] (a) to node [below] {} (b);
+  \draw [->] (a) to node [above] {} (c);
+\end{tikzpicture}
+\caption{Remaining tree if $\omega_1 = T$ and the long counterparty does not exercise at $n = 1$.}
+\end{figure}
+
+\indent Note that in our binomial model the only remaining nodes for the counterparty to exercise is at the end of the option's life. This is equivalent to a European option! That is, the remaining life of the American option is the same as a one-period European option. So, treating this as a European option we find that
+\begin{equation*}
+	V^E_2(T) = \frac{4}{5}\left[\frac{1}{2}\cdot 1 + \frac{1}{2}\cdot 4\right] = 2
+\end{equation*}
+
+\indent Therefore, we find that we only require $\$2$ to be able to successfully hedge the remaining life of the option is the case of suboptimal exercise. However, we already found that according to our hedging process we had $X_1(T) = 3$. This permits us to {\em consume} $\$1$ at $\omega_1 = T$ if our counterparty does not exercise. \\
+
+If we set
+\begin{equation*}
+	X_1^*(T) = 2 \quad \text{(after consumption time-$1$ hedged position)}
+\end{equation*}
+
+then, if $\omega_1 = T, \omega_2 = H$
+\begin{align*}
+	V_2(S_2(TH)) = v_2(4) = 1 &= X_2^*(TH) \\
+	&= \Delta_1^*(T)S_2(TH) + (1 + r)(X^*_1(T) - \Delta^*_1(T)S_1(T)) \\
+	&= 4\Delta_1^*(T) + \frac{5}{4}(2 - 2\Delta^*_1(T)) \\
+ \implies 1 &= \frac{3}{2}\Delta_1^*(T) + \frac{5}{2} \\
+ \implies -\frac{3}{2}\Delta_1^*(T) &= \frac{3}{2} \\
+ \implies \Delta_1^*(T) &= -1
+\end{align*}
+
+Similarly, if $\omega_1 = T, \omega_2 = T$ we can compute that
+\begin{equation*}
+	\Delta^*(T) = -1
+\end{equation*}
+
+This agrees with our definition of $\Delta^*(T)$
+\begin{equation*}
+	\Delta^*(T) = \frac{ V_2(TH) - V_2(TT) }{ S_2(TH) - S_2(TT)} = \frac{4 - 1}{1 - 4} = -1
+\end{equation*}
+
+\indent Likewise, if $\omega_1 = H$ we see that the remaining life of our American option is a European option and we can replicate as we would normally in the European case. The point of this exercise is that we should be looking out for suboptimal exercise of American options.
+
+Now, we have the stochastic process
+\begin{align*}
+	V_0 &= 1.36 \\
+	V_1(T) &= 3 \\
+	V_1(H) &= \frac{2}{5} \\
+	V_2(TT) &= 4 \\
+	V_2(HT) = V_1(TH) &= 1 \\
+	V_2(HH) &= 0
+\end{align*}
+
+\indent Recall that we had that the discounted European price process $\left\{ \frac{V^E_n}{(1 + r)^n} \right\}^N_{n = 0}$ is a discounted $\tilde{\P}$-martingale. However, in the context of this example we have that, for $\omega_1 = T$,
+\begin{align*}
+	\frac{V_1(T)}{(1 + r)} &= \frac{3}{\frac{5}{4}} \\
+	&= \frac{12}{5} \\
+	&= 2.4 \\
+	\tilde{\E}_1\left[ \frac{V_2}{(1 + r)^2} \right](T) &= \tilde{p}\frac{V_2(TH)}{(1 + r)^2} + \tilde{q}\frac{V_2(TT)}{(1 + r)^2} \\
+	&= \frac{1}{2}\frac{1}{\left(\frac{5}{4}\right)^2} + \frac{1}{2}\frac{4}{\left(\frac{5}{4}\right)^2} \\
+	&= \frac{8}{25} + \frac{32}{25} \\
+	&= \frac{40}{25} \\
+	&= 1.6 \\
+	\implies \frac{V_1(T)}{(1 + r)} &> \tilde{\E}_1\left[ \frac{V_2}{(1 + r)^2} \right](T)
+\end{align*}
+
+and if $\omega_1 = H$ we have that our American option becomes a simple European option, and so the martingale property holds
+\begin{align*}
+	\frac{V_1(H)}{(1 + r)} &= \frac{ \frac{2}{5} }{\frac{5}{4}} \\
+	&= \frac{8}{25} \\
+	\tilde{\E}_1\left[ \frac{V_2}{(1 + r)^2} \right](H) &= \tilde{p}\frac{V_2(HH)}{(1 + r)^2} + \tilde{q}\frac{V_2(HT)}{(1 + r)^2} \\
+	&= \frac{1}{2}\frac{0}{\left(\frac{5}{4}\right)^2} + \frac{1}{2}\frac{1}{\left(\frac{5}{4}\right)^2} \\
+	&= \frac{8}{25} \\
+	\implies \frac{V_1(H)}{(1 + r)} &= \tilde{\E}_1\left[ \frac{V_2}{(1 + r)^2} \right](H)
+\end{align*}
+
+and so in general
+\begin{equation*}
+	\frac{V_1}{(1 + r)} \geq \tilde{\E}_1\left[ \frac{V_2}{(1 + r)^2} \right]
+\end{equation*}
+
+We can also confirm that
+\begin{align*}
+	\frac{V_0}{(1 + r)^0} &= 1.36 \\
+	\tilde{\E}\left[ \frac{V_1}{(1 + r)} \right] &= \tilde{p}\frac{V_1(H)}{(1 + r)} + \tilde{q}\frac{V_1(T)}{(1 + r)} \\
+	&= \frac{1}{2}\frac{ \frac{2}{5} }{\frac{5}{4}} + \frac{1}{2}\frac{3}{\frac{5}{4}} \\
+	&= \frac{4}{25} + \frac{12}{10} \\
+	&= 1.36 \\
+	\implies \frac{V_0}{(1 + r)^0} &= \tilde{\E}\left[ \frac{V_1}{(1 + r)} \right]
+\end{align*}
+
+\indent That is, the discounted American option price process $\left\{ \frac{V^{AM}_n}{(1 + r)^n} \right\}^N_{n = 0}$ generated by our American pricing algorithm is a $\tilde{\P}$-supermartingale. \\
+
+If we were to rewrite the wealth equation for an American derivative
+\begin{align*}
+	X^*_2(TH) &= \Delta^*_1(T)S_2(TH) + (1 + r)(X_1(T) - C_1(T) - \Delta^*_1(T)S_1(T)) \\
+	X^*_2(TT) &= \Delta^*_1(T)S_2(TT) + (1 + r)(X_1(T) - C_1(T) - \Delta^*_1(T)S_1(T))
+\end{align*}
+
+where $C_1(T)$ is the amount that we are permitted to consume if the long counterparty does not exercise optimally at $\omega_1 = T$. Then, we see that
+\begin{align*}
+	X_1^*(T) &= X_1(T) - C_1(T) \\
+	\implies C_1(T) &= X_1(T) - X^*_1(T) \\
+	&= X_1(T) - \frac{1}{1 + r}\left[\tilde{p}V_2(S_2(TH)) + \tilde{q}V_2(S_2(TT)) \right] \quad \text{(since $X^*_1(T) = V_1(T)$)}
+\end{align*}
+
+\indent We can generalize this process to an arbitrary American derivative security with the following result
+\begin{theorem}{\bf Replicaiton of path-independent American derivatives.} Consider the $N$-period binomial asset pricing model with $0 < d < 1 + r < u$ and $\tilde{p} = \frac{(1 + r) - d}{u - d}$. Let $g(s)$ denote the payoff of an American derivative and consider the American pricing algorithm as outlined above. Define, for $n = 0,1,..., N$,
+\begin{align*}
+	\Delta_n &= \frac{v_{n + 1}(uS_n) - v_{n + 1}(dS_n)}{(u - d)S_n} \\
+	C_n &= v_n(S_n) - \frac{1}{1 + r}\left[\tilde{p}v_{n + 1}(uS_n) + \tilde{q}v_{n + 1}(dS_n) \right]
+\end{align*}
+
+{\bf Then $\bm{ C_n \geq 0}$ for all $\bm n$.} That is, consumption is always nonnegative and so cash injections are not required to successfully hedge an American derivative. Furthermore, if we set $X_0 = v_0(S_0)$ and define the portfolio process $X_1,...,X_N$ recursively forwards in time by
+\begin{equation*}
+	X_{n + 1} = \Delta_nS_{n + 1} + (1 + r)[X_n - C_n - \Delta_nS_n]
+\end{equation*}
+
+we have
+\begin{equation*}
+	\bm{X_n(\omega_1\cdots\omega_n) = v_n(S_n(\omega_1\cdots\omega_n))}
+\end{equation*}
+
+for all $n$ and sequences $\omega_1\cdots\omega_n \in \Omega$. {\bf In particular, $\bm{X_n \geq g(S_n)}$ for all $\bm n$.} \\
+
+\indent Node that this theorem informs us that we are able to hedge a short position in an American derivative security with time-$n$ intrinsic value given by $g(S_n)$, for all $n$. We say that $\left\{C_n\right\}^N_{n = 0}$ is the \underline{consumption process} and that this process is nonzero only if the long counterparty does not exercise the option optimally.
+
+\begin{proof} {(\em Proof that $C_n \geq 0$)}. From the American pricing algorithm we have that
+\begin{align*}
+	v_n(s) &= \max \left( g(s), \frac{1}{1 + r}[\tilde{p}v_{n + 1}(us) + \tilde{q}v_{n + 1}(ds)] \right) \\
+	&\geq \frac{1}{1 + r}[\tilde{p}v_{n + 1}(us) + \tilde{q}v_{n + 1}(ds)] \\
+	\implies v_n(s) &- \frac{1}{1 + r}[\tilde{p}v_{n + 1}(us) + \tilde{q}v_{n + 1}(ds)] \geq 0 \\
+	\implies C_n &\geq 0 \quad \text{(by definition of $C_n$)}
+\end{align*}
+
+as desired. \\
+
+{(\em Proof That $\bm{X_n(\omega_1\cdots\omega_n) = v_n(S_n(\omega_1\cdots\omega_n)}$)}. We proceed by induction. For $n = 0$ we have that $X_0 = v_0(S_0)$ is true by the definition of $X_0$. Now, fix arbitrary $\overline{\omega} = \omega_1\cdots\omega_n$ and suppose that
+\begin{equation*}
+	X_n(\overline{\omega}) = v_n(S_n(\overline{\omega}))
+\end{equation*}
+
+holds. For $n + 1$ consider firs the case that $\omega_{n + 1} = H$. Then from
+\begin{equation*}
+	X_{n + 1} = \Delta_nS_{n + 1} + (1 + r)[X_n - C_n - \Delta_nS_n]
+\end{equation*}
+
+we have that
+\begin{align*}
+	X_{n + 1}(\overline{\omega} H) &= \Delta_n(\overline{\omega})S_{n + 1}(\overline{\omega}H) + (1 + r)[X_n(\overline{\omega}) - C_n(\overline{\omega}) - \Delta_n(\overline{\omega})S_n(\overline{\omega})] \\
+	&= \Delta_n(\overline{\omega})uS_n(\overline{\omega}) + (1 + r)[ v_n(S_n(\overline{\omega})) - C_n(\overline{\omega}) - \Delta_n(\overline{\omega})S_n(\overline{\omega})] \quad \text{(inductive hypothesis)} \\
+	&= \frac{v_{n + 1}(uS_n(\overline{\omega})) - v_{n + 1}(dS_n(\overline{\omega}))}{(u - d)S_n(\overline{\omega})} uS_n(\overline{\omega}) + \\
+	&\hphantom{{}={------}} (1 + r) \left[v_n(S_n(\overline{\omega})) - C_n(\overline{\omega}) - \frac{v_{n + 1}(uS_n(\overline{\omega})) - v_{n + 1}(dS_n(\overline{\omega}))}{(u - d)S_n(\overline{\omega})} S_n(\overline{\omega}) \right] \\
+	&= \frac{v_{n + 1}(uS_n(\overline{\omega})) - v_{n + 1}(dS_n(\overline{\omega}))}{(u - d)S_n(\overline{\omega})} uS_n(\overline{\omega}) + \\
+	&\hphantom{{}={--}} (1 + r) \bigg[v_n(S_n(\overline{\omega})) - \left( v_n(S_n(\overline{\omega})) - \frac{1}{1 + r}\left[\tilde{p}v_{n + 1}(uS_n(\overline{\omega})) + \tilde{q}v_{n + 1}(dS_n(\overline{\omega}) )\right] \right) - \\
+	&\hphantom{{}={--------------}} \frac{v_{n + 1}(uS_n(\overline{\omega})) - v_{n + 1}(dS_n(\overline{\omega}))}{(u - d)S_n(\overline{\omega})} S_n(\overline{\omega}) \bigg] \\
+	&= \frac{v_{n + 1}(uS_n) - v_{n + 1}(dS_n)}{(u - d)S_n} uS_n + \\
+	&\hphantom{{}={----}} (1 + r) \bigg[v_n(S_n) - \left( v_n(S_n) - \frac{1}{1 + r}\left[\tilde{p}v_{n + 1}(uS_n) + \tilde{q}v_{n + 1}(dS_n)\right] \right) - \\
+	&\hphantom{{}={----------------}} \frac{v_{n + 1}(uS_n) - v_{n + 1}(dS_n)}{(u - d)S_n} S_n \bigg] \\	
+	&= \frac{u}{u - d}[v_{n + 1}(uS_n) - v_{n + 1}(dS_n)] + \\
+	&\hphantom{{}={----}} \tilde{p}v_{n + 1}(uS_n) + \tilde{q}v_{n + 1}(dS_n) - \\
+	&\hphantom{{}={----------------}} \frac{1 + r}{u - d} [ v_{n + 1}(uS_n) - v_{n + 1}(dS_n)]  \\
+	&= \frac{u}{u - d}[v_{n + 1}(uS_n) - v_{n + 1}(dS_n)] + \\
+	&\hphantom{{}={----}} \frac{(1 + r) - d}{u - d}v_{n + 1}(uS_n) + \frac{u - (1 + r)}{u - d}v_{n + 1}(dS_n) - \\
+	&\hphantom{{}={----------------}} \frac{1 + r}{u - d} [ v_{n + 1}(uS_n) - v_{n + 1}(dS_n)]  \\	
+	&= \frac{1}{u - d} \bigg[uv_{n + 1}(uS_n) - uv_{n + 1}(dS_n) + (1 + r)v_{n + 1}(uS_n) - dv_{n + 1}(uS_n) + \\
+	&\hphantom{{}={}} uv_{n + 1}(dS_n) - (1 + r)v_{n + 1}(dS_n) - (1 + r)v_{n + 1}(uS_n) + (1 + r)v_{n + 1}(dS_n) \bigg] \\
+	&= \frac{1}{u - d}\left[uv_{n + 1}(uS_n) - dv_{n + 1}(uS_n) \right] \\
+	&= v_{n + 1}(uS_n) \\
+	&= v_{n + 1}(uS_n(\omega_1\cdots\omega_n))
+\end{align*}
+
+Similarly, if $\omega_{n + 1} = T$ we can show that
+\begin{equation*}
+	X_{n + 1}(\overline{\omega} T) = v_{n + 1}(dS_n(\overline{\omega}))
+\end{equation*}
+
+Hence
+\begin{equation*}
+	X_{n + 1}(\overline{\omega}\omega_{n + 1}) = v_{n + 1}(dS_n(\overline{\omega}\omega_{n + 1}))
+\end{equation*}
+
+Therefore, since $\overline{\omega} = \omega_1\cdots\omega_n$ was arbitrary, we have by induction that
+\begin{equation*}
+	X_n(\omega_1\cdots\omega_n) = v_n(S_n(\omega_1\cdots\omega_n))
+\end{equation*}
+
+for all $n = 0,1,...,N$ and sequences $\omega_1\cdots\omega_n \in \Omega$. In particular, from the American pricing algorithm
+\begin{equation*}
+	v_n(S_n) = \max \left( g(S_n), \frac{1}{1 + r}[\tilde{p}v_{n + 1}(uS_n) + \tilde{q}v_{n + 1}(dS_n) \right) 
+\end{equation*}
+
+so that
+\begin{align*}
+	X_n &= v_n(S_n) = \max \left( g(S_n), \frac{1}{1 + r}[\tilde{p}v_{n + 1}(uS_n) + \tilde{q}v_{n + 1}(dS_n) \right) \quad \text{and } \\
+	v_n(S_n) &\geq g(S_n) \quad \text{(since the value must be $\geq$ than the payoff for all $n$)} \\
+	\implies X_n &\geq g(S_n)
+\end{align*}
+
+for all $n = 0,1,...,N$, as desired.
+\end{proof}
+\end{theorem}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\end{document}

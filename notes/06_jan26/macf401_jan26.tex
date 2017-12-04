@@ -1,0 +1,466 @@
+% --------------------------------------------------------------
+% This is all preamble stuff that you don't have to worry about.
+% Head down to where it says "Start here"
+% --------------------------------------------------------------
+ 
+\documentclass[12pt]{article}
+ 
+\usepackage[margin=1in]{geometry} 
+\usepackage{bm} % bold in mathmode \bm
+\usepackage{amsmath,amsthm,amssymb,mathtools}
+\usepackage{dsfont} % for indicator function \mathds 1
+\usepackage{tikz,pgf,pgfplots}
+\usepackage{enumerate} 
+\usepackage[multiple]{footmisc} % for an adjascent footnote
+\usepackage{graphicx,float} % figures
+\usepackage{csvsimple,longtable,booktabs} % load csv as a table
+\usepackage{listings,color} % for code snippets
+
+\newtheorem{definition}{Definition}
+\let\olddefinition\definition
+\renewcommand{\definition}{\olddefinition\normalfont}
+\newtheorem{lemma}{Lemma}
+\let\oldlemma\lemma
+\renewcommand{\lemma}{\oldlemma\normalfont}
+\newtheorem{proposition}{Proposition}
+\let\oldproposition\proposition
+\renewcommand{\proposition}{\oldproposition\normalfont}
+\newtheorem{corollary}{Corollary}
+\let\oldcorollary\corollary
+\renewcommand{\corollary}{\oldcorollary\normalfont}
+\newtheorem{theorem}{Theorem}
+\let\oldtheorem\theorem
+\renewcommand{\theorem}{\oldtheorem\normalfont}
+
+\newcommand\norm[1]{\left\lVert#1\right\rVert} % \norm command 
+
+%%% PLOTTING PARAMETERS
+\pgfmathsetseed{1952} % for Brownian Motion plotting
+\newcommand{\Emmett}[5]{% points, advance, rand factor, options, end label
+\draw[#4] (0,0)
+\foreach \x in {1,...,#1}
+{   -- ++(#2,rand*#3)
+}
+node[right] {#5};
+}
+
+\pgfplotsset{every axis/.append style={},
+    cmhplot/.style={mark=none,line width=1pt,->},
+    soldot/.style={only marks,mark=*},
+    holdot/.style={fill=white,only marks,mark=*},
+}
+
+\tikzset{>=stealth}
+
+\pgfmathdeclarefunction{gauss}{2}{%
+  \pgfmathparse{1/(#2*sqrt(2*pi))*exp(-((x-#1)^2)/(2*#2^2))}%
+}
+
+\tikzstyle{bag} = [text width=8em, text centered]
+\tikzstyle{end} = []
+%%%
+
+%% set noindent by default and define indent to be the standard indent length
+\newlength\tindent
+\setlength{\tindent}{\parindent}
+\setlength{\parindent}{0pt}
+\renewcommand{\indent}{\hspace*{\tindent}}
+
+\newcommand*{\vv}[1]{\vec{\mkern0mu#1}} % \vec command
+
+%% DAVIDS MACRO KIT %%
+\newcommand{\R}{\mathbb R}
+\newcommand{\N}{\mathbb N}
+\newcommand{\Z}{\mathbb Z}
+\renewcommand{\P}{\mathbb P}
+\newcommand{\Q}{\mathbb Q}
+\newcommand{\E}{\mathbb E}
+\newcommand{\var}{\mathrm{Var}}
+\newcommand{\indist}{\,{\buildrel \mathcal D \over \sim}\,}
+
+\newcommand{\bigtau}{\text{{\large $\bm \tau$}}}
+
+\begin{document}
+ 
+% --------------------------------------------------------------
+%                         Start here
+% --------------------------------------------------------------
+ 
+\title{Mathematical \& Computational Finance I\\Lecture Notes}
+\author{Probability Theory on Coin Toss Space}
+\date{January 26 2016 \\ Last update: \today{}}
+\maketitle
+
+% SECTION: 
+\section{Martingales}
+
+\indent Let $V_N$ (some random variable) be a derivative security payoff at time $N$ depending on the first $N$ coin tosses. From Chapter 1 we know that there exists some initial wealth $X_0$ and a replicating portfolio process $\{\Delta_0, \Delta_1, ..., \Delta_{N - 1}\}$ that generates a wealth process $\{X_1, X_2, ..., X_N\}$ satisfying
+\begin{equation*}
+	X_N(\omega_1\cdots\omega_N) = V_N(\omega_1\cdots\omega_N)
+\end{equation*}
+
+for all sequences $\omega_1\cdots\omega_N \in \Omega$. By the theorem presented last lecture we have that the discounted wealth process $\left\{\frac{X_n}{(1 + r)^n}\right\}^N_{n = 0}$ is a $\tilde{\P}$-martingale. That is, the discounted wealth process is adapted and
+\begin{equation*}
+	\tilde{\E}_n \left[ \frac{X_N}{(1 + r)^N} \right] = \frac{X_n}{(1 + r)^n}
+\end{equation*}
+
+but we have that $X_N = V_N$, so
+\begin{align*}
+	\frac{X_n}{(1 + r)^n}&= \tilde{\E}_n \left[ \frac{X_N}{(1 + r)^N} \right] \quad \text{(by the martingale property)} \\
+	&= \tilde{\E}_n \left[ \frac{V_N}{(1 + r)^N} \right] \quad \text{(since } X_N = V_N)
+\end{align*}
+
+\begin{definition} Consider an $N$-period binomial asset pricing model with $0 < d < 1 + r < u$ and let $V_N$ be a derivative security payoff at time $N$ (random variable) depending on the first $N$ coin tosses. Let $\Delta_0,...,\Delta_{N - 1}$ be the replicating portfolio process and $X_0, ..., X_N$ be the corresponding wealth process for hedging $V_N$. \\
+
+\indent For $0 \leq n \leq N$ \underline{the price of the derivative security at time $n$} is $X_n$ which we denote by $V_n$.
+\end{definition}
+
+\indent The rationale for defining the time $n$ price to be $V_n = X_n$ is that if we start at node $\omega_1\cdots\omega_n$ then we can replicate the payoff at time $N$ using initial capital $X_n(\omega_1\cdots\omega_n)$. If this were not the case, i.e. $V_n$ would be any other price at time $n$, then there would be arbitrage.
+
+However, we have that
+\begin{equation*}
+	\tilde{\E}_n \left[ \frac{V_N}{(1 + r)^N} \right] = \frac{V_n}{(1 + r)^n}
+\end{equation*}
+
+and so by the definition above and this equation we may conclude that the discounted derivative price is a $\tilde{\P}$-martingale. Multiplying this equation by $(1 + r)^n$ yields
+\begin{equation*}
+	V_n = \tilde{\E}_n \left[ \frac{V_N}{(1 + r)^{N - n}} \right]
+\end{equation*}
+
+which gives us the time $n$ derivative security price without having to set up the hedging portfolio, wealth process, or having to consider the backwards induction process.
+
+\subsection{Risk Neutral Pricing Formula}
+
+\begin{theorem} Consider an $N$-period binomial asset pricing model with $0 < d < 1 + r < u$ and risk neutral probability measure $\tilde{\P}$. Let $V_N$ be a derivative security payoff at time $N$ (a random variable) depending on the first $N$ coin tosses. Then, the price of the derivative security at time $n \in \{0, 1,..., N\}$ is given by
+\begin{equation*}
+	V_n = \tilde{\E}_n \left[ \frac{V_N}{(1 + r)^{N - n}} \right] \quad \text{\bf risk-neutral pricing formula}
+\end{equation*}
+
+and the discounted security price process
+\begin{equation*}
+	\left\{ \frac{V_n}{(1 + r)^n} \right\}^N_{n = 0}
+\end{equation*}
+
+is a $\tilde{\P}$-martingale.
+\begin{proof} {\em This was exercise 2.8 in the book.}
+\end{proof}
+\end{theorem}
+
+\indent Using this risk neutral pricing formula together with properties of conditional expectation and martingales allows us to say some interesting things about various derivative securities. \\
+
+\underline{Example}: Consider a binomial asset pricing model with $S_0 = 5100, u = 1.053, d = 0.965, r = 0.0033$. A European gap call option has payoff
+\begin{equation*}
+	V_N = 
+	\begin{cases}
+		S_N - K_1 & \text{if } S_N > K_2 \\
+		0 & \text{if } S_N \leq K_2
+	\end{cases}
+\end{equation*}
+
+at time $N = 3$.
+
+\begin{enumerate}[(i)]
+	\item For $K_1 = 5355$ and $K_2 = 5500$ find the price of the European gap call option price at all nodes of the binomial tree using the risk neutral pricing formula.
+	\item In the general case of an $N$-period binomial asset pricing model with $0 < d < 1 + r < u$ is there a general relationship between the price at time zero of a European gap call option when $K_2 \geq K_1$ and the price at time zero of a (vanilla) European call option on the same asset with strike price $K_1$ and expiry date $N$?
+\end{enumerate}
+
+\underline{Solution}: In principle we would build a tree and recursively apply backwards induction to price the option. Instead lets practice the risk neutral pricing formula that we have just stated.
+\\
+\\
+Part (i): We have the asset price tree
+\begin{figure}[H]
+\begin{tikzpicture}[sloped]
+  \node (a) at ( 0,0) [bag] {$S_0 = 5100$};
+  \node (b) at ( 4,-1.5) [bag] {$S^0_1 = 4921.5$};
+  \node (c) at ( 4,1.5) [bag] {$S^1_1 = 5370.3$};
+  \node (d) at ( 8,-3) [bag] {$S^0_2 = 4749.2475$};
+  \node (e) at ( 8,0) [bag] {$S^1_2 = 5182.3395$};
+  \node (f) at ( 8,3) [bag] {$S^2_2 = 5654.9259$};
+  \node (g) at ( 12,-4.5) [bag] {$S^0_3 = 4583.023838$};
+  \node (h) at ( 12,-1.5) [bag] {$S^1_3 = 5000.957618$};
+  \node (i) at ( 12,1.5) [bag] {$S^2_3 = 5457.003494$};
+  \node (j) at ( 12,4.5) [bag] {$S^3_3 = 5954.636973$};
+  \draw [->] (a) to node [below] {} (b);
+  \draw [->] (a) to node [above] {} (c);
+  \draw [->] (c) to node [below] {} (f);
+  \draw [->] (c) to node [above] {} (e);
+  \draw [->] (b) to node [below] {} (e);
+  \draw [->] (b) to node [above] {} (d);
+  \draw [->] (d) to node [below] {} (g);
+  \draw [->] (d) to node [above] {} (h);
+  \draw [->] (e) to node [below] {} (h);
+  \draw [->] (e) to node [above] {} (i);
+  \draw [->] (f) to node [below] {} (i);
+  \draw [->] (f) to node [above] {} (j);
+\end{tikzpicture}
+\caption{Asset price tree S}
+\end{figure}
+
+We have corresponding risk neutral probabilities
+\begin{align*}
+	\tilde{p} &= \frac{(1 + r) - d}{u - d} \\
+	&= \frac{(1 + 0.0033) - 0.965}{1.053 - 0.965}\\
+	&= \frac{ \frac{10033}{10000} - \frac{965}{1000} }{ 0.088 } \\
+	&= \frac{ \frac{ 383 }{ 10000 } }{ \frac{88}{1000} } = \frac{ \frac{ 383 }{ 10000 } }{ \frac{ 880 }{10000} }  \\
+	&= \frac{383}{ 880 } = 0.43522\overline{72}
+\end{align*}
+
+and
+\begin{equation*}
+	\tilde{q} = 1 - \tilde{p} = \frac{497}{880} = 0.56477\overline{27}
+\end{equation*}
+
+First we find the time $N = 3$ payoffs are
+\begin{align*}
+	V_3(HHH) &= (S_3(HHH) - K_1) \cdot \mathds 1_{\left\{ S_3(HHH) > K_2 \right\} } \\
+	&= 5954.636973 - 5355 \\
+	&= 599.636973 \\
+	V_3(HHT) &= V_3(HTH) = V_3(THH) = (S_3(HHT) - K_1) \cdot \mathds 1_{\left\{ S_3(HHT) > K_2 \right\} } \\
+	&= 0 \\
+	V_3(HTT) &= V_3(THT) = V_3(TTH) =  (S_3(HTT) - K_1) \cdot \mathds 1_{\left\{ S_3(HTT) > K_2 \right\} } \\
+	&= 0 \\
+	V_3(TTT) &=  (S_3(TTT) - K_1) \cdot \mathds 1_{\left\{ S_3(TTT) > K_2 \right\} } \\
+	&= 0
+\end{align*}
+
+and  the risk neutral pricing formula
+\begin{equation*}
+	V_n(\omega_1\cdots\omega_n) = \tilde{\E}_n \left[ \frac{V_N}{(1 + r)^{N - n}} \right] (\omega_1\cdots\omega_n) \quad n = 0, 1, ..., N
+\end{equation*}
+
+we find the time $n = 0$ price
+\begin{align*}
+	V_0(\omega_1\omega_2\omega_3) &= \tilde{\E}_0 \left[ \frac{V_3}{(1 + r)^{3}} \right] (\omega_1\omega_2\omega_3) \\
+	&= \E \left[ \frac{V_3}{(1 + r)^{3}} \right](\omega_1\omega_2\omega_3) \\
+	&= \sum_{\omega_1\omega_2\omega_3 \in \Omega} \tilde{\P}(\omega_1\omega_2\omega_3) \cdot \frac{V_3(\omega_1\omega_2\omega_3)}{(1 + r)^{3}} \\
+	&= \tilde{\P}(HHH) \cdot \frac{599.636973}{1.0033^3} + 0 + 0 + 0 \\
+	&= \left( \frac{383}{880} \right)^3 \cdot \frac{599.636973}{1.0033^3} \\
+	&\approx 48.9490505
+\end{align*}
+
+At time $n = 1$ we find the prices
+\begin{align*}
+	V_1(H\omega_1\omega_2) &= \tilde{\E}_1 \left[ \frac{V_N}{(1 + r)^{N - 1}} \right](H\omega_1\omega_2) \\
+	&= \sum_{H\omega_2\omega_3 \in \Omega} \tilde{\P}(\omega_1\omega_2\omega_3|\omega_1 = H) \cdot \frac{V_N}{(1 + r)^{N - 1}} \\
+	&= \tilde{\P}(HHH|H) \frac{V_3(HHH)}{(1.0033^2)} + 0 + 0 \\
+	&= \left( \frac{383}{880} \right)^2 \frac{599.636973}{1.0033^2} \\
+	&\approx 112.838936 \\
+	V_1(T\omega_2\omega_3) &= \tilde{\E}_1 \left[ \frac{V_N}{(1 + r)^{N - 1}} \right](T\omega_1\omega_2) \\
+	&= \sum_{T\omega_2\omega_3 \in \Omega} \tilde{\P}(\omega_1\omega_2\omega_3|\omega_1 = T) \cdot \frac{V_N}{(1 + r)^{N - 1}} \\
+	&= 0
+\end{align*}
+
+
+We may repeat this process to find the time $n = 2$ prices
+\begin{align*}
+	V_2(HH\omega_3) &\approx 260.11968 \\
+	V_2(HT\omega_3) &= 0 \\
+	V_2(TH\omega_3) &= 0 \\
+	V_2(TT\omega_3) &= 0 
+\end{align*}
+
+Part (ii): Using the risk neutral pricing formula we may write the time zero gap call price
+\begin{equation*}
+	V^{gc}_0 = \tilde{\E} \left[ \frac{(S_N - K_1)}{(1 + r)^N} \mathds 1_{\left\{S_N > K_2 \right\} } \right]
+\end{equation*}
+
+However, since we assume that $K_1 \leq K_2$, we have that\footnote{For brevity we denote $\left\{ S_N > K_i \right\} := \left\{ \omega_1\cdots\omega_N \in \Omega~|~ S_N(\omega_1\cdots\omega_N) > K_i \right\} $} $\left\{S_N > K_2 \right\} \subseteq \left\{ S_N > K_1 \right\}$, so
+\begin{equation*}
+	\mathds 1_{\left\{S_N > K_2 \right\} } \leq \mathds 1_{\left\{S_N > K_1 \right\} }
+\end{equation*}
+
+Therefore
+\begin{equation*}
+	V^{gc}_0 = \tilde{\E} \left[ \frac{(S_N - K_1)}{(1 + r)^N} \mathds 1_{\left\{S_N > K_2 \right\} } \right] \leq \tilde{\E} \left[ \frac{(S_N - K_1)}{(1 + r)^N} \mathds 1_{\left\{S_N > K_1 \right\} } \right] = V^{ec}_0
+\end{equation*}
+
+where $V^{ec}_0$ is the time zero price of a vanilla European call option. Note that if $\left\{S_N > K_2\right\} \subset \left\{S_N > K_1\right\}$ (proper subset) then our inequality above becomes a strict inequality. \\
+
+An alternative answer: For $K_1 \leq K_2$,
+\begin{align*}
+	V^{ec}_0 &= (S_N - K_1)^+ \\
+	&= \tilde{\E} \left[ \frac{(S_N - K_1)}{(1 + r)^N} \mathds 1_{\left\{S_N > K_1 \right\} } \right] \\
+	&= \tilde{\E} \left[ \frac{(S_N - K_1)}{(1 + r)^N} \mathds 1_{\left\{S_N > K_2\right\} \cup \left\{ K_1 < S_N \leq K_2 \right\} } \right] \\
+	&= \tilde{\E} \left[ \frac{(S_N - K_1)}{(1 + r)^N} \mathds 1_{\left\{S_N > K_2\right\}} \right] + \tilde{\E} \left[ \frac{(S_N - K_1)}{(1 + r)^N} \mathds 1_{ \left\{ K_1 < S_N \leq K_2 \right\} } \right] \\
+	&= V^{gc}_0 + \tilde{\E} \left[ \frac{(S_N - K_1)}{(1 + r)^N} \mathds 1_{ \left\{ K_1 < S_N \leq K_2 \right\} } \right] \\
+\end{align*}
+
+where we may analyse further if we were so inclined to do so.\footnote{We see that a European call option with strike $K_1$ is equivalent to a gap call option with strike $K_1$ and gap price $K_2$ as well as an up \& out barrier option with barrier $K_2$ and a singleton monitoring point at expiry.}
+
+\subsection{Cash-Flow Valuation}
+
+\indent Recall that we may find the net present value (NPV) of some series of cash flows $C$ at time $n$ by
+\begin{equation*}
+	NPV_n(C) = \sum^N_{k = n} \frac{C_k}{(1 + r)^{k - n}}
+\end{equation*}
+
+\begin{theorem}{\bf Cash-Flow Valuation.} Consider an $N$-period binomial asset pricing model with $0 < d < 1 + r < u$ and risk neutral probability measure $\tilde{\P}$. Let $C_0, C_1, ..., C_N$ be a sequence of random variables such that each $C_n$ depends only on $\omega_1\cdots\omega_n$. The price at time $n$ of the derivative security that makes payments $C_n,...,C_N$ at time $n,..., N$ is given by
+\begin{equation*}
+	V_n = \tilde{\E}_n \left[ \sum^N_{k = n}  \frac{C_k}{(1 + r)^{k - n}}  \right] \quad n = 0,..., N
+\end{equation*}
+
+and the price process $\{V_n\}^N_{n = 0}$ satisfies
+\begin{equation*}
+	C_n(\omega_1\cdots\omega_n) = V_n(\omega_1\cdots\omega_n) - \frac{1}{1 + r} \left[ \tilde{p}V_{n + 1}(\omega_1\cdots\omega_n H) + \tilde{q}V_{n + 1}(\omega_1\cdots\omega_n T) \right]
+\end{equation*}
+
+Now, define
+\begin{equation*}
+	\Delta_n(\omega_1\cdots\omega_n) = \frac{V_{n + 1}(\omega_1\cdots\omega_n H)  - V_{n + 1}(\omega_1\cdots\omega_n T)}{ S_{n + 1}(\omega_1\cdots\omega_n H) - S_{n + 1}(\omega_1\cdots\omega_n T) } \quad n = 0, 1, ..., N - 1
+\end{equation*}
+
+If we set $X_0 = V_0$ and define recursively forwards in time the portfolio values $X_1, ..., X_N$ by
+\begin{equation*}
+	X_{n + 1} = \Delta_n S_{n + 1} + (1 + r)(X_n - C_n - \Delta_n S_n)
+\end{equation*}
+
+then
+\begin{equation*}
+	X_n(\omega_1\cdots\omega_n) = V_n(\omega_1\cdots\omega_n) \quad n = 0, ..., N,~\omega_1\cdots\omega_n \in \Omega
+\end{equation*}
+\end{theorem}
+
+\indent We say that $V_n$ is the \underline{net present value} at time $n$ of the payments $C_n, ..., C_N$. Note that $C_n$ depends only on $\omega_1\cdots\omega_n$, so for $n = 0,..., N - 1$
+\begin{align*}
+	V_n &= \tilde{\E}_n \left[ \sum^N_{k = n} \frac{C_k}{(1 + r)^{k - n}}  \right] \quad \text{(by the definition)} \\
+	&= C_n + \frac{1}{1 + r} \tilde{\E}_n \left[ \sum^N_{k = n + 1} \frac{C_k}{(1 + r)^{k - (n + 1)} }\right] \quad \text{(taking out what is known)} \\
+	&= C_n + \frac{1}{1 + r} \tilde{\E}_n \left[ \tilde{\E}_{n + 1} \left[ \sum^N_{k = n + 1} \frac{C_k}{(1 + r)^{k - (n + 1)} }\right] \right] \quad \text{(tower property)} \\
+	&= C_n + \frac{1}{1 + r} \tilde{\E}_n \left[  V_{n + 1} \right] \quad \text{(by the definition of $NPV$)}
+\end{align*}
+
+and for $n = N$ we have $V_N = C_N$. Now, consider an agent with a short position on the cash flows (i.e. makes payment $C_n$ at time $n$ -- if $C_n$ is negative the short party will have received $C_n$). The agent invests in a risky asset and the risk free bank account so that at time $n$
+\begin{enumerate}
+	\item Just before making a payment $C_n$ the value of the portfolio is $X_n = V_n$
+	\item Then the agent makes payment $C_n$
+	\item The agent rebalances the portfolio and takes $\Delta_n$ units in the stock
+\end{enumerate}
+
+The time $n + 1$ value of the portfolio (prior to making the time $n + 1$ payment) is
+\begin{equation*}
+	X_{n + 1} = \Delta_n S_{n + 1} + (1 + r)(X_n - C_n - \Delta_n S_n)
+\end{equation*}
+
+If $X_0 = V_0$ and the agent chooses $\Delta_n$ according to
+\begin{equation*}
+	\Delta_n(\omega_1\cdots\omega_n) = \frac{V_{n + 1}(\omega_1\cdots\omega_n H)  - V_{n + 1}(\omega_1\cdots\omega_n T)}{ S_{n + 1}(\omega_1\cdots\omega_n H) - S_{n + 1}(\omega_1\cdots\omega_n T) } \quad n = 0, 1, ..., N - 1
+\end{equation*}
+
+then we claim that
+\begin{equation*}
+	X_n(\omega_1\cdots\omega_n) = V_n(\omega_1\cdots\omega_n)
+\end{equation*}
+
+and
+\begin{equation*}
+	X_N(\omega_1\cdots\omega_N) = V_N(\omega_1\cdots\omega_N) = C_N(\omega_1\cdots\omega_N)
+\end{equation*}
+
+\begin{proof} We proceed inductively. First
+\begin{equation*}
+	P(0)~:~X_0 = V_0
+\end{equation*}
+
+where $V_0$ is calculated from the risk neutral pricing formula, is true by definition. Now, fix arbitrary $\omega_1\cdots\omega_n$, we set our inductive hypothesis as
+\begin{equation*}
+	P(n)~:~X_n(\omega_1\cdots\omega_n) = V_n(\omega_1\cdots\omega_n) \quad 1 \leq n \leq N - 1
+\end{equation*}
+
+\indent It is our task to show that $P(n + 1)$ holds under the assumption that $P(n)$ is true. From the definition we have that
+\begin{equation*}
+	V_n = C_n + \tilde{\E}_n \left[ \frac{1}{1 + r}V_{n + 1} \right]
+\end{equation*}
+
+So, by the definition of conditional expectation we have
+\begin{equation*}
+	V_n(\omega_1\cdots\omega_n) - C_n(\omega_1\cdots\omega_n) = \frac{1}{1 + r}\left[ \tilde{p}V_{n + 1}(\omega_1\cdots\omega_n H) + \tilde{q}V_{n + 1}(\omega_1\cdots\omega_n T)\right] 
+\end{equation*}
+
+First consider the case $\omega_{n + 1} = H$. By construction of the portfolio
+\begin{equation*}
+	X_{n + 1}(\omega_1\cdots\omega_n H) = X_{n + 1}(H) = \Delta_n S_{n + 1}(H) + (1 + r)\left[ X_n - C_n - \Delta_n S_n \right]
+\end{equation*}
+
+but
+\begin{equation*}
+	\Delta_n = \frac{V_{n + 1}(H)  - V_{n + 1}(T)}{ S_{n + 1}(H) - S_{n + 1}(T) } \quad n = 0, 1, ..., N - 1
+\end{equation*}
+
+so
+\begin{align*}
+	X_{n + 1}(H) &= \frac{V_{n + 1}(H)  - V_{n + 1}(T)}{ S_{n + 1}(H) - S_{n + 1}(T) } \cdot S_{n + 1}(H) + (1 + r) \left[ X_n - C_n - \frac{V_{n + 1}(H)  - V_{n + 1}(T)}{ S_{n + 1}(H) - S_{n + 1}(T) } \cdot S_n \right] \\
+	&= \frac{V_{n + 1}(H) - V_{n + 1}(T)}{ S_{n + 1}(H) - S_{n + 1}(T) } \left[ S_{n + 1}(H)- (1 + r)S_n \right] + (1 + r)\left[X_n - C_n\right] \\
+	&= \frac{V_{n + 1}(H) - V_{n + 1}(T)}{ uS_n - dS_n } \left[ uS_n - (1 + r)S_n \right] + (1 + r)\left[X_n - C_n\right] \\
+	&= \frac{V_{n + 1}(H) - V_{n + 1}(T)}{ u - d} \left[ u - (1 + r) \right] + (1 + r)\left[X_n - C_n\right] \\
+	&= \left[ V_{n + 1}(H) - V_{n + 1}(T) \right] \left[ \frac{u - (1 + r)}{u - d} \right] + (1 + r)\left[X_n - C_n\right]
+\end{align*}	
+
+Note
+\begin{align*}
+	\tilde{p} &= \frac{(1 + r) - d}{u - d} \\
+	\implies \tilde{q} &= 1 - \tilde{p} = \frac{u - d}{u - d} - \frac{(1 + r) - d}{u - d} \\
+	&= \frac{u - (1 + r)}{u - d}
+\end{align*}
+	
+hence
+\begin{align*}
+	X_{n + 1}(H) &= \left[ V_{n + 1}(H) - V_{n + 1}(T) \right] \left[ \frac{u - (1 + r)}{u - d} \right] + (1 + r)\left[X_n - C_n\right] \\
+	&= \left[ V_{n + 1}(H) - V_{n + 1}(T) \right]\tilde{q} + (1 + r)\left[X_n - C_n\right] \\
+	&= \left[ V_{n + 1}(H) - V_{n + 1}(T) \right]\tilde{q} + (1 + r)\left[V_n - C_n\right] \quad \text{(since } X_n = V_n) \\
+\end{align*}
+
+\indent By the inductive hypothesis we have $V_n = C_n + \tilde{\E}_n\left[ \frac{1}{1 + r} V_{n + 1} \right]$ so we may simplify our result to
+\begin{align*}
+	X_{n + 1}(H) &= \left[ V_{n + 1}(H) - V_{n + 1}(T) \right]\tilde{q} + (1 + r)\left[C_n + \tilde{\E}_n\left[ \frac{1}{1 + r} V_{n + 1} \right] - C_n\right]  \\
+	&= \tilde{q}V_{n + 1}(H) - \tilde{q}V_{n + 1}(T) + \tilde{\E}_n \left[ V_{n + 1} \right] \\
+	&= \tilde{q}V_{n + 1}(H) - \tilde{q}V_{n + 1}(T) + \tilde{p}V_{n + 1}(H) + \tilde{q}V_{n + 1}(T) \\
+	&= (\tilde{p} + \tilde{q})V_{n + 1}(H) \\
+	&= V_{n + 1}(H)
+\end{align*}
+
+and so we find that
+\begin{equation*}
+	X_{n + 1}(\omega_1\cdots\omega_n H) = V_{n + 1}(\omega_1\cdots\omega_n H)
+\end{equation*}
+
+A similar procedure will yield
+\begin{equation*}
+	X_{n + 1}(\omega_1\cdots\omega_n T) = V_{n + 1}(\omega_1\cdots\omega_n T)
+\end{equation*}
+
+Therefore, by induction, we have that
+\begin{equation*}
+	X_n(\omega) = V_n(\omega) \quad 0 \leq n \leq N,~ \omega \in \Omega
+\end{equation*}
+\end{proof}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\end{document}

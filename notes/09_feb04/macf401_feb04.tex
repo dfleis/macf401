@@ -1,0 +1,483 @@
+% --------------------------------------------------------------
+% This is all preamble stuff that you don't have to worry about.
+% Head down to where it says "Start here"
+% --------------------------------------------------------------
+ 
+\documentclass[12pt]{article}
+ 
+\usepackage[margin=1in]{geometry} 
+\usepackage{bm} % bold in mathmode \bm
+\usepackage{amsmath,amsthm,amssymb,mathtools}
+\usepackage{dsfont} % for indicator function \mathds 1
+\usepackage{tikz,pgf,pgfplots}
+\usepackage{enumerate} 
+\usepackage[multiple]{footmisc} % for an adjascent footnote
+\usepackage{graphicx,float} % figures
+
+\newtheorem{definition}{Definition}
+\let\olddefinition\definition
+\renewcommand{\definition}{\olddefinition\normalfont}
+\newtheorem{lemma}{Lemma}
+\let\oldlemma\lemma
+\renewcommand{\lemma}{\oldlemma\normalfont}
+\newtheorem{proposition}{Proposition}
+\let\oldproposition\proposition
+\renewcommand{\proposition}{\oldproposition\normalfont}
+\newtheorem{corollary}{Corollary}
+\let\oldcorollary\corollary
+\renewcommand{\corollary}{\oldcorollary\normalfont}
+\newtheorem{theorem}{Theorem}
+\let\oldtheorem\theorem
+\renewcommand{\theorem}{\oldtheorem\normalfont}
+
+\newcommand\norm[1]{\left\lVert#1\right\rVert} % \norm command 
+
+%%% PLOTTING PARAMETERS
+\tikzstyle{bag} = [text width=7em, text centered] %binomial tree node width
+\tikzstyle{end} = []
+%%%
+
+%% set noindent by default and define indent to be the standard indent length
+\newlength\tindent
+\setlength{\tindent}{\parindent}
+\setlength{\parindent}{0pt}
+\renewcommand{\indent}{\hspace*{\tindent}}
+
+\newcommand*{\vv}[1]{\vec{\mkern0mu#1}} % \vec command
+
+%% DAVIDS MACRO KIT %%
+\newcommand{\R}{\mathbb R}
+\newcommand{\N}{\mathbb N}
+\newcommand{\Z}{\mathbb Z}
+\renewcommand{\P}{\mathbb P}
+\newcommand{\Q}{\mathbb Q}
+\newcommand{\E}{\mathbb E}
+\newcommand{\var}{\mathrm{Var}}
+\newcommand{\indist}{\,{\buildrel \mathcal D \over \sim}\,}
+
+\newcommand{\bigtau}{\text{{\large $\bm \tau$}}}
+
+\begin{document}
+ 
+% --------------------------------------------------------------
+%                         Start here
+% --------------------------------------------------------------
+ 
+\title{Mathematical \& Computational Finance I\\Lecture Notes}
+\author{State Prices/Change of Measure}
+\date{February 4 2016 \\ Last update: \today{}}
+\maketitle
+
+% SECTION: 
+\section{Change of Measure}
+
+\indent In the binomial asset pricing model we have two measure: $\P$, the real-world measure, and $\tilde{\P}$, the risk-neutral measure. We used $\tilde{\P}$ as a way to arrive to ``correct'' derivative prices, but what if we wish to consider $\P$ in the real world? How we do interpret the results we find in the risk-neutral measure for results relative to the real-world measure? \\
+
+\begin{definition} Consider a finite sample space $\Omega$ on which two probability measures $\P$ and $\tilde{\P}$ are defined. Assume that $\tilde{\P}(\omega) > 0$ and $\tilde{\P}(\omega) > 0$ for all $\omega \in \Omega$. The random variable
+\begin{equation*}
+	Z(\omega) = \frac{ \tilde{\P}(\omega) }{ \tilde{\P}(\omega) }, \quad \omega \in \Omega
+\end{equation*}
+
+is the \underline{Radon-Nikod\'{y}m derivative of $\tilde{\P}(\omega)$ with respect to $\tilde{\P}(\omega)$}. We sometimes use the notation
+\begin{equation*}
+	Z(\omega) = \frac{ d\tilde{\P} }{ d\P }(\omega)
+\end{equation*}
+\end{definition}
+
+The Radon-Nikod\'{y}m derivative has the following important properties:
+
+\begin{theorem} Let $\tilde{\P}(\omega)$ and $\P(\omega)$ be probability measures on a finite sample space $\Omega$. Assume that $\P(\omega) > 0$ and $\tilde{\P}(\omega) > 0$ for all $\omega \in \Omega$. Then the Radon-Nikod\'{y}m derivative $Z = \frac{ d\tilde{\P} }{ d\P }$ satisfies
+\begin{enumerate}[(i)]
+	\item $\P(Z > 0) = 1$
+	\item $\E[Z] = 1$
+	\item For any random variable $Y$
+	\begin{equation*}
+		\tilde{\E}[Y] = \E[ZY]
+	\end{equation*}
+\end{enumerate}
+
+\begin{proof} (i) We use the definitions. Assume that $\tilde{\P}(\omega) > 0$, so $\P(\omega) > 0$ for all $\omega \in \Omega$ so
+\begin{equation*}
+	Z(\omega) = \frac{ \tilde{\P}(\omega) }{ \P(\omega) } > 0 \quad \forall_{\omega\in\Omega}
+\end{equation*}
+
+Hence
+\begin{equation*}
+	\P( Z(\omega) > 0 ) = \sum_{\{ \omega: Z(\omega) > 0 \}} \P(\omega) = \sum_{ \omega \in \Omega } \P(\omega) = 1
+\end{equation*}
+\end{proof}
+
+\begin{proof} (ii)
+	\begin{align*}
+		\E[Z] &= \sum_{\omega \in \Omega} Z(\omega) \P(\omega) \\
+		&= \sum_{\omega \in \Omega} \P(\omega)\frac{ \tilde{\P}(\omega) }{ \P(\omega) } \\
+		&= \sum_{\omega \in \Omega} \tilde{\P}(\omega) = 1
+	\end{align*}
+\end{proof}
+
+\begin{proof} (iii)
+	\begin{align*}
+		\tilde{\E}[Z] &= \sum_{\omega \in \Omega} Y(\omega)\tilde{\P}(\omega) \\
+		&= \sum_{\omega \in \Omega} Y(\omega) \tilde{\P}(\omega) \frac{ \P(\omega) }{ \P(\omega) } \\
+		&= \sum_{\omega \in \Omega} Y(\omega) Z(\omega) \P(\omega) \\
+		&= \E[ZY]
+	\end{align*}
+\end{proof}
+\end{theorem}
+
+\underline{Example}: Consider the binomial model with $N = 3, u = 2, d = \frac{1}{2}$, and $r = \frac{1}{4}$. If we have $p = \frac{2}{3}$ and $q = \frac{1}{3}$ then we have the tree
+\begin{figure}[H]
+\begin{tikzpicture}[sloped]
+  \node (a) at ( 0,0) [bag] {$S_0 = 4$};
+  \node (b) at ( 4,-1.5) [bag] {$S_1(T) = 2$};
+  \node (c) at ( 4,1.5) [bag] {$S_1(H) = 8$};
+  \node (d) at ( 8,-3) [bag] {$S_2(TT) = 1$};
+  \node (e) at ( 8,0) [bag] {$S_2(HT) = S_2(TH) = 4$};
+  \node (f) at ( 8,3) [bag] {$S_2(HH) = 8$};
+  \node (g) at ( 12,-4.5) [bag] {$S_3(TTT) = \frac{1}{2}$};
+  \node (h) at ( 12,-1.5) [bag] {$S_3(HTT) = S_3(THT) = S_3(TTH) = 2$};
+  \node (i) at ( 12,1.5) [bag] {$S_3(HHT) = S_3(HTH) = S_3(THH) = 8$};
+  \node (j) at ( 12,4.5) [bag] {$S_3(HHH) = 32$};
+  \draw [->] (a) to node [below] {} (b);
+  \draw [->] (a) to node [above] {} (c);
+  \draw [->] (c) to node [below] {} (f);
+  \draw [->] (c) to node [above] {} (e);
+  \draw [->] (b) to node [below] {} (e);
+  \draw [->] (b) to node [above] {} (d);
+  \draw [->] (d) to node [below] {} (g);
+  \draw [->] (d) to node [above] {} (h);
+  \draw [->] (e) to node [below] {} (h);
+  \draw [->] (e) to node [above] {} (i);
+  \draw [->] (f) to node [below] {} (i);
+  \draw [->] (f) to node [above] {} (j);
+\end{tikzpicture}
+\caption{Asset price tree $S_n$}
+\end{figure}
+
+We can calculate the probabilities for a particular node under $\P$
+\begin{figure}[H]
+\begin{tikzpicture}[sloped]
+  \node (a) at ( 0,0) [bag] {$\P$};
+  \node (b) at ( 4,-1.5) [bag] {$p_1(T) = \frac{1}{3}$};
+  \node (c) at ( 4,1.5) [bag] {$p_1(H) = \frac{2}{3}$};
+  \node (d) at ( 8,-3) [bag] {$p_2(TT) = \frac{1}{9}$};
+  \node (e) at ( 8,0) [bag] {$p_2(HT) = p_2(TH) = \frac{2}{9}$};
+  \node (f) at ( 8,3) [bag] {$p_2(HH) = \frac{4}{9}$};
+  \node (g) at ( 12,-4.5) [bag] {$p_3(TTT) = \frac{1}{27}$};
+  \node (h) at ( 12,-1.5) [bag] {$p_3(HTT) = p_3(THT) = p_3(TTH) = \frac{2}{27}$};
+  \node (i) at ( 12,1.5) [bag] {$p_3(HHT) = p_3(HTH) = p_3(THH) = \frac{4}{27}$};
+  \node (j) at ( 12,4.5) [bag] {$p_3(HHH) = \frac{8}{27}$};
+  \draw [->] (a) to node [below] {} (b);
+  \draw [->] (a) to node [above] {} (c);
+  \draw [->] (c) to node [below] {} (f);
+  \draw [->] (c) to node [above] {} (e);
+  \draw [->] (b) to node [below] {} (e);
+  \draw [->] (b) to node [above] {} (d);
+  \draw [->] (d) to node [below] {} (g);
+  \draw [->] (d) to node [above] {} (h);
+  \draw [->] (e) to node [below] {} (h);
+  \draw [->] (e) to node [above] {} (i);
+  \draw [->] (f) to node [below] {} (i);
+  \draw [->] (f) to node [above] {} (j);
+\end{tikzpicture}
+\caption{Real world probabilities $\P$}
+\end{figure}
+
+Similarly, under $\tilde{\P}$ we have $\tilde{p} = \frac{1}{2}$, so
+\begin{figure}[H]
+\begin{tikzpicture}[sloped]
+  \node (a) at ( 0,0) [bag] {$\P$};
+  \node (b) at ( 4,-1.5) [bag] {$p_1(T) = \frac{1}{2}$};
+  \node (c) at ( 4,1.5) [bag] {$p_1(H) = \frac{1}{2}$};
+  \node (d) at ( 8,-3) [bag] {$p_2(TT) = \frac{1}{4}$};
+  \node (e) at ( 8,0) [bag] {$p_2(HT) = p_2(TH) = \frac{1}{4}$};
+  \node (f) at ( 8,3) [bag] {$p_2(HH) = \frac{1}{4}$};
+  \node (g) at ( 12,-4.5) [bag] {$p_3(TTT) = \frac{1}{8}$};
+  \node (h) at ( 12,-1.5) [bag] {$p_3(HTT) = p_3(THT) = p_3(TTH) = \frac{1}{8}$};
+  \node (i) at ( 12,1.5) [bag] {$p_3(HHT) = p_3(HTH) = p_3(THH) = \frac{1}{8}$};
+  \node (j) at ( 12,4.5) [bag] {$p_3(HHH) = \frac{1}{8}$};
+  \draw [->] (a) to node [below] {} (b);
+  \draw [->] (a) to node [above] {} (c);
+  \draw [->] (c) to node [below] {} (f);
+  \draw [->] (c) to node [above] {} (e);
+  \draw [->] (b) to node [below] {} (e);
+  \draw [->] (b) to node [above] {} (d);
+  \draw [->] (d) to node [below] {} (g);
+  \draw [->] (d) to node [above] {} (h);
+  \draw [->] (e) to node [below] {} (h);
+  \draw [->] (e) to node [above] {} (i);
+  \draw [->] (f) to node [below] {} (i);
+  \draw [->] (f) to node [above] {} (j);
+\end{tikzpicture}
+\caption{Real world probabilities $\tilde{\P}$}
+\end{figure}
+
+Then, from the definition of the Radon-Nikod\'{y}m derivative of $\tilde{\P}$ with respect to $\P$ is
+\begin{align*}
+	Z(HHH) &= \frac{ \tilde{\P}(HHH) }{ \P(HHH) } = \frac{ \frac{1}{8} }{ \frac{8}{27} } = \frac{27}{64}\\
+	Z(HHT) &= Z(HTH) = Z(THH) =  \frac{ \frac{1}{8} }{ \frac{4}{27} } = \frac{27}{32} \\
+	Z(HTT) &= Z(THT) = Z(THH) =  \frac{ \frac{1}{8} }{ \frac{2}{27} } = \frac{27}{16} \\
+	Z(TTT) &= \frac{ \frac{1}{8} }{ \frac{1}{27} } = \frac{27}{8} \\
+\end{align*}
+
+{\bf Fact}: The Radon-Nikod\'{y}m derivative of $\tilde{\P}$ with respect to $\P$ can be calculated as\footnote{I think this is only true in our binomial model. It we weren't in a coin toss space then this wouldn't necessarily hold.}
+\begin{equation*}
+	Z(\omega_1\cdots\omega_N) = \frac{ \tilde{\P}(\omega_1\cdots\omega_N) }{ \P(\omega_1\cdots\omega_N) } = \left( \frac{\tilde{p}}{p} \right)^{\#H(\omega_1\cdots\omega_N)} \left( \frac{\tilde{q}}{q} \right)^{\#T(\omega_1\cdots\omega_N)}
+\end{equation*}
+
+\indent Now, suppose that $V_3$ is the payoff of a derivative security (in particular the lookback option example used in the text). By the risk-neutral pricing formula we have
+\begin{align*}
+	V_0 &= \tilde{\E} \left[ \frac{V_3}{(1 + r)^3} \right] \\
+	&= \frac{1}{(1 + r)^3} \sum_{\omega\in\Omega} V_3(\omega)\tilde{\P}(\omega) \\
+	&= \frac{1}{(1 + r)^3} \sum_{\omega\in\Omega} V_3(\omega) \frac{ \P(\omega) }{ \P(\omega) } \tilde{\P}(\omega) \\
+	&= \frac{1}{(1 + r)^3} \sum_{\omega\in\Omega} V_3(\omega) Z(\omega) \P(\omega) \\
+	&= \E \left[ Z \cdot \frac{ V_3 }{(1 + r)^3} \right]
+\end{align*}
+
+which is essentially an application of the Theorem $\tilde{\E}[Y] = \E[ZY]$ above. This formula weights the payoff in each state of the world using the Radon-Nikod\'{y}m derivative/random variable $Z$ and calculates the expectation using the corresponding real-world probabilities under $\P$.
+
+\begin{definition} In the $N$-period binomial model with real-world probability measure $\P$ and risk-neutral probability measure $\tilde{\P}$ suppose that $\tilde{\P}(\omega) > 0$ and $\P(\omega) > 0$ for all $\omega \in \Omega$. The \underline{state-price density} is the random variable
+\begin{equation*}
+	\zeta(\omega) = \frac{Z(\omega)}{(1 + r)^N}
+\end{equation*}
+
+where $Z$ is the Radon-Nikod\'{y}m derivative of $\tilde{\P}$ with respect to $\P$. The random variable
+\begin{equation*}
+	\zeta(\omega)\P(\omega)
+\end{equation*}
+
+is called the \underline{state-price corresponding to $\omega$}.\footnote{The state price density $\zeta(\omega)$ includes the discount factor $(1 + r)^{-N}$ and a measure of risk $Z(\overline{\omega})$.}
+\end{definition}
+
+\begin{definition} Let $\overline{\omega} = \overline{\omega_1} \cdots \overline{\omega_N}$ be a particular coin toss sequence in the $N$-period binomial asset pricing model. The derivative security with payoff
+\begin{equation*}
+	V_N(\omega) = 
+	\begin{cases}
+		1 & \text{if } \omega = \overline{\omega} \\
+		0 & \text{else}
+	\end{cases}
+\end{equation*}
+
+is called the \underline{Arrow-Debreu security} associated with state $\overline{\omega}$.
+\end{definition}
+
+By the risk-neutral pricing formula
+\begin{align*}
+	\tilde{\E} \left[ \frac{V_N}{(1 + r)^N} \right] &= \tilde{\E} \left[ \frac{ \mathds 1_{\{\overline{\omega} \}} }{(1 + r)^N} \right] \\
+	&= \frac{ \tilde{\P}(\overline{\omega}) }{ (1 + r)^N } \\
+	&= \frac{ Z(\overline{\omega}) \P(\overline{\omega}) }{ (1 + r)^N } \\
+	&= \zeta(\overline{\omega}) \P(\overline{\omega})
+\end{align*}
+
+\indent A derivative security with general payoff $V_N$ at time $N$ can be regarded as a portfolio of Arrow-Debreu securities since
+\begin{align*}
+	V_0 &= \tilde{\E} \left[ \frac{V_N}{(1 + r)^N} \right] \quad \text{(risk-neutral pricing)} \\
+	&= \E \left[ Z \cdot \frac{V_N}{(1 + r)^N} \right] \quad \text{(theorem: } \tilde{\E}[Y] = \E[ZY]) \\
+	&= \E [\zeta V_N] \quad \text{(definition of } \zeta) \\
+	&= \sum_{\omega \in \Omega} V_N(\omega)\zeta(\omega)\P(\omega) \quad \text{(definition of expectation)}
+\end{align*}
+
+where $V_N(\omega)$ corresponds to the portfolio weight on a particular state $\omega$ and $\zeta(\omega)\P(\omega)$ corresponds to the state-price for an Arrow-Debreu security given $\omega$.
+
+\subsection{Radon-Nikod\'{y}m Process} 
+
+\indent We now consider the time $n$ conditional expectation under $\P$ of the Radon-Nikod\'{y} derivative $Z$. This permits us to investigate prices of derivative securities at intermediate time steps in terms of the real-world measure.
+
+\begin{theorem} Let $Z$ be a random variable on a finite probability space $(\Omega, \P)$. Define the random variable
+\begin{equation*}
+	Z_n = \E_n [Z] \quad n = 0, 1,..., N
+\end{equation*}
+
+Then the process $\{Z_n\}^N_{n = 0}$ is a $\P$-martingale.
+\begin{proof} \hfill
+\begin{enumerate}[(i)]
+	\item Adapted? By definition of conditional expectation we have that $Z_n = \E_n[Z]$ depends on the first $n$ coin tosses. Hence, the process $\{Z_n\}$ is an adapted stochastic process.
+	
+	\item Martingale property? We must show that for all $n$, $0 \leq n \leq N$, that $\E_n[Z_{n + 1}] = Z_n$. Note
+	\begin{align*}
+		\E_n[Z_{n + 1}] &= \E_n [E_{n + 1}[Z]] \quad \text{(by definition)} \\
+		&= \E_n[Z] \quad \text{(tower property)} \\
+		&= Z_n \quad \text{(by definition)}
+	\end{align*}
+\end{enumerate}
+\end{proof}
+
+\indent In general we may make successive estimates of a random variable by conditioning further in time. We may expect that doing so would provide more information, but this theorem tells us that, on average, that the estimates of the future state remain the same. This fits with out intuition of the definition of a martingale.
+\end{theorem}
+
+\underline{Example}: Consider the binomial model with $N = 3, u = 2, d = \frac{1}{2}, r = \frac{1}{4}, p = \frac{2}{3}$, and $q = \frac{1}{3}$. We had used this example to calculate values of $Z$ conditioned at time zero (ordinary expectation). We may use the theorem above to compute intermediate values for $Z$. For example, to calculate $Z_2$
+\begin{align*}
+	Z_n(\omega) &= \E_n[Z](\omega) \\
+\implies Z_2(HH) &= \E_2[Z](HH) \\
+	&= pZ(HHH) + qZ(HHT) \\
+	&= \frac{2}{3}\cdot\frac{27}{64} + \frac{1}{3}\cdot\frac{27}{32} \\
+	&= \frac{9}{16}
+\end{align*}
+
+\indent Note that in the $N$-step binomial model $Z_N = \E_N[Z] = Z$ as $Z$ only depends on the first $N$ coin tosses. We could use the definition to calculate $Z_1 = \E_1[Z]$ but it is simpler to use the one-step martingale property of $Z$
+\begin{equation*}
+	Z_1 = \E_1[Z_2]
+\end{equation*}
+
+to go recursively backwards in time. Similarly, $Z_0 = \E_0[Z_1] \equiv \E[Z_1]$ but from part (ii) of the theorem stating $\E[Z] = 1$ we find that this computation is not necessary.
+
+\begin{definition} Let $\tilde{\P}(\omega)$ and $\P(\omega)$ be probability measures on a finite sample space $\Omega$. Assume that $\P(\omega) > 0$ and $\tilde{\P}(\omega) > 0$ for all $\omega \in \Omega$. For the Radon-Nikod\'{y}m derivative $Z = \frac{ d\tilde{\P} }{ d\P }$, the associated \underline{Radon-Nikod\'{y}m process} is
+\begin{equation*}
+	Z_n = \E_n[Z] \quad n = 0, 1, ..., N
+\end{equation*}
+
+In particular, $Z_N = Z$ and $Z_0 = 1$.
+\end{definition}
+
+\begin{lemma} ``{\em This lemma allows us to connect concepts from our previous work}'' Assume the conditions of the above definition. Let $n \in \{0,..., N\}$ and let $Y$ be a random variable depending only on the first $n$ coin tosses. Then
+\begin{equation*}
+	\tilde{\E}[Y] = \E[Z_n Y]
+\end{equation*}
+
+\begin{proof} 
+\begin{align*}
+	\tilde{\E}[Y] &= \E[ZY] \quad \text{(by an earlier result)} \\
+	&= \E[\E_n[ZY]] \quad \text{(tower property)} \\
+	&= \E[Y\E_n[Z]] \quad \text{(adaptedness of $Y$)} \\
+	&= \E[YZ_n] \quad \text{(by definition: } Z_n = \E_n[Z])
+\end{align*}
+\end{proof}
+\end{lemma}
+
+Now, consider a time $n$ fixed coin toss sequence $\overline{\omega}_1\cdots\overline{\omega}_n$ and define the random variable
+\begin{equation*}
+	Y(\omega_1\cdots\omega_n\omega_{n + 1}\cdots\omega_N) = 
+	\begin{cases}
+		1 & \text{if } \omega_1\cdots\omega_n = \overline{\omega}_1\cdots\overline{\omega}_n \\
+		0 & \text{else}
+	\end{cases}
+\end{equation*}
+
+\indent We can think of this as an Arrow-Debreu security at an intermediate time step $n$ such that the future coin tosses $\omega_{n + 1}\cdots\omega_N$ are irrelevant to the payoff. Then
+\begin{align*}
+	\tilde{\E}[Y] &= \tilde{\P}( \omega_1\cdots\omega_n = \overline{\omega}_1\cdots\overline{\omega}_n ) \\
+	&= \tilde{p}^{\#H(\overline{\omega}_1\cdots\overline{\omega}_n)} \tilde{q}^{\#T(\overline{\omega}_1\cdots\overline{\omega}_n)} 
+\end{align*}
+
+and
+\begin{align*}
+	\E[YZ_n] &= Z_n(\overline{\omega}_1\cdots\overline{\omega}_n) \P( \omega_1\cdots\omega_n = \overline{\omega}_1\cdots\overline{\omega}_n )\\
+	&= Z_n(\overline{\omega}_1\cdots\overline{\omega}_n)\tilde{p}^{\#H(\overline{\omega}_1\cdots\overline{\omega}_n)} \tilde{q}^{\#T(\overline{\omega}_1\cdots\overline{\omega}_n)} 
+\end{align*}
+
+and since we had that $\E[Z_nY] = \tilde{\E}[Y]$ from our above lemma, we may state
+\begin{align*}
+	Z_n(\omega_1\cdots\omega_n)\tilde{p}^{\#H(\omega_1\cdots\omega_n)} \tilde{q}^{\#T(\omega_1\cdots\omega_n)} &= \tilde{p}^{\#H(\omega_1\cdots\omega_n)} \tilde{q}^{\#T(\omega_1\cdots\omega_n)} \\
+	\implies Z_n(\omega_1\cdots\omega_n) &= \left( \frac{\tilde{p}}{p} \right)^{\#H(\omega_1\cdots\omega_n)} \left( \frac{\tilde{q}}{q} \right)^{\#T(\omega_1\cdots\omega_n)} 
+\end{align*}
+
+which permits us to compute intermediate time steps for $Z_n$ fairly easily.
+
+\begin{theorem}{\bf General Bayes Theorem} Let $0 \leq n \leq m \leq N$ and let $Y$ be a random variable depending on only the first $n$ coin tosses. Then
+\begin{align*}
+	\tilde{\E}_n[Y] &= \frac{ \E_n[Z_mY] }{ \E_n[Z_m] } \\
+	&= \frac{ \E_n[Z_m Y] }{ Z_n } 
+\end{align*} 
+
+\begin{proof} 
+\begin{align*}
+	\E_n[Y](\omega_1\cdots\omega_n) &= \sum_{\omega_{n + 1}\cdots\omega_m} Y(\omega_1\cdots\omega_n\omega_{n + 1}\cdots\omega_m) \tilde{p}^{\#H(\omega_{n + 1}\cdots\omega_m)} \tilde{q}^{\#T(\omega_{n + 1}\cdots\omega_m)} \\
+	&= \left[ \frac{p}{\tilde{p}} \right]^{\#H(\omega_1\cdots\omega_n)} \left[ \frac{ q }{\tilde{q}} \right]^{\#T(\omega_1\cdots\omega_n)} \sum_{\omega_{n + 1}\cdots\omega_m} Y(\omega_1\cdots\omega_m) \cdot \\
+	&\hphantom{{}={-------}} \left[ \frac{\tilde{p}}{p} \right]^{\#H(\omega_1\cdots\omega_m)} \left[ \frac{\tilde{q}}{q} \right]^{\#T(\omega_1\cdots\omega_m)} \cdot	
+	 \tilde{p}^{\#H(\omega_{n + 1}\cdots\omega_m)} \tilde{q}^{\#T(\omega_{n + 1}\cdots\omega_m)}
+\end{align*}
+
+but 
+\begin{equation*}
+	Z_n(\omega_1\cdots\omega_n) = \left[ \frac{\tilde{p}}{p} \right]^{\#H(\omega_1\cdots\omega_n)} \left[ \frac{\tilde{q}}{q} \right]^{\#T(\omega_1\cdots\omega_n)} 
+\end{equation*}
+
+so
+\begin{align*}
+	\E_n[Y](\omega_1\cdots\omega_n) &= \frac{1}{Z_n} \sum_{\omega_{n + 1} \cdots \omega_m} Y(\omega_1\cdots\omega_m) Z_m \tilde{p}^{\#H(\omega_{n + 1}\cdots\omega_m)} \tilde{q}^{\#T(\omega_{n + 1}\cdots\omega_m)} \\
+	&= \frac{1}{Z_n} \E_n[Z_mY] 
+\end{align*}
+
+and by the tower property we can show that, with $n \leq m$,
+\begin{equation*}
+	Z_n = \E_n[Z_m] = \E_n[\E_m[Z]] = \E_n[Z]
+\end{equation*}
+
+hence
+\begin{equation*}
+	\tilde{\E}_n[Y] = \frac{ \E_n[Z_mY] }{Z_n} = \frac{ \E_n[Z_mY] }{ \E_n[Z_m] }
+\end{equation*}
+
+as desired.
+\end{proof}
+
+\indent The general Bayes Theorem allows us to give a version of the risk-neutral pricing formula based on state-prices and the real-world probability measure $\P$.
+\end{theorem}
+
+\begin{definition} In the $N$-period binomial model with real-world probability measure $\P$ and risk-neutral measure $\tilde{\P}$ suppose that $\tilde{\P}(\omega) > 0$ and $\P(\omega) > 0$ for all $\omega \in \Omega$. \\
+
+The \underline{state-price density process} $\{\zeta_n\}^N_{n = 0}$ is given by
+\begin{equation*}
+	\zeta_n = \frac{Z_n}{(1 + r)^n}
+\end{equation*}
+
+where $Z_n$ is the Radon-Nikod\'{y}m process of $\tilde{\P}$ with respect to $\P$.
+\end{definition}
+
+\begin{theorem} Consider the $N$-period binomial model with $0 < d < 1 + r < u$, the real-world probability measure $\P$, and risk-neutral probability measure $\tilde{\P}$. Suppose that $\tilde{\P}(\omega) > 0$ and $\P(\omega) > 0$ for all $\omega \in \Omega$. \\
+
+\indent Let $\{Z_n\}^N_{n = 0}$ be the Radon-Nikod\'{y}m process and $\{\zeta\}^N_{n = 0}$ be the state-price density process, and let $V_N$ be the payoff at time $N$ of a derivative security which may depend on all $N$ coin tosses. The price at time $n$ is
+\begin{equation*}
+	V_n = \frac{1}{\zeta_n} \E_n[\zeta_NV_N]
+\end{equation*}
+
+\begin{proof} By the risk-neutral pricing formula
+\begin{align*}
+	V_n &= \tilde{\E}_n \left[ \frac{V_N}{(1 + r)^{N - n}} \right] \\
+	&= \frac{\E_n \left[ Z_N \cdot \frac{V_N}{(1 + r)^{N - n}} \right] }{Z_n} \quad \text{(by the General Bayes Theorem with $m = N$)} \\
+	&= \frac{(1 + r)^n}{Z_n} \E_n \left[ \frac{Z_N V_N}{(1 + r)^N} \right] \quad \text{(taking out what is known at time $n$)} \\
+	&= \frac{1}{\zeta_n} \E_n [\zeta_NV_N]
+\end{align*}
+\end{proof}
+
+\end{theorem}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\end{document}

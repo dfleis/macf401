@@ -1,0 +1,473 @@
+% --------------------------------------------------------------
+% This is all preamble stuff that you don't have to worry about.
+% Head down to where it says "Start here"
+% --------------------------------------------------------------
+ 
+\documentclass[12pt]{article}
+ 
+\usepackage[margin=1in]{geometry} 
+\usepackage{bm} % bold in mathmode \bm
+\usepackage{amsmath,amsthm,amssymb,mathtools}
+\usepackage{dsfont} % for indicator function \mathds 1
+\usepackage{tikz,pgf,pgfplots}
+\usepackage{enumerate} 
+\usepackage[multiple]{footmisc} % for an adjascent footnote
+\usepackage{graphicx,float} % figures
+\usepackage{csvsimple,longtable,booktabs} % load csv as a table
+\usepackage{listings,color} % for code snippets
+
+\newenvironment{theorem}[2][Theorem:]{\begin{trivlist} %% Theorem Environment
+\item[\hskip \labelsep {\bfseries #1}\hskip \labelsep {\bfseries #2.}]}{\end{trivlist}}
+
+\newtheorem{definition}{Definition}
+\let\olddefinition\definition
+\renewcommand{\definition}{\olddefinition\normalfont}
+\newtheorem{lemma}{Lemma}
+\let\oldlemma\lemma
+\renewcommand{\lemma}{\oldlemma\normalfont}
+\newtheorem{proposition}{Proposition}
+\let\oldproposition\proposition
+\renewcommand{\proposition}{\oldproposition\normalfont}
+\newtheorem{corollary}{Corollary}
+\let\oldcorollary\corollary
+\renewcommand{\corollary}{\oldcorollary\normalfont}
+
+\newcommand\norm[1]{\left\lVert#1\right\rVert} % \norm command 
+
+%%% PLOTTING PARAMETERS
+\pgfmathsetseed{1952} % for Brownian Motion plotting
+\newcommand{\Emmett}[5]{% points, advance, rand factor, options, end label
+\draw[#4] (0,0)
+\foreach \x in {1,...,#1}
+{   -- ++(#2,rand*#3)
+}
+node[right] {#5};
+}
+
+\pgfplotsset{every axis/.append style={},
+    cmhplot/.style={mark=none,line width=1pt,->},
+    soldot/.style={only marks,mark=*},
+    holdot/.style={fill=white,only marks,mark=*},
+}
+
+\tikzset{>=stealth}
+
+\pgfmathdeclarefunction{gauss}{2}{%
+  \pgfmathparse{1/(#2*sqrt(2*pi))*exp(-((x-#1)^2)/(2*#2^2))}%
+}
+
+\tikzstyle{bag} = [text width=6em, text centered]
+\tikzstyle{end} = []
+%%%
+
+%% set noindent by default and define indent to be the standard indent length
+\newlength\tindent
+\setlength{\tindent}{\parindent}
+\setlength{\parindent}{0pt}
+\renewcommand{\indent}{\hspace*{\tindent}}
+
+\newcommand*{\vv}[1]{\vec{\mkern0mu#1}} % \vec command
+
+%% DAVIDS MACRO KIT %%
+\newcommand{\R}{\mathbb R}
+\newcommand{\N}{\mathbb N}
+\newcommand{\Z}{\mathbb Z}
+\renewcommand{\P}{\mathbb P}
+\newcommand{\Q}{\mathbb Q}
+\newcommand{\E}{\mathbb E}
+\newcommand{\var}{\mathrm{Var}}
+\newcommand{\indist}{\,{\buildrel \mathcal D \over \sim}\,}
+
+\newcommand{\bigtau}{\text{{\large $\bm \tau$}}}
+
+\begin{document}
+ 
+% --------------------------------------------------------------
+%                         Start here
+% --------------------------------------------------------------
+ 
+\title{Mathematical \& Computational Finance I\\Lecture Notes}
+\author{Introduction \& Binomial No-Arbitrage Pricing Model}
+\date{January 7 2016 \\ Last update: \today{}}
+\maketitle
+
+% SECTION: 
+\section{Introduction}
+
+\begin{quote} 
+\centering 
+{\em ``Essentially all models are wrong, but some are useful.'' } \\
+\hfill - George Box
+\end{quote}
+
+\subsection{No Arbitrage Pricing -- Forward Contracts}
+
+\indent Consider the forward contract with underlying price $S_t,\,t\in[0,T]$, delivery price $K$, and expiration date $T$. The forward price $F_t$ is set such that the contract has value zero at time $t$. \\
+
+\indent Let's look more closely at the forward price. Let the (continuously compounded) risk-free rate of interest be constant at $r$. At time $t$ suppose that we buy/long one unit of the asset for $S_t$ and sell/short one forward contract for delivery of one unit of $S$ at time $T$. Since the value of the forward price at contract inception is zero we find that the up-front cost of this strategy is just $S_t$. \\
+
+\indent At time $T$ the investor/long party will receive the forward price $F$. The forward price must equal to the value that $S$ would grow to if invested at the risk-free rate. That is,
+
+\begin{equation*}
+	F(S,t,T) = S_t e^{r(T - t)}
+\end{equation*}
+
+\indent If this equality does not hold then there is \underline{arbitrage}. In general, as $t \to T$ we find that $F(S, t, T) \to S_T$. \\
+
+If $F(S, t, T) > S_t e^{r(T - t)}$ then an arbitrageur can
+
+\begin{center}
+\begin{tabular}{l|l}
+At time $t$ & At time $T$ \\
+\hline
+Borrow $S_t$ at rate $r$ & Receive $F_T$ in exchange for $S_T$ \\
+Use the loan to buy one unit of $S$ & Repay the loan at $-S_te^{rt}$ \\
+Enter in a forward contract to deliver $S$ at $T$ & Riskless profit of $F_T - S_te^{r(T - t)} > 0$
+\end{tabular}
+\end{center}
+
+If $F(S, t, T) < S_t e^{r(T - t)}$ then the arbitrageur can
+
+\begin{center}
+\begin{tabular}{l|l}
+At time $t$ & At time $T$ \\
+\hline
+Short $S$ and receive $S_t$ & Take $S_te^{r(T - t)}$ out of the bank account \\
+Invest $S_t$ in the bank at rate $r$ & Pay $F_T$ \& receive $S$ to close the short position \\
+Enter in a forward contract to buy $S$ at $T$ & Riskless profit of $S_te^{r(T - t)} - F_T > 0$
+\end{tabular}
+\end{center}
+
+\subsection{Options}
+
+\indent Consider a European call option at time $t = 0$, maturity $T$, strike $K$, underlying $S$, and option value $C$. The payoff of the European call option is defined to be
+
+\begin{equation*}
+	C_T =
+	\begin{cases}
+		0 & S_T \leq K \\
+		S_T - K & S_T > K
+	\end{cases}
+\end{equation*}
+
+\indent We wish to extend the idea of ``no-arbitrage pricing'' to the valuation of options. However, it is not as simple to do so as it was for forward pricing. To this end we introduce concepts of {\em replication} and {\em hedging}, as well as the construction of the binomial model.
+
+\section{Binomial No-Arbitrage Pricing Model}
+
+\indent First consider a simple one-step binomial model over two time periods. Let the current price of some stock ABC be 100, denoted $S_0 = 100$, and let the interest rate for borrowing be $r = 10\%$. Suppose that in one year the pricing will either go up to $S_T = 150$ or remain constant at $S_T = 100$. We may represent this by the following tree \\
+
+\begin{center}
+\begin{tikzpicture}[sloped]
+  \node (a) at ( 0,0) [bag] { $S_0 = 100$ };
+  \node (b) at ( 4,-1.5) [bag] { $S^d_T = 100$ };
+  \node (c) at ( 4,1.5) [bag] { $S^u_T = 150$ };
+  \draw [->] (a) to node [below] {} (b);
+  \draw [->] (a) to node [above] {} (c);
+\end{tikzpicture}
+\end{center}
+
+\indent What is the fair/rational price for a call option written on such an asset with strike $K = 120$? That is, what is $C_0$? By definition, we have the payoff/value at time $T = 1$
+\begin{equation*}
+	C_T = 
+	\begin{cases}
+		\max \left\{S^u_T - K, 0\right\} & \text{if the stock goes up} \\
+		\max \left\{S^d_T - K, 0\right\} & \text{if the stock goes down}
+	\end{cases}
+\end{equation*}
+
+which is equivalent to
+\begin{equation*}
+	C_T = 
+	\begin{cases}
+		\max \left\{150 - 120, 0\right\} = 30 =: C^u_T & \text{if up} \\
+		\max \left\{100 - 120, 0\right\} = 0 =: C^d_T & \text{if down}
+	\end{cases}
+\end{equation*}
+
+\indent For these events we may be interested in assigning probabilities to the up \& down states, say
+\begin{align*}
+	\P\left( \text{up state} \right) &= \P(H) = p \\
+	\P\left( \text{down state} \right) &= \P(T) = 1 - p
+\end{align*}
+
+\indent Doing so permits us to calculate the expectation of the payoff $C_T$ with respect to the chosen measure $\P$
+\begin{align*}
+	\E\left[C_T \right] &= \P(H) C^u_T + \P(T) C^d_T \\
+	&= p C^u_T + (1 - p)C^d_T
+\end{align*}
+
+Discounting back to $t = 0$ gives us the discounted present value of the option
+\begin{equation*}
+	C_0 = \frac{1}{1 + r} \left(p C^u_T + (1 - p)C^d_T \right)
+\end{equation*}
+
+\indent This equation is nice, but begs the question: What should be the value for $p$? We may have our own subjective beliefs about what $p$ should be. For example, if we believe $p$ to be $p = 0.5$ then we should be willing to pay
+\begin{equation*}
+	C_0 = \frac{1}{1 + 0.1}\left( 0.5 \cdot 30 + 0.5 \cdot 0 \right) \approx \$ 13.64
+\end{equation*}
+
+\indent However, using such subjective probabilities for $p$ would be incorrect and lead to the wrong price for $C_0$.\footnote{Why is this {\em ipso facto} true? Would we create arbitrage otherwise?} In order to come to the correct no-arbitrage price we will create a portfolio with the same cash flows as the option $C$ at all points in the option's life. In this case we require a single cash flow corresponding to the time $T$ payoff of $C$. The \underline{law of one price} or \underline{absence of arbitrage} argument implies that the price of such a {\em replicating portfolio} for the option and the price of the option itself must be the same.
+
+\subsection{The Replicating Portfolio}
+
+Construct a portfolio $H$ consisting of
+\begin{equation*}
+	H = \begin{cases}
+		\text{$n$ units of the underlying asset} \\
+		\text{$B$ dollars in the bank account}
+	\end{cases}
+\end{equation*}
+
+\indent We wish to choose $n$ and $B$ so that this portfolio replicates the cash flow/payoff of the option at time $T$. We say that such a portfolio is called the \underline{hedging portfolio} for the option. The value at time $T$ of the portfolio is
+\begin{equation*}
+	H_T = 
+	\begin{cases}
+		n S^u_T + B(1 + r) =: H^u_T & \text{if up} \\
+		n S^d_T + B(1 + r) =: H^d_T & \text{if down}
+	\end{cases}
+\end{equation*}
+
+Setting $C_T = H_T$ we may solve the system in two unknowns $(n, B)$,
+\begin{align*}
+	C^u_T &= 30 = n\cdot 150 + (1 + 0.1)\cdot B = H^u_T \\
+	C^d_T &= 0 = n\cdot 100 + (1 + 0.1)\cdot B = H^u_T \\
+\end{align*}
+
+which has the solution
+\begin{align*}
+	n &= 0.6 \\
+	B &= -54.54
+\end{align*}
+
+\indent With these values of $n$ and $B$ our hedging portfolio will have the same value at time $T$ as the option regardless of the state of the underlying stock. Thus, a portfolio consisting of 0.6 shares of ABC financed by $\$54.54$ of borrowing replicates the payoff of the call option at time $T$. \\
+
+\indent From the law of one price (absence of arbitrage) it follows that the initial value of the hedging portfolio and the option itself must be the same. The price of the option is difficult to determine on its own, but we may easily price the value of the portfolio. At time $0$,
+\begin{align*}
+	H_0 &= nS_0 + B \\
+	&= 0.6\cdot 100 - 54.54 \\
+	&= 5.46
+\end{align*}
+
+Hence, $C_0 = H_0 = 5.46$.
+
+\subsection{Risk Neutral Probability}
+
+\indent An interesting consequence of the hedging portfolio is that it induces a probability, denoted $q$, such that the expectation formula introduced earlier gives the value solving $C_0 = H_0$,
+\begin{align*}
+	C_0 = 5.46 &= \frac{1}{1 + r}\left( qC^u_T + (1 - q)C^d_T\right) \\
+	&= \frac{1}{1 + 0.1} \left(q\cdot 30 + (1 - q)\cdot 0\right) \\ 
+	&= q \frac{30}{1.1} \\
+	\implies q &= \frac{5.46\cdot 1.1}{30} \approx 0.2
+\end{align*}
+
+\indent We call $q$ the \underline{risk neutral} or \underline{martingale} probability. Note that this probability gives the no-arbitrage price and yet does not require any subjective probability of the up/down states assigned by some party. \\
+
+\indent The reason we may call $q$ the \underline{risk neutral probability} is that using this probability to calculate the expected returns gives us
+\begin{align*}
+	\E_q \left[ \frac{S_T - S_0}{S_0} \right] &= q \left( \frac{S^u_T - S_0}{S_0} \right) + (1 - q) \left( \frac{S^d_T - S_0}{S_0} \right) \\
+	&= 0.2 \left( \frac{150 - 100}{100} \right) + (1 - 0.2) \left( \frac{100 - 100}{100} \right) \\
+	&= 0.2\cdot 0.5 \\
+	&= 0.1 = r
+\end{align*}
+
+\indent That is, with the risk neutral probabilities the expected return of the risky asset is the risk free rate. An investor would be indifferent towards risk to accept the risk free rate as the rate of return on a risky asset. \\
+
+\indent The reason we may call $q$ the \underline{martingale probability} is that using this probability to calculate the expected asset price
+\begin{align*}
+	\E_q \left[ \frac{S_T}{1 + r} \right] &= q \left( \frac{S^u_T}{1 + r} \right) + (1 - q) \left( \frac{S^d_T}{1 + r} \right) \\ 
+	&= 0.2 \left( \frac{150}{1.1} \right) + (1 - 0.2) \left( \frac{100}{1.1} \right) \\ 
+	&= 100 = S_0
+\end{align*}
+
+\indent That is, the expectation of the discount asset price is equal to the asset price at the previous time step. This is a general property (known as the martingale property) of some more complicated models and makes computations simpler.
+
+\subsection{Binomial Models}
+
+\indent Suppose we partition the time interval $[0, T]$ into subintervals of length $(\Delta t) = \frac{T}{M}$. Denote $t_i = i(\Delta t)$ for $0 \leq i \leq M$. We suppose that between any successive time-steps the asset price moves either up by a factor of $u$ or down by a factor of $d$.
+
+\begin{center}
+\begin{tikzpicture}[sloped]
+  \node (a) at ( 0,0) [bag] { $S_{t_{i - 1}} $ };
+  \node (b) at ( 4,-1.5) [bag] { $S_{t_i} = uS_{t_{i - 1}}$ };
+  \node (c) at ( 4,1.5) [bag] { $S_{t_i} = dS_{t_{i - 1}}$ };
+  \draw [->] (a) to node [below] {} (b);
+  \draw [->] (a) to node [above] {} (c);
+\end{tikzpicture}
+\end{center}
+
+\indent We assume that we know the initial asset price at time 0. The price after one step step is either $uS_0$ or $dS_0$. After two time steps the price is either $u^2S_0$, $udS_0$, or $d^2S_0$. In general, at time $t_i$ there are $i + 1$ possible asset prices. In general, write
+\begin{equation*}
+	S^n_i = d^{i - n}u^n S_0 \quad 0 \leq n \leq i
+\end{equation*}
+
+\begin{figure}[H]
+\begin{center}
+\begin{tikzpicture}[sloped]
+  \node (a) at ( 0,0) [bag] {$S_0$};
+  \node (b) at ( 4,-1.5) [bag] {$S^0_1$};
+  \node (c) at ( 4,1.5) [bag] {$S^1_1$};
+  \node (d) at ( 8,-3) [bag] {$S^0_2$};
+  \node (e) at ( 8,0) [bag] {$S^1_2$};
+  \node (f) at ( 8,3) [bag] {$S^2_2$};
+  \node (g) at ( 12,-4.5) [bag] {$S^0_3$};
+  \node (h) at ( 12,-1.5) [bag] {$S^1_3$};
+  \node (i) at ( 12,1.5) [bag] {$S^2_3$};
+  \node (j) at ( 12,4.5) [bag] {$S^3_3$};
+  \draw [->] (a) to node [below] {} (b);
+  \draw [->] (a) to node [above] {} (c);
+  \draw [->] (c) to node [below] {} (f);
+  \draw [->] (c) to node [above] {} (e);
+  \draw [->] (b) to node [below] {} (e);
+  \draw [->] (b) to node [above] {} (d);
+  \draw [->] (d) to node [below] {} (g);
+  \draw [->] (d) to node [above] {} (h);
+  \draw [->] (e) to node [below] {} (h);
+  \draw [->] (e) to node [above] {} (i);
+  \draw [->] (f) to node [below] {} (i);
+  \draw [->] (f) to node [above] {} (j);
+\end{tikzpicture}
+\end{center}
+\caption{Recombining tree for $M = 3$ steps. The node $S^n_i$ denotes the asset price at the $i^\text{th}$ time step given $n$ up-states.}
+\end{figure}
+
+\indent We may work backwards through the tree to calculate the option price at time zero using the same hedging method as was presented in the one time step example. Suppose that $R$ is the continuously compounded risk-free interest rate (i.e. the discount factor for one time step is then $e^{-R(\Delta t)}$). Let $C^n_i$ denote the value of the call option at a time step $t = t_i$ corresponding to the asset price $S^n_i$. The same hedging argument yields the risk-neutral probability $q$ associated with the continuously compounded interest rate $R$
+\begin{equation*}
+	q = \frac{e^{R(\Delta t)} - d}{u - d}
+\end{equation*}
+
+\indent Using the risk neutral probabilities of an up or a down step we may compute the price of a European call option by taking its discounted expectation.
+
+\subsection{General Results}
+
+\indent The general recursive procedure for finding the price of a European derivative security at time zero, denoted by $V_0$, is known as backwards induction. 
+
+\begin{definition} \underline{Backwards induction}: For an $N$-period binomial model with $0 < d < 1 + r < u$ let $V_N$ be a random variable (the payoff) depending on the first $N$ coin tosses $\omega_1\cdots\omega_N$. Define recursively, backwards in time, the sequence of random variables $V_{N - 1}, V_{N - 2}, ..., V_0$ by
+\begin{equation*}
+	V_n(\omega_1\cdots\omega_n) = \frac{1}{1 + r}\left[\tilde{p}V_{n + 1}(\omega_1\cdots\omega_n H) + \tilde{q}V_{n + 1}(\omega_1\cdots\omega_n T) \right]
+\end{equation*}
+
+where $\tilde{p} = \frac{1 + r - d}{u - d}$ and $\tilde{q} = 1 - \tilde{p}$.
+\end{definition}
+
+\begin{theorem}{Replication} Define
+\begin{equation*}
+	\Delta_n(\omega_1\cdots\omega_n) = \frac{V_{n + 1}(\omega_1\cdots\omega_n H) - V_{n + 1}(\omega_1\cdots\omega_n T)}{S_{n + 1}(\omega_1\cdots\omega_n H) - S_{n + 1}(\omega_1\cdots\omega_n T)}
+\end{equation*}
+
+If we set $X_0 = V_0$ and define recursively, forward in time, the values $X_1, ..., X_N$ by\footnote{The following equation is known as the {\em wealth equation}.}
+\begin{equation*}
+	X_{n + 1} = \Delta_nS_{n + 1} + (1 + r)(X_n - \Delta_n S_n)
+\end{equation*}
+
+Then
+\begin{equation*}
+	X_N(\omega_1\cdots\omega_N) = V_N(\omega_1\cdots\omega_N)
+\end{equation*}
+
+for all $\omega_1\cdots\omega_N$.
+
+\begin{proof} The proof is by induction on $n$ and we find that
+\begin{equation*}
+	X_n(\omega_1\cdots\omega_n) = V_n(\omega_1\cdots\omega_n)
+\end{equation*}
+
+for all $n = 0, 1, ..., N$ and all subsequences $\omega_1\cdots\omega_n$.
+\end{proof}
+
+\indent This theorem gives us that, by no-arbitrage, that the price of the derivative security at time $n$ is given $V_n(\omega_1\cdots\omega_n)$.
+\end{theorem}
+
+\subsection{Conditional Expectation}
+
+\indent Suppose $X$ is a random variable on the coin-toss sample space $\Omega = \{ \omega: \omega = \omega_1\cdots\omega_N,~\omega_i \in \{H, T\}\}$ where $\P(\omega_i = H) = p$ and $\P(\omega_i = T) = 1 - p$. Write $X(\omega) = X(\omega_1\cdots\omega_N)$.
+
+\begin{definition} \underline{Conditional Expectation}: For $1 \leq n \leq N$ let $\omega_1\cdots\omega_n$ be given. There are $2^{N - n}$ possible continuations $\omega_{n + 1}\cdots\omega_N$ in our sample space. Write
+\begin{align*}
+	\#H(\omega_{n + 1}\cdots\omega_N) &= \text{number of heads} \\
+	\#T(\omega_{n + 1}\cdots\omega_N) &= \text{number of tails}
+\end{align*}
+
+and define the random variable
+\begin{equation*}
+	\E_n[X](\omega_1\cdots\omega_n) = \sum_{\omega_{n + 1}\cdots \omega_N} p^{\#H(\omega_{n + 1}\cdots\omega_N)}\cdot(1 - p)^{\#T(\omega_{n + 1}\cdots\omega_N)}X({\omega_1\cdots\omega_N})
+\end{equation*}
+
+and we call $\E_n[X]$ the \underline{conditional expectation of $X$ based on the information at time $n$}.
+\end{definition}
+
+\subsubsection{Properties of Conditional Expectation}
+
+\indent In the two extreme cases of $n = 0, N$ we define $\E_0[X] = \E[X]$ (i.e. no information) and $\E_N[X] = X$ (i.e. full information). For constants $c_1, c_2$
+\begin{equation*}
+	\E_n[c_1X + c_2Y] = c_1\E_n[X] + c_2\E_n[Y] \quad \text{(linearity)}
+\end{equation*}
+
+If $X$ only depends on the first $n$ coin tosses 
+\begin{equation*}
+	\E_n[XY] = X\E_n[Y] \quad \text{(taking out what is known)}
+\end{equation*}
+
+If $0 \leq n \leq m \leq N$ then
+\begin{equation*}
+	\E_n[\E_m[X]] = \E_n[X] \quad \text{(tower property)}
+\end{equation*}
+
+\indent That is, we collapse our expectation to time step containing the least information. If $X$ only depends on $\omega_{n + 1}\cdots\omega_N$ (i.e. no information was gained from the first $n$ coin tosses) then
+\begin{equation*}
+	\E_n[X(\omega_{n + 1}\cdots\omega_N)] = \E_n[X] = \E_0[X] = \E[X]
+\end{equation*}
+
+\subsection{Risk Neutral Pricing}
+
+\begin{theorem}{Risk Neutral Pricing Formula} Consider an $N$-period binomial asset pricing model with $0 < d < 1 + r < u$ and risk neutral measure $\tilde{\P}$. Let $V_N$ be a random variable (a derivative security paying $V_N$ at time $N$) depending on the coin tosses. Then, for $0 \leq n \leq N$, the price of the derivative security at time $n$ is given by
+\begin{equation*}
+	V_n = \tilde{\E}_n \left[ \frac{V_N}{(1 + r)^{N - n}} \right]
+\end{equation*}
+
+\indent The random variables $V_n$ defined by the equation above are the same as the random variable $V_n$ given by the backwards induction definition and the replication theorem.
+
+\begin{proof} Proof omitted for now but will be shown in later lectures.
+
+\end{proof}
+\end{theorem}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\end{document}

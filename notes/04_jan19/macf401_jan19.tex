@@ -1,0 +1,362 @@
+% --------------------------------------------------------------
+% This is all preamble stuff that you don't have to worry about.
+% Head down to where it says "Start here"
+% --------------------------------------------------------------
+ 
+\documentclass[12pt]{article}
+ 
+\usepackage[margin=1in]{geometry} 
+\usepackage{bm} % bold in mathmode \bm
+\usepackage{amsmath,amsthm,amssymb,mathtools}
+\usepackage{dsfont} % for indicator function \mathds 1
+\usepackage{tikz,pgf,pgfplots}
+\usepackage{enumerate} 
+\usepackage[multiple]{footmisc} % for an adjascent footnote
+\usepackage{graphicx,float} % figures
+\usepackage{csvsimple,longtable,booktabs} % load csv as a table
+\usepackage{listings,color} % for code snippets
+
+\newtheorem{definition}{Definition}
+\let\olddefinition\definition
+\renewcommand{\definition}{\olddefinition\normalfont}
+\newtheorem{lemma}{Lemma}
+\let\oldlemma\lemma
+\renewcommand{\lemma}{\oldlemma\normalfont}
+\newtheorem{proposition}{Proposition}
+\let\oldproposition\proposition
+\renewcommand{\proposition}{\oldproposition\normalfont}
+\newtheorem{corollary}{Corollary}
+\let\oldcorollary\corollary
+\renewcommand{\corollary}{\oldcorollary\normalfont}
+\newtheorem{theorem}{Theorem}
+\let\oldtheorem\theorem
+\renewcommand{\theorem}{\oldtheorem\normalfont}
+
+\newcommand\norm[1]{\left\lVert#1\right\rVert} % \norm command 
+
+%%% PLOTTING PARAMETERS
+\pgfmathsetseed{1952} % for Brownian Motion plotting
+\newcommand{\Emmett}[5]{% points, advance, rand factor, options, end label
+\draw[#4] (0,0)
+\foreach \x in {1,...,#1}
+{   -- ++(#2,rand*#3)
+}
+node[right] {#5};
+}
+
+\pgfplotsset{every axis/.append style={},
+    cmhplot/.style={mark=none,line width=1pt,->},
+    soldot/.style={only marks,mark=*},
+    holdot/.style={fill=white,only marks,mark=*},
+}
+
+\tikzset{>=stealth}
+
+\pgfmathdeclarefunction{gauss}{2}{%
+  \pgfmathparse{1/(#2*sqrt(2*pi))*exp(-((x-#1)^2)/(2*#2^2))}%
+}
+
+\tikzstyle{bag} = [text width=6em, text centered]
+\tikzstyle{end} = []
+%%%
+
+%% set noindent by default and define indent to be the standard indent length
+\newlength\tindent
+\setlength{\tindent}{\parindent}
+\setlength{\parindent}{0pt}
+\renewcommand{\indent}{\hspace*{\tindent}}
+
+\newcommand*{\vv}[1]{\vec{\mkern0mu#1}} % \vec command
+
+%% DAVIDS MACRO KIT %%
+\newcommand{\R}{\mathbb R}
+\newcommand{\N}{\mathbb N}
+\newcommand{\Z}{\mathbb Z}
+\renewcommand{\P}{\mathbb P}
+\newcommand{\Q}{\mathbb Q}
+\newcommand{\E}{\mathbb E}
+\newcommand{\var}{\mathrm{Var}}
+\newcommand{\indist}{\,{\buildrel \mathcal D \over \sim}\,}
+
+\newcommand{\bigtau}{\text{{\large $\bm \tau$}}}
+
+\begin{document}
+ 
+% --------------------------------------------------------------
+%                         Start here
+% --------------------------------------------------------------
+ 
+\title{Mathematical \& Computational Finance I\\Lecture Notes}
+\author{Backwards Induction \& Probability Theory on Coin Toss Space}
+\date{January 19 2016 \\ Last update: \today{}}
+\maketitle
+
+% SECTION: 
+\section{Exercise 1.8: Asian Call Option}
+
+to do...
+
+\section{Backwards Induction}
+
+\begin{definition} The general recursive procedure for finding the price of a European derivative security at time zero, denoted $V_0$, is called \underline{backwards induction}. \\
+
+\indent For an $N$-period binomial model with $0 < d < 1 + r < u$ let $V_N$ be a random variable (the payoff) depending on the first $N$ coin tosses $\omega_1\cdots\omega_N$. Define recursively, backwards in time, the sequence of random variables $V_{N - 1}, V_{N - 2}, ..., V_0$ by
+\begin{equation*}
+	V_n(\omega_1\cdots\omega_n) = \frac{1}{1 + r}[\tilde{p}V_{n + 1}(\omega_1\cdots\omega_n H) + \tilde{q}V_{n + 1}(\omega_1\cdots\omega_n T)]
+\end{equation*}
+
+where
+\begin{equation*}
+	\tilde{p} = \frac{1 + r - d}{u - d} \quad \tilde{q} = 1 - \tilde{p}
+\end{equation*}
+\end{definition}
+
+\begin{theorem} {\bf Replication.} Define 
+\begin{equation*}
+	\Delta_n(\omega_1\cdots\omega_n) = \frac{V_{n + 1}(\omega_1\cdots\omega_n H) - V_{n + 1}(\omega_1\cdots\omega_n T)}{S_{n + 1}(\omega_1\cdots\omega_n H) - S_{n + 1}(\omega_1\cdots\omega_n T)}
+\end{equation*}
+
+if we set $X_0 = V_0$ and define recursively, forwards in time, the values $X_1,..., X_N$ by
+\begin{equation*}
+	X_N(\omega_1\cdots\omega_N) = V_N(\omega_1\cdots\omega_N) \quad \forall~\omega_1\cdots\omega_N \in \Omega
+\end{equation*}
+
+\begin{proof} We will proceed by induction on $n$. At time 0 we have that $P(0): X_0 = V_0$ is trivially true by construction. Therefore $P(0)$ holds. \\
+
+Assume now that our inductive hypothesis $P(n)$ holds
+\begin{equation*}
+	P(n): X_n(\omega_1\cdots\omega_n) = V_n(\omega_1\cdots\omega_n) ~ \forall \omega_1\cdots\omega_n \in \Omega
+\end{equation*}
+
+\indent Now, let $\omega_1\cdots\omega_n$ be an arbitrary and fixed sequence of coin tosses so that our inductive hypothesis $P(n)$ holds. For the next coin toss $\omega_{n + 1}$ we wish to show that $P(n + 1)$ holds, that is
+\begin{equation*}
+	P(n + 1): X_{n + 1}(\omega_1\cdots\omega_n\omega_{n + 1} \stackrel{?}{=} V_{n + 1}(\omega_1\cdots\omega_n\omega_{n + 1})
+\end{equation*}
+
+but note that from the wealth equation we have\footnote{For brevity we have dropped the functional $(\omega_1\cdots\omega_n)$.}
+\begin{equation*}
+	X_{n + 1}(\omega_1\cdots\omega_n\omega_{n + 1}) = \Delta_n S_{n + 1} + (1 + r)[X_n - \Delta_nS_n] 
+\end{equation*}
+
+Now, consider the case of the $n + 1^{\text{th}}$ coin toss to be $H$, then
+\begin{align*} 
+	X_{n + 1}(H) &= \Delta_n S_{n + 1}(H) + (1 + r)[X_n - \Delta_nS_n] \\
+	X_{n + 1}(H) &= \Delta_n u S_n + (1 + r)[X_n - \Delta_n S_n] \\
+	&= \Delta_n u S_n + (1 + r)X_n - (1 + r)\Delta_n S_n \\
+	&= (1 + r)X_n + \Delta_n S_n [u - (1 + r)] \\
+	&= (1 + r)V_n + \Delta_n S_n [u - (1 + r)] \quad \text{(by the inductive hypothesis)}
+\end{align*}
+
+but by definition
+\begin{align*}
+	\Delta_n &= \frac{V_{n + 1}(\omega_1\cdots\omega_n H) - V_{n + 1}(\omega_1\cdots\omega_n T)}{ S_{n + 1}(\omega_1\cdots\omega_n H) - S_{n + 1}(\omega_1\cdots\omega_n T)} \\
+	 &= \frac{V_{n + 1}(\omega_1\cdots\omega_n H) - V_{n + 1}(\omega_1\cdots\omega_n T)}{ u S_n(\omega_1\cdots\omega_n) - d S_n(\omega_1\cdots\omega_n)} \\
+	 &= \frac{V_{n + 1}(\omega_1\cdots\omega_n H) - V_{n + 1}(\omega_1\cdots\omega_n T)}{ (u - d) S_n(\omega_1\cdots\omega_n)}
+\end{align*}
+
+So,
+\begin{align*}
+	X_{n + 1}(H) &= (1 + r)V_n + \Delta_n S_n [u - (1 + r)] \\
+	&= (1 + r)V_n + \frac{V_{n + 1}(H) - V_{n + 1}(T)}{ (u - d) S_n}S_n [u - (1 + r)] \\                                                                                                                                                                                                                                  
+	&= (1 + r)V_n + [V_{n + 1}(H) - V_{n + 1}(T)] \left( \frac{ u - (1 + r)}{ u - d }\right) \\                                                                                                                                                                                                                                  
+\end{align*}
+
+but
+\begin{equation*}
+	\tilde{q} = \frac{u - (1 + r)}{u - d}
+\end{equation*}
+
+hence
+\begin{align*}
+	X_{n + 1}(H) &= (1 + r)V_n + [V_{n + 1}(H) - V_{n + 1}(T)] \left( \frac{ u - (1 + r)}{ u - d }\right) \\ 
+	&= (1 + r)V_n + [V_{n + 1}(H) - V_{n + 1}(T)]\tilde{q} \\ 
+\end{align*}
+
+but
+\begin{equation*}
+	(1 + r)V_n = \tilde{p}V_{n + 1}(H) + \tilde{q}V_{n + 1}(T)
+\end{equation*}	
+
+so
+\begin{align*}
+	X_{n + 1}(H) &= (1 + r)V_n + [V_{n + 1}(H) - V_{n + 1}(T)]\tilde{q} \\ 
+	&= \tilde{p}V_{n + 1}(H) + \tilde{q}V_{n + 1}(T) + [V_{n + 1}(H) - V_{n + 1}(T)]\tilde{q} \\
+	&= \tilde{p}V_{n + 1}(H) + V_{n + 1}(H)\tilde{q} \\
+	&= (\tilde{p} + \tilde{q})V_{n + 1}(H) \\
+	&= V_{n + 1}(H)
+\end{align*}
+
+which completes the case of the $n + 1^{\text{th}}$ coin toss as heads. A nearly identical procedure will confirm that 
+\begin{equation*}
+	X_{n + 1}(T) = V_{n + 1}(T)
+\end{equation*}
+
+Thus
+\begin{equation*}
+	P(n + 1): X_{n + 1}(\omega_1\cdots\omega_n\omega_{n + 1}) = V_{n + 1}(\omega_1\cdots\omega_n\omega_{n + 1})
+\end{equation*}
+
+holds, as desired. Hence, by induction $P(n)$ holds for all $0 \leq n \leq N$, for all sequences $\omega_1\cdots\omega_n$.
+\end{proof}
+\end{theorem}
+
+\indent The above replication theorem gives us that, by no-arbitrage, that the price of the European derivative security at time $n$ must be $V_n(\omega_1\cdots\omega_n)$.
+
+\section{Probability Theory on Coin Toss Space}
+
+\begin{definition} A \underline{finite probability space} consists of
+\begin{enumerate}
+	\item A finite set $\Omega$ called the \underline{sample space} and
+	\item A function $\P: \Omega \to [0,1]$ called a \underline{probability measure} such that
+	\begin{equation*}
+		\sum_{\omega\in\Omega} \P(\omega) = 1
+	\end{equation*}
+\end{enumerate}
+\end{definition}
+
+\begin{definition} An \underline{event} is a subset $\Omega$. We define the probability of an event $A \subset \Omega$ to be 
+\begin{equation*}
+	\P(A) = \sum_{\omega\in A} \P(\omega)
+\end{equation*}
+\end{definition}
+
+\indent The above definitions lead to all the usual properties of probability that we should be familiar from introductory courses (STAT 249, 250, 349, ...), e.g.
+\begin{enumerate}
+	\item $\P(\Omega) = 1$
+	\item If $A, B \subseteq \Omega$ such that $A \cap B = \emptyset$ then
+	\begin{equation*}
+		\P(A \cup B) = \P(A) + \P(B)
+	\end{equation*}
+	\item etc...
+\end{enumerate}
+
+\begin{definition} Let $(\Omega, \P)$ be a finite probability space. A \underline{random variable} $X$ is a function
+\begin{align*}
+	X: ~&\Omega \to \R \\
+	&\omega \to X(\omega)
+\end{align*}
+
+\indent Sometimes it is useful to include $\pm\infty$ as values that our random variables may take, so, using the extended real numbers
+\begin{equation*}
+	X : \Omega \to \R \cup \{+\infty\} \cup \{-\infty\}
+\end{equation*}
+\end{definition}
+
+\begin{definition} The \underline{distribution} of a random variable is a specification of the probabilities that a random variable takes certain values
+\begin{equation*}
+	F(y) = \P(\{\omega \in \Omega : X(\omega) \leq y\}) \quad \forall~y\in\R
+\end{equation*}
+
+or
+\begin{equation*}
+	f(y) = \P(\{\omega\in\Omega: X(\omega) = y\}) \quad \forall~y\in\text{Range}(X)
+\end{equation*}
+\end{definition}
+
+\begin{definition} Let $X$ be a random variable defined on the finite probability space $(\Omega,\P)$. The \underline{expectation} of $X$ is
+\begin{equation*}
+	\E_\P[X] = \sum_{\omega\in\Omega} X(\omega)\P(\omega)
+\end{equation*}
+
+and the \underline{variance} of $X$ is
+\begin{equation*}
+	\var[X] = \E_\P[(X - \E_\P[X])^2]
+\end{equation*}
+\end{definition}
+
+The usual properties of expectation and variance hold:
+\begin{enumerate}
+	\item Linearity: For $a, b\in\R$ and random variables $X, Y$
+	\begin{equation*}
+		\E[aX + bY] = a\E[X] + b\E[Y]
+	\end{equation*}
+	\item 
+	\begin{equation*}
+		\var[X] = \E[X^2] - \E^2[X]
+	\end{equation*}
+\end{enumerate}
+
+\begin{definition} A function $\phi: \R \to \R$ is \underline{convex} if, for all $t \in (0, 1)$ and all $x, y \in \R$, that is, for all linear combinations of $X$ and $Y$
+\begin{equation*}
+	\phi(tx + (1 - t)y) \leq t\phi(x) + (1 - t)\phi(y)
+\end{equation*}
+\end{definition}
+
+\begin{theorem} {\bf Jensen's Inequality.} Let $X$ be a random variable on a finite probability space $(\Omega, \P)$ and let $\phi$ be convex. Then
+\begin{equation*}
+	\phi(\E[X]) \leq \E[\phi(X)]
+\end{equation*}
+
+\begin{proof} Let $x \in \R$ be arbitrary. Then, there exists some supporting line $l$ through $(x, \phi(x))$ such that the graph of $\phi$ is above $l$. \\
+
+Therefore, $\phi(y) \geq \phi(x) + \lambda(y - x)$ where $\lambda = \text{slope}(l)$. \\
+
+Let $x = \E[x]$, then for all $y$
+\begin{equation*}
+	\phi(y) \geq \phi(\E[X]) + \lambda(y - \E[X])
+\end{equation*}
+
+Note that $\lambda$ depends on $x = \E[X]$ but not $y$. Let $y = X$ to find $\lambda$, so
+\begin{equation*}
+	\phi(X) \geq \phi(\E[X]) + \lambda(X - \E[X])
+\end{equation*}
+
+Take the expectation of both sides to yield
+\begin{align*}
+	\E[\phi(X)] &\geq \E[\phi(\E[X]) + \lambda(X - \E[X])] \\
+	&\geq \E[\phi(\E[X])] + \lambda(\E[X] - E[E[X]]) \\
+	\implies \E[\phi(X)] &\geq \phi(E[X])
+\end{align*}
+
+as desired.
+\end{proof}
+\end{theorem}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\end{document}

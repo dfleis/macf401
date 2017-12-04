@@ -1,0 +1,368 @@
+% --------------------------------------------------------------
+% This is all preamble stuff that you don't have to worry about.
+% Head down to where it says "Start here"
+% --------------------------------------------------------------
+ 
+\documentclass[12pt]{article}
+ 
+\usepackage[margin=1in]{geometry} 
+\usepackage{bm} % bold in mathmode \bm
+\usepackage{amsmath,amsthm,amssymb,mathtools}
+\usepackage{dsfont} % for indicator function \mathds 1
+\usepackage{mathdots} % for \iddots
+\usepackage{tikz,pgf,pgfplots}
+\usepackage{enumerate} 
+\usepackage[multiple]{footmisc} % for an adjascent footnote
+\usepackage{graphicx,float} % figures
+\usepackage{framed} % surround a text with a box 
+\usepackage{changepage} % \begin{adjustwidth}{2cm}{} environment
+\usepackage{array}   % for \newcolumntype macro
+
+\newtheorem{definition}{Definition}
+\let\olddefinition\definition
+\renewcommand{\definition}{\olddefinition\normalfont}
+\newtheorem{lemma}{Lemma}
+\let\oldlemma\lemma
+\renewcommand{\lemma}{\oldlemma\normalfont}
+\newtheorem{proposition}{Proposition}
+\let\oldproposition\proposition
+\renewcommand{\proposition}{\oldproposition\normalfont}
+\newtheorem{corollary}{Corollary}
+\let\oldcorollary\corollary
+\renewcommand{\corollary}{\oldcorollary\normalfont}
+\newtheorem{theorem}{Theorem}
+\let\oldtheorem\theorem
+\renewcommand{\theorem}{\oldtheorem\normalfont}
+
+%%% PLOTTING PARAMETERS
+\tikzstyle{bag} = [text width=7em, text centered] %% binomial tree node width
+\tikzstyle{end} = []
+
+\pgfplotsset{soldot/.style={color=black,only marks,mark=*},
+             holdot/.style={color=black,fill=white,only marks,mark=*},
+             compat=1.12}
+%%%
+
+%% I want to be in control of when to indent...
+%% set noindent as the default status and define \indent to indent a line
+\newlength\tindent
+\setlength{\tindent}{\parindent}
+\setlength{\parindent}{0pt}
+\renewcommand{\indent}{\hspace*{\tindent}}
+
+\newcommand*{\vv}[1]{\vec{\mkern0mu#1}} % \vec command
+
+%% DAVIDS MACROS %%
+\newcommand{\R}{\mathbb R}
+\newcommand{\N}{\mathbb N}
+\newcommand{\Z}{\mathbb Z}
+\renewcommand{\P}{\mathbb P}
+\newcommand{\Q}{\mathbb Q}
+\newcommand{\E}{\mathbb E}
+\newcommand{\var}{\mathrm{Var}}
+\newcommand{\Var}{\mathrm{Var}}
+\newcommand{\cov}{\mathrm{Cov}}
+\newcommand{\Cov}{\mathrm{Cov}}
+\newcommand{\indist}{\,{\buildrel \mathcal D \over \sim}\,}
+
+\newcommand{\bigtau}{\text{{\large $\bm \tau$}}}
+
+\newcolumntype{C}{>{$}c<{$}} % math-mode version of "c" column type
+\setlength\extrarowheight{5pt} % taller rows
+
+\begin{document}
+ 
+% --------------------------------------------------------------
+%                         Start here
+% --------------------------------------------------------------
+ 
+\title{Mathematical \& Computational Finance I\\Lecture Notes}
+\author{Black-Derman-Toy Model Calibration}
+\date{April 12 2016 \\ Last update: \today{}}
+\maketitle
+
+% SECTION: 
+\section{Black-Derman-Toy Model Calibration}
+
+\indent Our ongoing goal is how to apply the methods developed in the binomial model in order to specify an interest rate process. We then apply such a process to price fixed-income derivatives. In the real-world we need a tree that is capable of pricing zero-coupon bonds \& options correctly and in a market consistent manner. The process of matching the model to fit real-world data is known as calibration: We wish to calibrate our model to observations in the market by modifying model parameters. \\
+
+In order to calibrate the BDT model we require
+\begin{enumerate}[(i)]
+	\item Time-zero zero-coupon bond prices
+	\item Bond yield volatilities
+\end{enumerate}
+
+\indent Consider a derivative security paying $\$1$ at time $m$ if the binomial term structure goes through node $(m,j)$, and $\$0$ otherwise. Recall that we call such a derivative an Arrow-Debreu security. \\
+
+\indent Denote $A(n,i,m,j)$ to be the Arrow-Debreu security price at node $(n,i)$ which pays $\$1$ if the process goes through $(m,j)$. At the node $(m - 1, i)$, we may apply the martingale property and risk-neutral pricing formula to yield
+\begin{equation*}
+	A(m - 1, i, m, j) =
+	\begin{cases}
+		\frac{ \tilde{p}(m - 1, j - 1) }{ 1 + r(n - 1, j - 1) } & \text{if } i = j - 1 \quad \text{(discounted probability of heads)} \\
+		\frac{1 - \tilde{p}(m - 1, j) }{ 1 + r(m - 1, j) } & \text{if } i = j \quad \text{(discounted probability of tails)} \\
+		0 & \text{else}
+	\end{cases}
+\end{equation*}
+
+We define\footnote{Maybe we don't have to {\em define} it. It may be derivable from the definitions, but at the moment I don't feel like checking.}~$A(0,0,0,0) = 1$. \\
+
+We may use a portfolio of simple Arrow-Debreu securities in order to price a zero-coupon bond. The price of a zero-coupon bond at node $(n,i)$ with maturity at some future time $m$ is given by
+\begin{equation*}
+	P(n,i;m) = \sum^m_{j = 0} A(n,i,m,j)
+\end{equation*}
+
+Otherwise, we can show that there is arbitrage. From Jamshidian's Forward Induction formula we are able to calculate
+\begin{equation*}
+	A(n,i,m + 1,j) \quad j = 0,1,...,m + 1
+\end{equation*}
+
+given the previous maturity Arrow-Debreu price
+\begin{equation*}
+	A(n,i,m,j) \quad j = 0,1,...,m
+\end{equation*}
+
+The statement of Jamshidian's Forward Induction formula is\footnote{A simpler example was left as an exercise in an assignment.}
+\begin{equation*}
+	A(n,i,m + 1,j) = 
+	\begin{cases}
+		\frac{1 - \tilde{p}(m,j)}{1 + r(m,j)} A(n,i,m,j) & \text{if } j = 0 \\
+		\frac{1 - \tilde{p}(m,j)}{1 + r(m,j)} A(n,i,m,j) + \frac{\tilde{p}(m,j - 1)}{1 + r(m,j - 1)} A(n,i,m,j - 1) & \text{if } 0 < j < m \\
+		\frac{\tilde{p}(m,j - 1)}{1 + r(m,j - 1)} A(n,i,m,j - 1) & \text{if } j = m
+	\end{cases}
+\end{equation*}
+
+\indent In the BDT model we typically assume that the conditional transition probabilities of an up step $\tilde{p}(m,j) = \frac{1}{2}$. In order to calibrate the model we require bond yield volatilities $\sigma_y(t)$ as well as observed bond prices at time 0. In the BDT model we also require that the short rates\footnote{I forget what is the definition of a ``short rate'': What makes it special?}~satisfy
+\begin{equation*}
+	\sigma_t(t) = \frac{1}{2} \log \left( \frac{r(t,n + 1)}{r(t,n)} \right)
+\end{equation*}
+
+Then, after doing some trivial manipulations, we find
+\begin{equation}
+	r(t,n + 1) = r(t,n)e^{2\sigma_r(t)} = r(t,n)\sigma(t)
+\end{equation} 
+
+Yield rates $Y(n,j;m)$ must satisfy\footnote{Think of this as the time value of money/discounting of a bond $P$ back from final period $m$ to initial period $n$. $Y(n,j;m)$ is the rate satisfying this definition (think YTM).}
+\begin{equation*}
+	P(n,j;m) = [1 + Y(n,j;m)]^{-(m-n)}
+\end{equation*}
+
+and the current yield volatility for a bond at maturity $t$ is
+\begin{equation*}
+	\sigma_y(t) = \frac{1}{2} \log \left( \frac{Y(1,1;t)}{Y(1,0;t)} \right)
+\end{equation*}
+
+Hence
+\begin{equation*}
+	Y(1,1;t) = Y(1,0;t)e^{2\sigma_y(t)} \quad t = 2,3,...
+\end{equation*}
+
+We use the term structure for initial yields $Y(0,t)$ and volatilities in order to fit the model. \\
+
+\underline{Example:} Suppose that at time 0 we have the data of time-zero bond yields/volatilities expiring at various future dates $t$:
+\begin{figure}[H]
+\centering
+\begin{tabular}{ccc}
+\hline
+	Maturity & Yield & Yield Vol. \\
+	$t$ & $Y(0,0;t)$ & $\sigma_y(t)$ \\
+\hline
+	1 & 0.06 & - \\
+	2 & 0.07 & 0.19 \\
+	3 & 0.08 & 0.18 \\
+	4 & 0.09 & 0.17 \\
+	5 & 0.10 & 0.16	
+\end{tabular}
+\end{figure}
+
+\indent Note that\footnote{Since $r(n,j) = Y(n,j;n + 1)$.}~ $r(0,0) = Y(0,0;1)$ so that the time-zero Arrow-Debreu security price for a process reaching $(1,0)$ and $(1,1)$ are 
+\begin{align*}
+	A(0,0,1,0) &= \frac{1 - \tilde{p}(0,0)}{1 + r(0,0)} A(0,0,0,0) \quad \text{(Jamshidian case $j = 0$)} \\
+	&= \frac{1 - \frac{1}{2}}{1 + r(0,0)} A(0,0,0,0) \quad (\tilde{p} = \frac{1}{2} \text{ by assumption)} \\
+	&= \frac{\frac{1}{2}}{1 + r(0,0)} = \frac{1}{2\cdot 1.06} = 0.4717 \\
+	A(0,0,1,1) &=  \frac{1 - \tilde{p}(0,0)}{1 + r(0,0)} A(0,0,0,0) \quad \text{(Jamshidian case $j = m$)} \\
+	&= A(0,0,1,0) = 0.4717
+\end{align*}
+
+\indent Now, at the end of the first period (time $t = 1$) we must find the appropriate discount rates $r(1,0)$ and $r(1,1)$. To do so we must match observed bond yields maturing at time 2 with the risk-neutral pricing formula such that
+\begin{align*}
+	\frac{1}{Y(0,0;2)^2} = \frac{1}{1.07^2} = P(0,2) &= \tilde{\E}_0 \left[ \frac{1}{(1 + r_0)(1 + r_1)} \right] \\
+	&= \frac{1}{(1 + r_0)} \left[ \frac{1}{2} \cdot \frac{1}{(1 + r(1,0))} + \frac{1}{2} \cdot \frac{1}{(1 + r(1,1))} \right] \\
+	&= \frac{1}{2(1 + r(0,0)} \left[ \frac{1}{(1 + r(1,0))} + \frac{1}{(1 + r(1,1))} \right] \\
+	&= A(0,0,1,0) \left[ \frac{1}{(1 + r(1,0))} + \frac{1}{(1 + r(1,1))} \right] \quad \text{(as well as $A(0,0,1,1)$)} \\
+	&= \frac{A(0,0,1,0)}{1 + r(1,0)} + \frac{A(0,0,1,0)}{1 + r(1,1)} \\
+	&= \frac{A(0,0,1,0)}{1 + r(1,0)} + \frac{A(0,0,1,1)}{1 + r(1,1)}
+\end{align*}
+
+\indent Since $r(n,j) = Y(n,j;n + 1)$ we find that the one-period rates at nodes $(1,0)$ and $(1,1)$ are given by
+\begin{align*}
+	r(1,0) &= Y(1,0;2) \\
+	r(1,1) &= Y(1,1;2) = Y(1,0;2)e^{2\sigma_y(2)} = r(1,0)e^{2(0.19)}
+\end{align*}
+
+Substituting this relationship between $r(1,1)$ and $r(1,0)$ in our equation above gives us
+\begin{align*}
+	\frac{1}{1.07^2} &= \frac{A(0,0,1,0)}{1 + r(1,0)} + \frac{A(0,0,1,1)}{1 + r(1,1)} \\
+	&= \frac{0.4717}{1 + r(1,0)} + \frac{0.4717}{1 + r(1,0)e^{2(0.19)}}
+\end{align*}
+
+We can solve this numerical/using the quadratic formula (after some rearrangement) to yield
+\begin{align*}
+	r(1,0) &\approx 0.6522784 \\
+	\implies r(1,1) &= r(1,0)e^{2(0.19)} \approx 0.09538167
+\end{align*}
+
+Now, for time $t = 2$ we use the Jamshidian Forward Induction formula to compute
+\begin{align*}
+	A(0,0,2,0) &= \frac{ A(0,0,1,0) }{2 ( 1 + r(1,0) )} = 0.221564266 \\
+	A(0,0,2,1) &= \frac{A(0,0,1,0)}{2(1 + r(1,0))} + \frac{A(0,0,1,1)}{2(1 + r(1,1))} = 0.437093829 \\
+	A(0,0,2,2) &= \frac{A(0,0,1,1)}{2(1 + r(1,1))} = 0.21559562
+\end{align*}
+
+Then, to compute the time-1 Arrow-Debreu securities expiring at time-2 we use risk-neutral pricing
+\begin{align*}
+	A(1,0,2,0) &= \frac{1}{2} \cdot \frac{1}{1 + r(1,0)} = 0.469716245 \underbrace{ = A(1,0,2,1)}_{\text{since $\tilde{p} = \tilde{q}$}} \\
+	A(1,1,2,1) &= \frac{1}{2} \cdot \frac{1}{1 + r(1,1)} = 0.456922672 = A(1,1,2,2) \\
+	A(1,0,2,2) &= A(1,1,2,0) = 0 \quad \text{(there is no way to reach these nodes in one step)}
+\end{align*}
+
+We seek the one-period time-two interest rates $r(2,0), r(2,1), r(2,2)$, where
+\begin{equation*}
+	r(2,n + 1) = r(2,n)e^{2\sigma_t(t)} = r(2,n)\sigma(t)
+\end{equation*}
+
+Again matching the observed prices with the risk-neutral pricing formula
+\begin{align*}
+	\frac{1}{Y(0,0;3)^3} = \frac{1}{1.08^2} = P(0,3) &= \tilde{\E} \left[ \frac{1}{(1 + r_0)(1 + r_1)(1 + r_2)} \right] \\
+	&= \frac{1}{(1 + r_0)} \tilde{\E} \left[ \frac{1}{(1 + r_1)} \tilde{\E} \left[ \frac{1}{(1 + r_2)} ~\bigg|~ \omega_1 \right] \right]
+\end{align*}
+
+Note that the internal expectation is
+\begin{equation*}
+	\tilde{\E} \left[ \frac{1}{(1 + r_2)} ~\bigg|~ \omega_1 \right] = 
+	\begin{cases}
+		\frac{1}{2} \frac{1}{1 + r(2,2)} + \frac{1}{2} \frac{1}{1 + r(2,1)} \quad \text{if } \omega_1 = H \\
+	\frac{1}{2} \frac{1}{1 + r(2,1)} + \frac{1}{2} \frac{1}{1 + r(2,0)} \quad \text{if } \omega_1 = T 
+	\end{cases}
+\end{equation*}
+
+Thus
+\begin{align*}
+	\tilde{\E} \left[ \frac{1}{(1 + r_1)} \tilde{\E} \left[ \frac{1}{(1 + r_2)} ~\bigg|~ \omega_1 \right] \right] &= \frac{1}{2} \frac{1}{1 + r(1,1)} \left\{ \frac{1}{2} \frac{1}{1 + r(2,2)} + \frac{1}{2} \frac{1}{1 + r(2,1)} \right\} + \\
+	&\hphantom{{}={---}} \frac{1}{2} \frac{1}{1 + r(1,0)} \left\{ \frac{1}{2} \frac{1}{1 + r(2,1)} + \frac{1}{2} \frac{1}{1 + r(2,0)} \right\} \\
+	&= \frac{1}{4} \left( \frac{1}{(1 + r(1,0)(1 + r(2,0))}\right) + \\
+	&\hphantom{{}={---}} \frac{1}{4}\left( \frac{1}{1 + r(1,0)} + \frac{1}{1 + r(1,1)} \right) \frac{1}{1 + r(2,1)} + \\
+	&\hphantom{{}={---}} \frac{1}{4} \left( \frac{1}{(1 + r(1,1))(1 + r(2,2))} \right)
+\end{align*}
+
+Therefore,
+\begin{align*}
+	\frac{1}{1.08^2} &= \frac{1}{(1 + r_0)} \tilde{\E} \left[ \frac{1}{(1 + r_1)} \tilde{\E} \left[ \frac{1}{(1 + r_2)} ~\bigg|~ \omega_1 \right] \right] \\
+	&= \frac{1}{(1 + r_0)} \Bigg[ \frac{1}{4} \left( \frac{1}{(1 + r(1,0)(1 + r(2,0))}\right) + \\
+	&\hphantom{{}={---}} \frac{1}{4}\left( \frac{1}{1 + r(1,0)} + \frac{1}{1 + r(1,1)} \right) \frac{1}{1 + r(2,1)} + \\
+	&\hphantom{{}={---}} \frac{1}{4} \left( \frac{1}{(1 + r(1,1))(1 + r(2,2))} \right) \Bigg] \\
+	&= \frac{1}{2(1 + r_0)} \Bigg[ \frac{1}{2} \left( \frac{1}{(1 + r(1,0)(1 + r(2,0))}\right) + \\
+	&\hphantom{{}={---}} \frac{1}{2}\left( \frac{1}{1 + r(1,0)} + \frac{1}{1 + r(1,1)} \right) \frac{1}{1 + r(2,1)} + \\
+	&\hphantom{{}={---}} \frac{1}{2} \left( \frac{1}{(1 + r(1,1))(1 + r(2,2))} \right) \Bigg] \\
+	&= \Bigg[ \frac{1}{2} \left( \frac{ A(0,0,1,0) }{(1 + r(1,0)(1 + r(2,0))}\right) + \\
+	&\hphantom{{}={---}} \frac{1}{2}\left( \frac{ A(0,0,1,0) }{1 + r(1,0)} + \frac{ A(0,0,1,1) }{1 + r(1,1)} \right) \frac{1}{1 + r(2,1)} + \\
+	&\hphantom{{}={---}} \frac{1}{2} \left( \frac{A(0,0,1,1)}{(1 + r(1,1))(1 + r(2,2))} \right) \Bigg] \\
+	&= \frac{ A(0,0,2,0) }{ 1 + r(2,0) } + \frac{ A(0,0,2,1) }{ 1 + r(2,1) } + \frac{ A(0,0,2,2) }{ 1 + r(2,2) }
+\end{align*}
+
+and using the relationship
+\begin{equation*}
+	r(2,n + 1) = r(2,n) e^{2\sigma_r(2)} = r(2,n)\sigma(2)
+\end{equation*}
+
+gives us the equation in terms of $r(2,0)$
+\begin{equation*}
+	\frac{1}{1.08^2} = \frac{ A(0,0,2,0) }{ 1 + r(2,0) } + \frac{ A(0,0,2,1) }{ 1 + r(2,0)\sigma(2) } + \frac{ A(0,0,2,2) }{ 1 + r(2,0)[\sigma(2)]^2 }
+\end{equation*}
+
+\indent Note that we express the volatility parameters in terms of $\sigma$ and not $\sigma_r$ as is given in the table. The volatility parameter $\sigma(2)$ is still unknown to us and so our equation is still intractable with two unknowns. We use the yield volatilities $\sigma_y(2)$ to obtain a separate equation in these unknowns. \\
+
+\indent To build our second equation we start with finding out intermediate bond yields for maturity at time $t = 3$. These prices should be consistent with the initial bond prices \& the short rate.
+
+Note 
+\begin{align*}
+	P(1,m;3) &= [1 + Y(1,m;3)]^{-2} \\
+	\implies Y(1,m;3) &= P(1,m;3)^{-\frac{1}{2}} - 1
+\end{align*}
+
+Then, from our relationship $r(t, n + 1) = r(t,n)e^{2\sigma_r(t)} = r(t,n)\sigma(t)$, with the rate $Y(1,1;3)$, we find
+\begin{equation*}
+	Y(1,1;3) = P(1,1;3)^{-\frac{1}{2}} - 1 = \left[ P(1,0;3)^{-\frac{1}{2}} - 1\right] e^{2\sigma_y(3)}
+\end{equation*}
+
+From risk-neutral pricing we have that we can also express $P(1,0;3)$ by
+\begin{align*}
+	P(1,0;3) &= \tilde{\E}_1 \left[ \frac{1}{(1 + r_1)(1 + r_2)} \right](T) \\
+	&= \frac{1}{(1 + r(1,0))} \left[ \frac{1}{2} \frac{1}{( 1 + r(2,0) )} + \frac{1}{2} \frac{1}{(1 + r(2,1))} \right] \\
+	&= \frac{1}{2(1 + r(1,0))} \left[ \frac{1}{( 1 + r(2,0) )} + \frac{1}{(1 + r(2,1))} \right] \\
+	&= \frac{ A(1,0,2,0) }{ 1 + r(2,0) } + \frac{ A(1,0,2,1) }{ 1 + r(2,1) } \\
+	&= \frac{ A(1,0,2,0) }{ 1 + r(2,0) } + \frac{ A(1,0,2,1) }{ 1 + r(2,0)\sigma(2) }
+\end{align*}
+
+and since $A(1,0,2,2) = A(1,1,2,0) = 0$ we can generalize this as
+\begin{equation*}
+	P(1,0;3) = \sum^2_{j = 0} \frac{ A(1,0,2,j) }{ 1 + r(2,0)\sigma(2)^j }
+\end{equation*}
+
+Similarly
+\begin{align*}
+	P(1,1;3) &= \tilde{\E}_1 \left[ \frac{1}{(1 + r_1)(1 + r_2)} \right](H) \\
+	&= \frac{1}{(1 + r(1,1))} \left[ \frac{1}{2} \frac{1}{( 1 + r(2,1) )} + \frac{1}{2} \frac{1}{(1 + r(2,2))} \right] \\
+	&= \frac{ A(1,1,2,1) }{ 1 + r(2,0) } + \frac{ A(1,1,2,2) }{ 1 + r(2,1) } \\
+	&= \frac{ A(1,1,2,1) }{ 1 + r(2,0) } + \frac{ A(1,1,2,2) }{ 1 + r(2,0)\sigma(2) } \\
+	&= \sum^2_{j = 0} \frac{ A(1,1,2,j) }{ 1 + r(2,0)\sigma(2)^j } \quad \text{(since $A(1,1,2,0) = 0$)}
+\end{align*}
+
+Substituting these expressions for $P(1,0;3)$ and $P(1,1;3)$ into
+\begin{equation*}
+	P(1,1;3)^{-\frac{1}{2}} - 1 = \left[ P(1,0;3)^{-\frac{1}{2}} - 1\right] e^{2\sigma_y(3)}
+\end{equation*}
+
+gives
+\begin{equation*}
+	\left( \sum^2_{j = 0} \frac{ A(1,1,2,j) }{ 1 + r(2,0)\sigma(2)^j } \right)^{-\frac{1}{2}} - 1 = \left[ \left( \sum^2_{j = 0} \frac{ A(1,0,2,j) }{ 1 + r(2,0)\sigma(2)^j } \right) ^{-\frac{1}{2}} - 1\right] e^{2\sigma_y(3)}
+\end{equation*}
+
+We now have two equations in two unknowns 
+\begin{align*}
+	\frac{1}{1.08^2} &= \frac{ A(0,0,2,0) }{ 1 + r(2,0) } + \frac{ A(0,0,2,1) }{ 1 + r(2,0)\sigma(2) } + \frac{ A(0,0,2,2) }{ 1 + r(2,0)[\sigma(2)]^2 } \\
+	\left( \sum^2_{j = 0} \frac{ A(1,1,2,j) }{ 1 + r(2,0)\sigma(2)^j } \right)^{-\frac{1}{2}} - 1 &= \left[ \left( \sum^2_{j = 0} \frac{ A(1,0,2,j) }{ 1 + r(2,0)\sigma(2)^j } \right) ^{-\frac{1}{2}} - 1\right] e^{2\sigma_y(3)}
+\end{align*}
+
+which may be used to solve numerically for $r(2,0)$ and $\sigma(2)$. We find
+\begin{align*}
+	\sigma(2) &= 0.1724846 \\
+	r(2,0) &= 0.06949409 \\
+	r(2,1) &= 0.09981177 \\
+	r(2,2) &= 0.13853693
+\end{align*}
+
+\indent We can use these (including $r(0,0), r(1,0), r(1,1)$) short rates $r$ to price other derivatives, such as an option expiring at time two with underlying asset equal to the time-3 maturity zero-coupon bond.
+
+In general, for time-$t$ calibration we can use the equations
+\begin{align*}
+	P(0,t + 1) &= \sum^t_{j = 0} \frac{ A(0,0,t,j) }{ 1 + r(t,0)\sigma(t)^j } \\
+	Y(1,1; t + 1) &= Y(1,0;t + 1)e^{2\sigma_y(t + 1)}
+\end{align*}
+
+to match initial yield rates with yield volatilities, such that
+\begin{equation*}
+	Y(1,m; t + 1) = \left( \sum^t_{j = 0} \frac{ A(1,m,t,j) }{ 1 + r(t,0)\sigma(t)^j } \right)^{-\frac{1}{t}} - 1, \quad m = 0,1.
+\end{equation*}
+
+\indent Note that we have constructed our tree under the risk-neutral measure $\tilde{\P}$. We can implement this procedure recursively forwards in time to continue matching the interest rate tree to initial yields \& bond volatilities by solving the system of two equations in two unknowns at each step. \\
+
+
+
+
+
+
+
+
+
+
+\end{document}

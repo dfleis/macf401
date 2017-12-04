@@ -1,0 +1,281 @@
+% --------------------------------------------------------------
+% This is all preamble stuff that you don't have to worry about.
+% Head down to where it says "Start here"
+% --------------------------------------------------------------
+ 
+\documentclass[12pt]{article}
+ 
+\usepackage[margin=1in]{geometry} 
+\usepackage{bm} % bold in mathmode \bm
+\usepackage{amsmath,amsthm,amssymb,mathtools}
+\usepackage{dsfont} % for indicator function \mathds 1
+\usepackage{tikz,pgf,pgfplots}
+\usepackage{enumerate} 
+\usepackage[multiple]{footmisc} % for an adjascent footnote
+\usepackage{graphicx,float} % figures
+\usepackage{csvsimple,longtable,booktabs} % load csv as a table
+\usepackage{listings,color} % for code snippets
+
+\newtheorem{definition}{Definition}
+\let\olddefinition\definition
+\renewcommand{\definition}{\olddefinition\normalfont}
+\newtheorem{lemma}{Lemma}
+\let\oldlemma\lemma
+\renewcommand{\lemma}{\oldlemma\normalfont}
+\newtheorem{proposition}{Proposition}
+\let\oldproposition\proposition
+\renewcommand{\proposition}{\oldproposition\normalfont}
+\newtheorem{corollary}{Corollary}
+\let\oldcorollary\corollary
+\renewcommand{\corollary}{\oldcorollary\normalfont}
+\newtheorem{theorem}{Theorem}
+\let\oldtheorem\theorem
+\renewcommand{\theorem}{\oldtheorem\normalfont}
+
+\newcommand\norm[1]{\left\lVert#1\right\rVert} % \norm command 
+
+%%% PLOTTING PARAMETERS
+\pgfmathsetseed{1952} % for Brownian Motion plotting
+\newcommand{\Emmett}[5]{% points, advance, rand factor, options, end label
+\draw[#4] (0,0)
+\foreach \x in {1,...,#1}
+{   -- ++(#2,rand*#3)
+}
+node[right] {#5};
+}
+
+\pgfplotsset{every axis/.append style={},
+    cmhplot/.style={mark=none,line width=1pt,->},
+    soldot/.style={only marks,mark=*},
+    holdot/.style={fill=white,only marks,mark=*},
+}
+
+\tikzset{>=stealth}
+
+\pgfmathdeclarefunction{gauss}{2}{%
+  \pgfmathparse{1/(#2*sqrt(2*pi))*exp(-((x-#1)^2)/(2*#2^2))}%
+}
+
+\tikzstyle{bag} = [text width=6em, text centered]
+\tikzstyle{end} = []
+%%%
+
+%% set noindent by default and define indent to be the standard indent length
+\newlength\tindent
+\setlength{\tindent}{\parindent}
+\setlength{\parindent}{0pt}
+\renewcommand{\indent}{\hspace*{\tindent}}
+
+\newcommand*{\vv}[1]{\vec{\mkern0mu#1}} % \vec command
+
+%% DAVIDS MACRO KIT %%
+\newcommand{\R}{\mathbb R}
+\newcommand{\N}{\mathbb N}
+\newcommand{\Z}{\mathbb Z}
+\renewcommand{\P}{\mathbb P}
+\newcommand{\Q}{\mathbb Q}
+\newcommand{\E}{\mathbb E}
+\newcommand{\var}{\mathrm{Var}}
+\newcommand{\indist}{\,{\buildrel \mathcal D \over \sim}\,}
+
+\newcommand{\bigtau}{\text{{\large $\bm \tau$}}}
+
+\begin{document}
+ 
+% --------------------------------------------------------------
+%                         Start here
+% --------------------------------------------------------------
+ 
+\title{Mathematical \& Computational Finance I\\Lecture Notes}
+\author{Binomial No-Arbitrage Pricing Model (continued)}
+\date{January 14 2016 \\ Last update: \today{}}
+\maketitle
+
+% SECTION: 
+\section{One-Period Binomial Model}
+
+\indent Note that $\tilde{p}$ is not the physical/real world probability governing the evolution of the risky asset process $S$. There should be a real world probability of heads $p$ such that\footnote{That is, the expected return for $S_1$ exceeds the risk free rate.}
+\begin{equation*}
+	(1 + r)S_0 < pS_1(H) + (1 - p)S_1(T)
+\end{equation*}
+
+with the expected return in the real world satisfying
+\begin{equation*}
+	\E \left[ \frac{S_1 - S_0}{S_0} \right] > r
+\end{equation*}
+
+where $\E[\cdot]$ denotes expectation under the real world probability. In the real world the investor is compensated for the risk of holding $S$ rather than investing $\$S_0$ in the bank account.
+
+\section{Multiperiod Binomial Model}
+
+\indent We may generalize the one-period binomial model to accept multiple time periods, where $S^n_i$ denotes the asset price at the $i^{\text{th}}$ tier after $n$ heads. In general,
+
+\begin{equation*}
+	S^n_i = d^{i - n}u^nS_0 \quad 0 \leq n \leq i
+\end{equation*}
+
+\begin{figure}[H]
+\begin{tikzpicture}[sloped]
+  \node (a) at ( 0,0) [bag] {$S_0$};
+  \node (b) at ( 4,-1.5) [bag] {$S^0_1$};
+  \node (c) at ( 4,1.5) [bag] {$S^1_1$};
+  \node (d) at ( 8,-3) [bag] {$S^0_2$};
+  \node (e) at ( 8,0) [bag] {$S^1_2$};
+  \node (f) at ( 8,3) [bag] {$S^2_2$};
+  \node (g) at ( 12,-4.5) [bag] {$S^0_3$};
+  \node (h) at ( 12,-1.5) [bag] {$S^1_3$};
+  \node (i) at ( 12,1.5) [bag] {$S^2_3$};
+  \node (j) at ( 12,4.5) [bag] {$S^3_3$};
+  \draw [->] (a) to node [below] {} (b);
+  \draw [->] (a) to node [above] {} (c);
+  \draw [->] (c) to node [below] {} (f);
+  \draw [->] (c) to node [above] {} (e);
+  \draw [->] (b) to node [below] {} (e);
+  \draw [->] (b) to node [above] {} (d);
+  \draw [->] (d) to node [below] {} (g);
+  \draw [->] (d) to node [above] {} (h);
+  \draw [->] (e) to node [below] {} (h);
+  \draw [->] (e) to node [above] {} (i);
+  \draw [->] (f) to node [below] {} (i);
+  \draw [->] (f) to node [above] {} (j);
+\end{tikzpicture}
+\caption{Recombining tree for $M = 3$ steps.}
+\end{figure}
+
+\indent We suppose that the evolution of the risky asset is governed by sequences of coin tosses. The same space $\Omega$ for the multiperiod binomial model contains all coin toss sequences (e.g. $HTTHTTHHTT\cdots$). Let $\omega_i \in  \left\{ H, T \right\}$ be the outcome of the $i^{\text{th}}$ coin toss so that we may write a sequence $\omega \in \Omega$ as $\omega = \omega_1\omega_2\cdots$. Then, write the value of the stock price at time $n$ depending on the first $n$ coin tosses as $S_n(\omega_1\cdots\omega_n)$. The value of $S_n$ depends only on the number of heads and tails in the first $n$ coin tosses and not the particular order, e.g.
+\begin{equation*}
+	S_3(TTH) = S_3(THT) = S_3(HTT) = S^1_3
+\end{equation*}
+
+\indent We can consider the prices of derivative securities by constructing a replicating portfolio as in the one time period case. Consider the derivative security with time $t = 2$ payoff
+\begin{equation*}
+	V_2 = (S_2 - K)^+
+\end{equation*}
+
+\indent Suppose some agent sells the option at time zero for $V_0$ and constructs a portfolio consisting of
+\begin{enumerate}[]
+	\item $\Delta_0$ shares of the underlying stock 
+	\item $(V_0 - \Delta_0S_0)$ invested in the riskless bank account
+\end{enumerate}
+
+At time $t = 1$ the value of the portfolio is
+\begin{equation*}
+	X_1 = \Delta_0S_1 + (1 + r)(V_0 - \Delta_0S_0)
+\end{equation*}
+
+The value of the portfolio at time $t = 1$ depends on the outcome of the first coin toss $\omega_1$
+\begin{align*}
+	X_1(H) &= \Delta_0S_1(H) + (1 + r)(V_0 - \Delta_0S_0) \\
+	X_1(T) &= \Delta_0S_1(T) + (1 + r)(V_0 - \Delta_0S_0)
+\end{align*}
+
+\indent At time $t = 1$ we rebalance the portfolio to $\Delta_1$ shares invested in the stock noting that $\Delta_1$ may depend on the outcome of the first coin toss, with the remaining wealth, $X_1 - \Delta_1S_1$, in the bank account. \\
+
+\indent We should also note that we only permit trading at these discrete time nodes in our multiperiod tree. At time $t = 2$ the value of the investor's wealth/portfolio should be
+\begin{equation*}
+	X_2 = \Delta_1S_2 + (1 + r)(X_1 - \Delta_1S_1)
+\end{equation*}
+
+\indent We wish to have $X_2 = V_2$ in all possible states (regardless of the outcome of the two coin tosses)
+\begin{align*}
+	V_2(HH) &= \Delta_1(H)S_2(HH) + (1 + r)[X_1(H) - \Delta_1S_1(H)] \\
+	V_2(HT) &= \Delta_1(H)S_2(HT) + (1 + r)[X_1(H) - \Delta_1S_1(H)] \\
+	V_2(TH) &= \Delta_1(T)S_2(TH) + (1 + r)[X_1(T) - \Delta_1S_1(T)] \\
+	V_2(TT) &= \Delta_1(T)S_2(TT) + (1 + r)[X_1(T) - \Delta_1S_1(T)]
+\end{align*}
+
+\indent Including the two equations for $X_1(H)$ and $X_1(T)$ we find that we have six equations for the time-one and time-two wealth in six unknowns $(V_0,\Delta_0,\Delta_1(H),\Delta_1(T),X_1(H),X_1(T))$. Subtracting $V_2(TH) - V_2(TT)$ gives 
+\begin{align*}
+	V_2(TH) - V_2(TT) &= \Delta_1(T)S_2(TH) - \Delta_1(T)S_1(TT) \\
+	&= \Delta_1(T)\left[S_2(TH) - S_1(TT)\right] \\
+	\implies \Delta_1(T) &= \frac{V_2(TH) - V_2(TT)}{S_2(TH) - S_1(TT)}
+\end{align*}
+
+is the $\Delta$-hedge ratio at time $t = 1$ for the note $T$. Substituting our value for $\Delta_1(T)$ into either equation for $V_2(TH)$ or $V_2(TT)$ yields
+\begin{equation*}
+	X_1(T) = \frac{1}{1 + r}[\tilde{p}V_2(TH) + \tilde{q}V_2(TT)]
+\end{equation*}
+
+where, as before,
+\begin{equation*}
+	\tilde{p} = \frac{1 + r - d}{u - d}, \quad \tilde{q} = 1 - \tilde{p}
+\end{equation*}
+
+At time $t - 1$ if the first coin toss was a $T$ then the price of the option is
+\begin{equation*}
+	V_1(T) = \frac{1}{1 + r}[\tilde{p}V_2(TH) + \tilde{q}V_2(TT)] \quad \text{({\bf risk-neutral valuation formula})}
+\end{equation*}
+
+otherwise there would be arbitrage (consider the one period sub-tree remaining). We can also verify that
+\begin{equation*}
+	S_1(T) = \frac{1}{1 + r}[\tilde{p}S_2(TH) + \tilde{q}S_2(TT)] \quad \text{({\bf martingale property})}
+\end{equation*}
+
+Similarly, if we subtract $V_2(HH) - V_2(HT)$, we find
+\begin{equation*}
+	\Delta_1(H) = \frac{V_2(HH) - V_2(HT)}{S_2(HH) - S_2(HT)}
+\end{equation*}
+
+\indent Likewise, by substituting $\Delta_1(H)$ into $V_2(HH)$ yields us that $X_1(H) = V_1(H)$ is the price of the option at time $t = 1$ if the first coin toss is a $H$ satisfying
+\begin{equation*}
+	V_1(H) = \frac{1}{1 + r}[\tilde{p}V_2(HH) + \tilde{q}V_2(HT)]
+\end{equation*}
+
+\indent Once again, we require that at time step $t = 1$ we require $X_1(\omega_1) = V_1(\omega_1)$ to avoid arbitrage. Substituting $X_1(H) = V_1(H)$ and $X_1(T) = V_1(T)$ into our previous formulas for $X_1(\omega)$ yields
+\begin{align*}
+	V_1(H) &= \Delta_0S_1(H) + (1 + r)(V_0 - \Delta_0S_0) \\
+	V_1(T) &= \Delta_0S_1(T) + (1 + r)(V_0 - \Delta_0S_0)
+\end{align*}
+
+which we find to be identical to the one-period case, hence
+\begin{align*}
+	V_1(H) - V_1(T) &=  \Delta_0S_1(H) + (1 + r)(V_0 - \Delta_0S_0) - \Delta_0S_1(T) + (1 + r)(V_0 - \Delta_0S_0) \\
+	&= \Delta_0(S_1(H) - S_1(T)) \\
+	\implies \Delta_0 &= \frac{V_1(H) - V_1(T)}{S_1(H) - S_1(T)}
+\end{align*}
+
+\indent This method defines a recursive procedure for finding $V_0$ by proceeding backwards in time through the nodes of the binomial tree. Essentially, we solve a series of one-period examples backwards through the nodes. The stochastic processes
+\begin{equation*}
+	\{\Delta_0,\Delta_1\}, \quad \{X_0,X_1,X_2\}, \quad \{V_0,V_1,V_2\}
+\end{equation*}
+
+define the \underline{replication problem}. These processes are clearly composed of random variables since they depend on the outcome of the coin tosses. If we begin with initial wealth $X_0 = V_0$ and specify $\Delta_0,\Delta_1(\omega)$ we can compute the value of the portfolio
+\begin{equation*}
+	X_{n + 1} = \Delta_nS_{n + 1} + (1 + r)(X_n - \Delta_nS_n) \quad (\text{\bf wealth equation})
+\end{equation*}
+
+that replicates the derivative. The value of the derivative at time zero must be the value of the replicating portfolio $X_0$, otherwise we would find arbitrage.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\end{document}

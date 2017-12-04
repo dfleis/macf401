@@ -1,0 +1,592 @@
+% --------------------------------------------------------------
+% This is all preamble stuff that you don't have to worry about.
+% Head down to where it says "Start here"
+% --------------------------------------------------------------
+ 
+\documentclass[12pt]{article}
+ 
+\usepackage[margin=1in]{geometry} 
+\usepackage{bm} % bold in mathmode \bm
+\usepackage{amsmath,amsthm,amssymb,mathtools}
+\usepackage{dsfont} % for indicator function \mathds 1
+\usepackage{mathdots} % for \iddots
+\usepackage{tikz,pgf,pgfplots}
+\usepackage{enumerate} 
+\usepackage[multiple]{footmisc} % for an adjascent footnote
+\usepackage{graphicx,float} % figures
+\usepackage{framed} % surround a text with a box 
+\usepackage{changepage} % \begin{adjustwidth}{2cm}{} environment
+
+\newtheorem{definition}{Definition}
+\let\olddefinition\definition
+\renewcommand{\definition}{\olddefinition\normalfont}
+\newtheorem{lemma}{Lemma}
+\let\oldlemma\lemma
+\renewcommand{\lemma}{\oldlemma\normalfont}
+\newtheorem{proposition}{Proposition}
+\let\oldproposition\proposition
+\renewcommand{\proposition}{\oldproposition\normalfont}
+\newtheorem{corollary}{Corollary}
+\let\oldcorollary\corollary
+\renewcommand{\corollary}{\oldcorollary\normalfont}
+\newtheorem{theorem}{Theorem}
+\let\oldtheorem\theorem
+\renewcommand{\theorem}{\oldtheorem\normalfont}
+
+%%% PLOTTING PARAMETERS
+\tikzstyle{bag} = [text width=7em, text centered] %% binomial tree node width
+\tikzstyle{end} = []
+
+\pgfplotsset{soldot/.style={color=black,only marks,mark=*},
+             holdot/.style={color=black,fill=white,only marks,mark=*},
+             compat=1.12}
+%%%
+
+%% I want to be in control of when to indent...
+%% set noindent as the default status and define \indent to indent a line
+\newlength\tindent
+\setlength{\tindent}{\parindent}
+\setlength{\parindent}{0pt}
+\renewcommand{\indent}{\hspace*{\tindent}}
+
+\newcommand*{\vv}[1]{\vec{\mkern0mu#1}} % \vec command
+
+%% DAVIDS MACROS %%
+\newcommand{\R}{\mathbb R}
+\newcommand{\N}{\mathbb N}
+\newcommand{\Z}{\mathbb Z}
+\renewcommand{\P}{\mathbb P}
+\newcommand{\Q}{\mathbb Q}
+\newcommand{\E}{\mathbb E}
+\newcommand{\var}{\mathrm{Var}}
+\newcommand{\Var}{\mathrm{Var}}
+\newcommand{\cov}{\mathrm{Cov}}
+\newcommand{\Cov}{\mathrm{Cov}}
+\newcommand{\indist}{\,{\buildrel \mathcal D \over \sim}\,}
+
+\newcommand{\bigtau}{\text{{\large $\bm \tau$}}}
+
+\begin{document}
+ 
+% --------------------------------------------------------------
+%                         Start here
+% --------------------------------------------------------------
+ 
+\title{Mathematical \& Computational Finance I\\Lecture Notes}
+\author{Interest-Rate-Dependent Assets}
+\date{March 24 2016 \\ Last update: \today{}}
+\maketitle
+
+% SECTION: 
+\section{Binomial Models for Interest Rates (con't)}
+
+Recall that we had defined the following
+\begin{enumerate}[(i)]
+	\item $R_n$: The, potentially stochastic, interest rate over the $n^\text{th}$  to $(n + 1)^\text{th}$ period as a function of $\omega_1\cdots\omega_n$.
+	
+	\item $D_n$: The discount process given by
+	\begin{equation*}
+	D_n = \frac{1}{ (1 + R_0)(1 + R_1) \cdots (1 + R_{n - 1})} = \frac{1}{ \prod^n_{j = 0} (1 + R_j) }
+	\end{equation*}
+	as a function of the first $\omega_1\cdots\omega_{n - 1}$ coin tosses.
+	
+	\item $B_{n,m}$: The time $n$ price of a zero-coupon bond maturity at time $m$ given by
+	\begin{equation*}
+		D_nB_{n,m} = \tilde{\E}_n[D_m]
+	\end{equation*}
+	
+	\item $\Delta_{n,m}$: The number of $m$-maturity zero-coupon bonds held between periods $n$ and $n + 1$, as a function of the first $n$ coin tosses $\omega_1\cdots\omega_n$.
+\end{enumerate}
+
+Using these quantities we finished last time with the proof demonstrating that the wealth process given by
+\begin{equation*}
+	X_{n + 1} =  1\cdot\Delta_{n,n + 1} + \sum^N_{m = n + 2} \Delta_{n,m}B_{n + 1,m} + (1 + R_n)\left[X_n - \sum^N_{m = n + 1} \Delta_{n,m}B_{n,m} \right]
+\end{equation*}
+
+was a discounted $\tilde{\P}$-martingale. That is, we had proven
+\begin{equation*}
+	\tilde{\E}_n \left[ D_{n + 1}X_{n + 1} \right] = D_nX_n
+\end{equation*}
+
+Since $D_nX_n$ is a $\tilde{\P}$-martingale we have
+\begin{equation*}
+	\tilde{\E}_0[D_nX_n] = D_0X_0 = X_0
+\end{equation*}
+
+\indent Since arbitrage is not {\em ipso facto} precluded from our model, suppose now that arbitrage is possible. Then, by trading in zero-coupon bonds and the bank account there exists a portfolio process sequence $\left\{\Delta_{n,m}\right\}$ satisfying
+\begin{align*}
+	X_0 &= 0 \\
+	X_n &\geq 0 \quad \forall\,\omega_1\cdots\omega_n\in\Omega \\
+	\tilde{\P}(X_n > 0) &> 0
+\end{align*}
+
+\indent That is, under our arbitrage assumption, with zero initial capital we have a strictly positive probability of achieving positive time $n$ wealth. However, note that we have
+\begin{equation*}
+	X_0 = \tilde{\E}_0[D_nX_n] > 0
+\end{equation*}
+
+which contradicts our arbitrage assumption!\footnote{I'm not crystal clear on how this is true.}~Therefore, using risk-neutral pricing to define our zero-coupon bond price gives us a model free of arbitrage, which is nice. \\
+
+\indent By applying the risk-neutral pricing formula for $0 \leq n \leq m \leq N$ we can show that the time $n$ price of a derivative contract paying $V_m$ at time $m$, with $V_m$ depending on only the first $m$ coin tosses $\omega_1\cdots\omega_{n}\cdots\omega_m$, is given by
+\begin{equation*}
+	V_n = \frac{1}{D_n} \tilde{\E}_n[D_mV_m]
+\end{equation*}
+
+\indent From this quantity we will demonstrate that for our derivative security there exists a hedging portfolio, validating our use of risk-neutral pricing. If it is possible to construct a hedging portfolio for a short position of the derivative then the time $n$ value must be $V_n$ by the arbitrage-free property of the model. \\
+
+\indent Investing at time $n$ in a zero-coupon bond maturing at time $n + 1$ is identical to investing in the bank account since a $\$1$ investment in the bond at time $n$ will yield $\frac{1}{B_{n,n + 1}}$ bond units paying $\frac{1}{B_{n,n + 1}}$ at time $n + 1$, so
+\begin{align*}
+	\frac{1}{B_{n,n + 1}} &= \frac{1}{ \tilde{\E}_n \left[ \frac{D_{n + 1}}{D_n}  \right] } \\
+	&= \frac{1}{ \tilde{\E}_n \left[ \frac{1}{1 + R_n} \right] } \\
+	&= \frac{1}{ \frac{1}{ 1 + R_n } } \\
+	&= 1 + R_n
+\end{align*}
+
+which is identical to the amount an agent would receive by investing $\$1$ in the bank account at time $n$. Therefore, either the bond or the bank account (whichever a particular agent prefers) is a redundant security. \\
+
+\begin{definition} Let $0 \leq m \leq N$ be given. A \underline{coupon bond} can be modelled as a sequence of constant (i.e. non-random) quantities
+\begin{equation*}
+	C_0,C_1,...,C_m
+\end{equation*}
+
+We say that, for $0 \leq n \leq m - 1$, the amount $C_n$ is the \underline{coupon payment} made at time $n$. The final payment $C_m$ is the payment that includes the principle as well as the interest accrued over periods $m - 1$ to $m$. For a $\$1$ face value zero-coupon bond we have that
+\begin{equation*}
+ 	C_0 = C_1 = \cdots = C_{m - 1} = 0 \quad \text{and} \quad C_m = 1
+\end{equation*}
+\end{definition}
+
+We can view a coupon bond as a portfolio of zero-coupon bonds consisting of
+\begin{enumerate}[]
+	\item $C_0$ paid in cash at time $n = 0$ (typically $C_0 = 0$)
+	\item $C_1$ face-value zero-coupon bond maturing at time $n = 1$
+	\item $C_2$ face-value zero-coupon bond maturing at time $n = 2$ \\
+	$\vdots$
+	\item $C_m$ face-value zero-coupon bond maturing at time $n = m$
+\end{enumerate}
+
+Therefore, the rational time zero price of a coupon bond is given by
+\begin{equation*}
+	\sum^m_{k = 0} C_k B_{0,k} = \tilde{\E}_0 \left[ \sum^m_{k = 0} D_kC_k \right]
+\end{equation*}
+
+and for any period $n \leq m$, before the payment $C_n$ is made but after all payments $C_0,...,C_{n - 1}$, the price is given by
+\begin{equation*}
+	\sum^m_{k = n} C_k B_{n,k} = \tilde{\E}_n \left[ \sum^m_{k = n} \frac{ D_k }{D_n} C_k \right]
+\end{equation*}
+
+which is similar to our result for the price of a sequence of cash-flows, for a {\em deterministic} rate $r$, given by
+\begin{equation*}
+	V_n = \tilde{\E}_n \left[ \sum^N_{k = n} \frac{C_k}{(1 + r)^{k - n}} \right], \quad n = 0,1,...,N
+\end{equation*}
+
+discussed in Chapter 2.
+
+\subsection{Fixed-Income Derivatives}
+
+\indent Suppose that we have a risky asset whose time $n$ price is given by $S_n$ in addition to stochastic interests rate dictated by the binomial model. Assume that $S_n$ depends only on the coin tosses up to $n$, $\omega_1\cdots\omega_n$. Since we have the risk-neutral measure $\tilde{\P}$ we require that the discounted asset price must be a $\tilde{\P}$-martingale satisfying
+\begin{equation*}
+	D_nS_n = \tilde{\E}_n[D_{n + 1}S_{n + 1}], \quad n = 0,1,...,N - 1
+\end{equation*}
+
+\subsubsection{Forward Prices}
+
+\begin{definition} A \underline{forward contract} is an agreement to pay a specified delivery price $K$ at a specified future time $m$, for $0 \leq m \leq N$, for the asset whose time $m$ price is $S_m$. \\
+
+\indent The \underline{$m$-forward price} of $S$ at time $n$ denote $Fwd_{n,m}$, for $0 \leq n \leq m$, is the delivery price $K$ that gives the forward contract a no-arbitrage value of zero at time $n$.
+\end{definition}
+
+\begin{theorem} Consider a risky asset price process $\left\{S_n \right\}^N_{n = 0}$ in the binomial interest rate model. Assume that zero-coupon bonds of all maturities are sufficiently liquid and can be traded. For $0 \leq n \leq m \leq N$, the $m$-forward price of $S$ at time $n$ is
+\begin{equation*}
+	Fwd_{n,m} = \frac{S_n}{B_{n,m}}
+\end{equation*}
+
+\begin{proof} Suppose that at time $n$ an agent
+\begin{enumerate}[(i)]
+	\item Shorts the forward contract with delivery price $K$ at time $m$ (i.e. the agent has an obligation to deliver one unit of $S$ at time $m$ in exchange for $K$). If $K$ is chosen such that the forward contract has a no-arbitrage value of zero at time $n$ then the shorted forward position generates no cash-flow at time $n$.
+	\item Shorts $\frac{S_n}{B_{n,m}}$ units of a zero-coupon bond maturing at time $m$. Then, the agent receives $\frac{S_n}{B_{n,m}} \cdot B_{n,m} = S_n$ in cash at time $n$.
+	\item The agent uses these proceeds to buy one share of the asset at time $n$ so that the net gain/loss at time $n$ is zero (to cover the shorted forward position).
+\end{enumerate}
+
+Then, at time $m$ we have that
+\begin{enumerate}[(i)]
+	\item The agent must deliver the one purchased share in exchange for $K$ units in cash (i.e. cover the shorted forward position).
+	\item Deliver the $\frac{S_n}{B_{n,m}}$ in the $m$-maturity bond (i.e. cover the shorted bond position).
+	\item Therefore, the net cash-flow at time $m$ is
+	\begin{equation*}
+		K - \frac{ S_n }{ B_{n,m} }
+	\end{equation*}
+\end{enumerate} 
+
+Note that if $K \neq \frac{S_n}{B_{n,m}}$ there is an arbitrage opportunity.\footnote{If $K > \frac{S_n}{B_{n,m}}$ then we have found arbitrage. If $K < \frac{S_n}{B_{n,m}}$ then go long on the forward contract, long the $m$-maturity bond, and short the asset.}~Therefore, in order to satisfy no-arbitrage we must have
+
+\begin{equation*}
+	Fwd_{n,m} = K = \frac{ S_n }{ B_{n,m} }
+\end{equation*}
+
+as desired.\footnote{I don't quite see this final step.}~We call such positions undertaken in the proof {\em static hedges} since the agent does not need (or should need) to trade/rebalance between time $n$ when the hedge is initiated and time $m$ when the contracts expire.
+
+\end{proof}
+\end{theorem} \hfill\\
+
+\underline{Example:} {\em (Exercise 6.2)} Verify that the discounted value of the static hedging portfolio constructed immediately above is a $\tilde{\P}$-martingale. \\
+
+\begin{proof} First we must identity what our portfolio actually is. At time $n$ we short the forward contract with delivery date $m$ and delivery price $K$ with time $n$ value zero. Our hedged position is
+\begin{enumerate}[(i)]
+	\item Short $\frac{S_n}{B_{n,m}}$ units of the zero-coupon bond.
+	\item Long one unit of the underlying asset for $S_n$.
+\end{enumerate}
+
+Therefore, at time $k = n, n + 1,...,m$ the value of this hedging portfolio is given by
+\begin{equation*}
+	X_k = S_k - \frac{S_n}{B_{n,m}} B_{k,m}
+\end{equation*}
+
+\underline{Adaptedness:} First note that $\frac{S_n}{B_{n,m}}$ remains constant through $k = n, n + 1,...,m$ and depends on the first $n$ coin tosses $\omega_1\cdots\omega_n$, and so it is adapted. Next, by definition we have that $S_k$ and $B_{k,m}$ depend on the first $k = n, n + 1,..., m$ coin tosses $\omega_1\cdots\omega_k$. Therefore, our portfolio $X_k$ is adapted. \\
+
+\underline{Martingale property:} For $k = n,..., m -1$ we have the conditional expectation with respect to time $k$ of the discounted portfolio is
+\begin{align*}
+	\tilde{\E}_k \left[ D_{k + 1}X_{k + 1} \right] &= \tilde{\E}_k \left[ D_{k + 1} \left( S_{k + 1} - \frac{ S_n }{ B_{n,m} } B_{k + 1,m} \right) \right] \quad \text{(by definition)} \\
+	&= \tilde{\E}_k \left[ D_{k + 1}S_{k + 1} \right] - \frac{ S_n }{ B_{n,m} } \tilde{\E}_k \left[ D_{k + 1}B_{k + 1,m} \right] \quad \text{(linearity \& adaptedness)} \\
+	&= D_kS_k - \frac{ S_n }{ B_{n,m} } \tilde{\E}_k \left[ D_{k + 1}B_{k + 1,m} \right] \quad \text{($D_kS_k$ is a $\tilde{\P}$-martingale)} \\
+	&= D_kS_k - \frac{ S_n }{ B_{n,m} } D_{k}B_{k,m}  \quad \text{($D_kB_{k,m}$ is a $\tilde{\P}$-martingale)} \\
+	&= D_k \left( S_k - \frac{ S_n }{ B_{n,m} } B_{k,m} \right) \\
+	&= D_kX_k \quad \text{(by definition)}
+\end{align*}
+
+which satisfies the martingale property for $D_kX_k$. Therefore, the discounted hedging portfolio process $D_kX_k$ is a $\tilde{\P}$-martingale, as desired.
+\end{proof}
+
+\indent So, thankfully, we have confirmed that the discounted value of the static hedging portfolio is indeed a $\tilde{\P}$-martingale, as any discounted asset value should be in our model. This permits us to apply the risk-neutral pricing formula when need be. Hence, the payoff (to a short party) of a forward contract will be $S_m - K$ at time $m$. Therefore, we wish to solve
+\begin{align*}
+	\tilde{\E}_n[D_m(S_m - K)] &= \tilde{\E}_n[D_mS_m] - K\tilde{\E}_n[D_m] \quad \text{(linearity \& adaptedness)} \\
+	&= \tilde{\E}_n[D_mS_m] - K\tilde{\E}_n \left[ \frac{D_n}{D_n} D_m \right] \\
+	&= \tilde{\E}_n[D_mS_m] - KD_n \tilde{\E}_n \left[ \frac{D_m}{D_n} \right] \quad \text{(adaptedness)} \\
+	&= D_nS_n - KD_n \tilde{\E}_n \left[ \frac{D_m}{D_n} \right] \quad \text{(martingale property of $D_nS_n$)} \\
+	&= D_nS_n - KD_nB_{n,m} \quad \text{(definition of $B_{n,m}$)} \\
+	&= D_n \left( S_n - KB_{n,m} \right)
+\end{align*}
+
+Since we require the time $n$ price of this contract to be zero we must have
+\begin{align*}
+	0 &= S_n - KB_{n,m} \\
+	\implies K &= \frac{ S_n }{ B_{n,m} }
+\end{align*}
+
+which is consistent to our result from risk-neutral pricing above. \\
+
+\subsubsection{Forward Interest Rates}
+
+\indent In additional to forward prices we may also consider forward rates between periods. Let $0 \leq n \leq m \leq N - 1$. At time $n$ perform the following actions
+\begin{enumerate}[(i)]
+	\item Short one unit of the $m$-maturity zero-coupon bond to receive $B_{n,m}$. 
+	\item Use the proceeds to purchase $\frac{ B_{n,m} }{ B_{n, m + 1} }$ units of the zero-coupon bond maturity at time $m + 1$ for a cost of $\frac{ B_{n,m} }{ B_{n, m + 1} } \cdot B_{n, m + 1} = B_{n,m}$.
+\end{enumerate}
+
+and at time $m$
+\begin{enumerate}[(i)]
+	\item Invest $\$1$ in order to cover the short position in the $m$-maturity bond.\footnote{This doesn't make sense to me. Why would we invest now when the $m$-maturity bond is already expiring presently and so we must deliver $\$1$ now.}
+\end{enumerate}
+
+and finally, at time $m + 1$
+\begin{enumerate}[(i)]
+	\item Receive $\frac{ B_{n, m} }{ B_{n, m + 1} }$ from the long position in the $(m + 1)$-maturity zero-coupon bond.
+\end{enumerate}
+
+\indent We write $F_{n,m}$ (not to be confused with $Fwd_{n,m}$) for the forward interest rate earned between times $m$ and $m + 1$ starting with the actions taken at time $n$. The $\$1$ invested at time $m$ will accumulate to
+\begin{equation*}
+	\$1\cdot(1 + F_{n,m}) = \frac{ B_{n,m} }{ B_{n, m + 1} } 
+\end{equation*}
+
+\indent Therefore, with $\frac{ B_{n,m} }{ B_{n, m + 1} }$ denoting the current value of the invested $\$1$ and $-1$ denoting the principle we must repay/deliver,
+\begin{align*}
+	F_{n,m} &= \frac{ B_{n,m} }{ B_{n, m + 1} } - 1 \\
+	&= \frac{ B_{n,m} - B_{n, m + 1} }{ B_{n, m + 1} }
+\end{align*}
+
+is the rate (decided/locked in at time $n$) at which we may invest $\$1$ between time $m$ and $m + 1$ for a single period. Note that we have
+\begin{align*}
+	F_{m,m} &= \frac{ B_{m,m} }{ B_{m, m + 1} } - 1 \\
+	&= \frac{1}{ \frac{1}{1 + R_m} } - 1 \\
+	&= 1 + R_m - 1 \\
+	&= R_m
+\end{align*}
+
+so the one-period rate that may be locked in at time $m$ is identical to $R_m$, the {\em spot rate} at time $m$. \\
+
+\begin{definition} Let $0 \leq n \leq m \leq N - 1$. The one-period \underline{forward interest rate} at time $n$ for investing at time $m$ is given by
+\begin{equation*}
+	F_{n,m} = \frac{ B_{n,m} }{ B_{n, m + 1} } - 1
+\end{equation*}
+\end{definition}
+
+\begin{theorem} Let $0 \leq n \leq m \leq N - 1$ be given. The no-arbitrage time $n$ price of a contract paying $R_m$ at time $m + 1$ is
+\begin{equation*}
+	B_{n, m + 1} F_{n,m} = B_{n,m} - B_{n, m + 1}
+\end{equation*}	
+
+\begin{proof} At time $n$ perform the following actions
+\begin{enumerate}[(i)]
+	\item Short a bond paying $R_m$ at time $m + 1$ with value to be determined.
+	\item Long a $m$-maturity zero-coupon bond worth $B_{n,m}$.
+	\item Short a $(m + 1)$-maturity zero-coupon bond worth $B_{n, m + 1}$.
+\end{enumerate}
+
+Notice that this will require some initial capital in order to set up since 
+\begin{equation*}
+	B_{n,m} - B_{n, m + 1} > 0
+\end{equation*}
+
+At time $m$ we have
+\begin{enumerate}[(i)]
+	\item Receive $\$1$ from the $m$-maturity zero-coupon bond.
+	\item Invest the $\$1$ in the bank account for rate $R_m$
+	\item Net cash flow = 0.
+\end{enumerate}
+
+and at time $m + 1$ we have
+\begin{enumerate}[(i)]
+	\item The bank account is now worth $1 + R_m$.
+	\item Pay $R_m$ to the long counterparty of the initial shorted contract.
+	\item Pay the remaining $\$1$ to the cover the short position from the $m + 1$-maturity zero-coupon bond.
+	\item Net cash flow = 0.
+\end{enumerate}
+
+Hence, we have successfully hedged our short positions in the contract using initial capital
+\begin{equation*}
+	B_{n,m} - B_{n,m + 1} > 0
+\end{equation*}
+
+Therefore, the no-arbitrage price of the initial shorted contract must be
+\begin{equation*}
+	B_{n,m} - B_{n, m + 1} > 0
+\end{equation*}
+
+Therefore, by our result
+\begin{align*}
+	F_{n,m} &= \frac{ B_{n,m} }{ B_{n, m + 1} } - 1 \\
+	\implies B_{n,m + 1}F_{n,m} &= B_{n,m} - B_{n, m + 1}
+\end{align*}
+
+We have that
+\begin{equation*}
+	B_{n,m + 1}F_{n,m} = B_{n,m} - B_{n, m + 1} > 0
+\end{equation*}
+
+is the rational no-arbitrage price of this contract paying $R_m$ at time $m + 1$, as desired.
+\end{proof}
+\end{theorem}
+
+If we consider such a forward contract initiated at time $n$ for delivery of ``asset'' $R_m$ at time $m + 1$ the forward price $Fwd_{n,m + 1}$ at time $n$, using the forward rate $F_{n,m}$, is given by
+\begin{align*}
+	Fwd_{n,m + 1} &= \frac{ S_n }{ B_{n, m + 1} } \\
+	&= \frac{ B_{n, m + 1}F_{n, m} }{ B_{n, m + 1} } \\
+	&= F_{n,m}
+\end{align*}
+
+since, by our theorem, the value of the underlying asset at time $n$ is
+\begin{equation*}
+	S_n = B_{n,m + 1}F_{n,m}
+\end{equation*}
+
+\subsubsection{Interest Rate Swap}
+
+Once again, consider the following portfolio. At time $n$:
+\begin{enumerate}[(i)]
+	\item Short a forward contract on the interest rate process $R$: Agree to receive (fixed) $F_{n,m}$ at time $m + 1$ in exchange for a payment of (random) $R_m$ at time $m + 1$.
+	\item Such a contract should have time $n$ value of zero to enter.
+\end{enumerate}
+
+At time $m$
+\begin{enumerate}[(i)]
+	\item Invest $\$1$ at rate $R_m$.
+\end{enumerate}
+
+and at time $m + 1$
+\begin{enumerate}[(i)]
+	\item Receive $1 + R_m$ from the investment at time $m$.
+	\item Pay $R_m$ to the long party of the contract.
+	\item Receive $F_{n,m}$ from the long party of the contract.
+	\item Net cash received = $1 + F_{n,m}$.
+\end{enumerate}
+
+\indent After subtracting the $\$1$ injected into the portfolio at time $m$ we find that we have effectively locked-in an interest rate $F_{n,m}$ over the period $m$ to $m + 1$ at time $n$. This transaction leads to the definition of an interest rate swap: \\
+
+\begin{definition} Let $m$ be given with $1 \leq m \leq N$. An \underline{$m$-period interest rate swap} is a contract that makes payments $S_1,...,S_m$ at time $1,...,m$ where
+\begin{equation*}
+	S_n = K - R_{n - 1}, \quad n = 1,...,m
+\end{equation*}
+
+\indent The \underline{$m$-period swap rate $SR_m$} is the value of $K$ that makes the time zero no-arbitrage price of the interest rate swap equal to zero.
+\end{definition}
+
+We say that the long party {\bf (``receive fixed'')} of the swap contract 
+\begin{enumerate}
+	\item Receives a constant payment at each period $n$: Receive fixed interest $K$ on national principal of $\$1$.
+	\item Pays a variable rate {\bf (``pays floating'')} of $R_{n - 1}$ at each time $n$: Receive variable (stochastic) interest $R_{n - 1}$ on notional principal of $\$1$.
+\end{enumerate}
+
+\indent If the long party in such a contract already has some loan on which fixed interest payments must be paid then the long swap position will convert\footnote{Assuming the appropriate parameters match.} such a fixed rate loan into a variable rate loan. Conversely, a short swap position converts a variable rate loan to a fixed rate loan (paying fixed \& receiving floating).
+
+\begin{theorem} The time zero no-arbitrage price of the $m$-period interest rate swap is given by
+\begin{align*}
+	Swap_m &= \sum^m_{n = 1} \underbrace{B_{0,n}}_\text{discounting} \underbrace{ (K - F_{0,n - 1}) }_\text{risk-neutral forecast} \\
+	&= K\sum^m_{n = 1} B_{0,n} - (1 - B_{0,m})
+\end{align*}
+
+and the $m$-period swap rate (fixed rate) is
+\begin{align*}
+	SR_m &= \frac{ \sum^m_{n = 1} B_{0,n} F_{0, n - 1} }{ \sum^m_{n = 1} B_{0,n} } \\
+	&= \frac{ 1 - B_{0,m} }{ \sum^m_{n = 1} B_{0,n} }
+\end{align*}
+
+\begin{proof} The time zero no-arbitrage rational price of the payment $\$K$ made at time $n$ must be 
+\begin{align*}
+	K \cdot \tilde{\E}_0 \left[ \frac{1}{\prod^n_{j = 0} (1 + R_j)} \right] &= K \cdot \tilde{\E}_0 \left[ D_n \right] \\
+	&= K \cdot B_{0,n}
+\end{align*}
+
+and by our previous theorem stating that the no-arbitrage price of a payment $R_m$ at time $m + 1$ is given by
+\begin{equation*}
+	B_{n, m + 1}F_{n,m} = B_{n,m} - B_{n, m + 1} > 0
+\end{equation*}
+
+\indent Therefore, we have that the time zero no-arbitrage price of a payment $R_{n - 1}$ made at time $n$ is $B_{0,n}F_{0, n - 1}$. Hence, the time zero price of an the payments\footnote{As defined above, $S_n = K - R_{n - 1}$.} $S_n$ at time $n$ is
+\begin{align*}
+	S_n &= \underbrace{K \cdot B_{0,n}}_\text{time zero price of fixed} - \underbrace{ B_{0,n}F_{0,n - 1} }_\text{time zero price of floating} \\
+	&= B_{0, n}(K - F_{0, n - 1})
+\end{align*}
+
+summing over all time periods $n$ yields
+\begin{equation*}
+	Swap_m = \sum^m_{n = 1} B_{0,n}(K - F_{0,n - 1}) 
+\end{equation*}
+
+Using our result 
+\begin{equation*}
+	F_{0, n - 1} = \frac{ B_{0, n - 1} - B_{0, n} }{ B_{0, n} } 
+\end{equation*}
+
+we get
+\begin{align*}
+	Swap_m &= \sum^m_{n = 1} B_{0,n}(K - F_{0,n - 1}) \\
+	&= \sum^m_{n = 1} B_{0,n} \left(K - \frac{ B_{0, n - 1} - B_{0, n} }{ B_{0, n} } \right) \\
+	&= \sum^m_{n = 1} B_{0,n}K - (\underbrace{B_{0, n - 1} - B_{0,n}}_\text{telescoping}) \\
+	&= \sum^m_{n = 1} B_{0,n}K - (\underbrace{B_{0,0}}_{=\,1} - B_{0,m}) \\
+	&= K\sum^m_{n = 1} B_{0,n} - (1 - B_{0,m})
+\end{align*}
+
+which is the quantity for $Swap_m$ to be proven. Now, setting $Swap_m = 0$ in order to find the $m$-period rate we find
+\begin{align*}
+	0 &= Swap_m \\
+	&= \sum^m_{n = 1} B_{0,n}(K - F_{0,n - 1}) \\
+	&= K\sum^m_{n = 1} B_{0,n} - \sum^m_{n = 1} B_{0,n}F_{0,n - 1} \\
+	\implies K\sum^m_{n = 1}B_{0,n} &= \sum^m_{n = 1} B_{0,n}F_{0,n - 1} \\
+	\implies K &= \frac{ \sum^m_{n = 1} B_{0,n}F_{0,n - 1} }{ \sum^m_{n = 1} B_{0,n} } \\
+	&= \frac{ \sum^m_{n = 1} B_{0,n} \frac{ B_{0, n - 1} - B_{0, n} }{ B_{0, n} } }{ \sum^m_{n = 1} B_{0,n} } \\
+	&= \frac{ \sum^m_{n = 1} B_{0, n - 1} - B_{0, n} }{ \sum^m_{n = 1} B_{0,n} } \\
+	&= \frac{ B_{0,0} - B_{0,m} }{ \sum^m_{n = 1} B_{0,n} } \\
+	&= \frac{ 1 - B_{0,m} }{ \sum^m_{n = 1} B_{0,n} }
+\end{align*}
+
+and if the notional principal to the swap is $\$1$ we have that $K = SR_m$, as desired.
+\end{proof}
+\end{theorem} \hfill\\
+
+The formula given in the above theorem
+\begin{equation*}
+	Swap_m = \sum^m_{n = 1} B_{0,n}(K - F_{0,n - 1}) 
+\end{equation*}
+
+for the no-arbitrage price of an $m$-period swap is, unsurprisingly, consistent with risk-neutral pricing. In particular note that
+\begin{align*}
+	Swap_m &= \sum^m_{n = 1} B_{0,n}(K - F_{0,n - 1})  \\
+	&= \sum^m_{n = 1} B_{0,n}K - B_{0,n}F_{0,n - 1} \\
+	&= \sum^m_{n = 1} B_{0,n}K - (B_{0,n - 1} - B_{0,n}) \\
+	&= \sum^m_{n = 1} \tilde{\E}_0[D_n]K - \left( \tilde{\E}_0[D_{n - 1}] - \tilde{\E}_0[D_n] \right) \\
+	&= \sum^m_{n = 1} \tilde{\E}[K D_n] - \left( \tilde{\E}[ D_n(1 + R_{n - 1})] - \tilde{\E}[D_n] \right) \\
+	&= \sum^m_{n = 1} \tilde{\E}[K D_n] - \tilde{\E}[D_n(1 + R_{n - 1}) - D_n] \\
+	&= \sum^m_{n = 1} \tilde{\E}[K D_n] - \tilde{\E}[D_n(1 + R_n - 1)] \\
+	&= \sum^m_{n = 1} \tilde{\E}[K D_n] - \tilde{\E}[D_nR_{n - 1}] \\
+	&= \sum^m_{n = 1} \tilde{\E}[ K D_n - D_nR_{n - 1}] \\
+	&= \sum^m_{n = 1} \tilde{\E}[D_n(K - R_{n - 1})] \\
+	&= \tilde{\E} \left[ \sum^m_{n = 1} D_n(K - R_{n - 1}) \right]
+\end{align*}
+
+\indent That is, we have that the time zero rational price of the $m$-period interest rate swap (net swap cash flows for the long/fixed position, $K - R_{n - 1}$) is given by
+\begin{equation*}
+	Swap_m = \tilde{\E}_0 \left[ \sum^m_{n = 1} D_n(K - R_{n - 1}) \right]
+\end{equation*}
+
+\indent Notice that the above arguments for the no-arbitrage price of fixed income derivatives have been through the construction of hedging portfolios for the short position. In general, whenever a hedging portfolio is successfully constructed the application of risk-neutral pricing is justified. \\
+
+\subsubsection{Caps \& Floors}
+
+\indent The remainder of this section discusses the risk-neutral pricing of interest rate caps \& floors (options on interest rates). Although we can typically construct a hedging portfolio for short positions in these securities, we do not\footnote{Do we not do this because it's impossible or just not within the scope of the section?} work out the assumptions that would guarantee this is possible. \\
+
+\begin{definition} Let $m$ be given with $1 \leq m \leq N$. A \underline{$m$-period interest rate cap} is a contract that makes payments $C_1,...,C_m$ at times $1,...,m$ where each payment is given by
+\begin{equation*}
+	C_n = (R_{n - 1} - K)^+, \quad n = 1,...,m
+\end{equation*}
+
+\indent An \underline{$m$-period interest rate floor} is a contract that makes payments $F_1,...,F_m$ at times $1,...,m$ where
+\begin{equation*}
+	F_n = (K - R_{n - 1})^+, \quad n = 1,...,m
+\end{equation*}
+
+A contract which makes a single payment $C_n$ at only time $n$ is called an \underline{interest rate caplet}. \\
+
+A contract which makes a single payment $F_n$ at only time $n$ is called an \underline{interest rate floorlet}. \\
+\end{definition} \hfill\\
+
+We can show that the risk-neutral price at time zero of an $m$ period interest rate cap is
+\begin{equation*}
+	Cap_m = \tilde{\E} \left[ \sum^m_{n = 1} D_n(R_{n - 1} - K)^+ \right]
+\end{equation*}
+
+\indent If we have are paying a variable rate loan presently at $R_{n - 1}$ then an interest rate cap will effectively ``cap'' the interest rate we are obliged to pay at $K$: Whenever the interest owed $R_{n - 1}$ is in excess of $K$ we receive the rate
+\begin{equation*}
+	(R_{n - 1} - K)^+ = R_{n - 1} - K
+\end{equation*}
+
+with a net rate owed of $K$ at time $n$. Similarly, we can show that the risk-neutral price at time zero of an $m$ period interest rate cap is
+\begin{equation*}
+	Floor_m = \tilde{\E} \left[ \sum^m_{n = 1} D_n(R_{n - 1} - K)^+ \right]
+\end{equation*}
+
+and if are receiving a variable rate loan presently at $R_{n - 1}$ then an interest rate floor will effectively ``floor'' the interest rate we will receive at a guaranteed minimum rate $K$: Whenever the interest paid $R_{n - 1}$ is less than $K$ we receive
+\begin{equation*}
+	(K - R_{n - 1}^+ = K - R_{n - 1}
+\end{equation*}
+
+with a net rate received of $K$ at time $n$. \\
+
+Note that we have the relationship
+\begin{equation*}
+	\underbrace{ K - R_{n - 1} }_\text{swap} + \underbrace{ (R_{n - 1} - K)^+ }_\text{cap} = \underbrace{ (K - R_{n - 1})^+ }_\text{floor}
+\end{equation*}
+
+That is, holding a swap and a cap is equivalent to holding a floor:
+\begin{equation*}
+	Swap_m + Cap_m = Floor_m
+\end{equation*}
+
+\indent If we have that $K = SR_m$ then $Swap_m = 0$ and the cap and floor on the same underlying rate will have the same price
+\begin{equation*}
+	K = SR_m \implies Swap_m = 0 \implies Cap_m = Floor_m
+\end{equation*}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\end{document}

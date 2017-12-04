@@ -1,0 +1,736 @@
+% --------------------------------------------------------------
+% This is all preamble stuff that you don't have to worry about.
+% Head down to where it says "Start here"
+% --------------------------------------------------------------
+ 
+\documentclass[12pt]{article}
+ 
+\usepackage[margin=1in]{geometry} 
+\usepackage{bm} % bold in mathmode \bm
+\usepackage{amsmath,amsthm,amssymb,mathtools}
+\usepackage{dsfont} % for indicator function \mathds 1
+\usepackage{tikz,pgf,pgfplots}
+\usepackage{enumerate} 
+\usepackage[multiple]{footmisc} % for an adjascent footnote
+\usepackage{graphicx,float} % figures
+\usepackage{framed} % surround a text with a box 
+
+\newtheorem{definition}{Definition}
+\let\olddefinition\definition
+\renewcommand{\definition}{\olddefinition\normalfont}
+\newtheorem{lemma}{Lemma}
+\let\oldlemma\lemma
+\renewcommand{\lemma}{\oldlemma\normalfont}
+\newtheorem{proposition}{Proposition}
+\let\oldproposition\proposition
+\renewcommand{\proposition}{\oldproposition\normalfont}
+\newtheorem{corollary}{Corollary}
+\let\oldcorollary\corollary
+\renewcommand{\corollary}{\oldcorollary\normalfont}
+\newtheorem{theorem}{Theorem}
+\let\oldtheorem\theorem
+\renewcommand{\theorem}{\oldtheorem\normalfont}
+
+%%% PLOTTING PARAMETERS
+\tikzstyle{bag} = [text width=7em, text centered] %% binomial tree node width
+\tikzstyle{end} = []
+
+\pgfplotsset{soldot/.style={color=black,only marks,mark=*},
+             holdot/.style={color=black,fill=white,only marks,mark=*},
+             compat=1.12}
+%%%
+
+%% I want to be in control of when to indent...
+%% set noindent as the default status and define \indent to indent a line
+\newlength\tindent
+\setlength{\tindent}{\parindent}
+\setlength{\parindent}{0pt}
+\renewcommand{\indent}{\hspace*{\tindent}}
+
+\newcommand*{\vv}[1]{\vec{\mkern0mu#1}} % \vec command
+
+%% DAVIDS MACRO KIT %%
+\newcommand{\R}{\mathbb R}
+\newcommand{\N}{\mathbb N}
+\newcommand{\Z}{\mathbb Z}
+\renewcommand{\P}{\mathbb P}
+\newcommand{\Q}{\mathbb Q}
+\newcommand{\E}{\mathbb E}
+\newcommand{\var}{\mathrm{Var}}
+\newcommand{\Var}{\mathrm{Var}}
+\newcommand{\cov}{\mathrm{Cov}}
+\newcommand{\Cov}{\mathrm{Cov}}
+\newcommand{\indist}{\,{\buildrel \mathcal D \over \sim}\,}
+
+\newcommand{\bigtau}{\text{{\large $\bm \tau$}}}
+
+
+\begin{document}
+ 
+% --------------------------------------------------------------
+%                         Start here
+% --------------------------------------------------------------
+ 
+\title{Mathematical \& Computational Finance I\\Lecture Notes}
+\author{Random Walks}
+\date{March 15 2016 \\ Last update: \today{}}
+\maketitle
+
+% SECTION: 
+\section{Preliminaries}
+
+\indent It turns out that there is no known ``closed-form'' analytic formula for pricing American options. Our current motivation in this chapter is to work towards constructing the formula for a perpetual American put option. Indeed, the perpetual American put does have an analytic formula. However, in order to do so we must first build up some results regarding random walks.
+
+\subsection{Random Walks}
+
+\begin{definition} We first wish to introduce the notion of a \underline{symmetric random walk}. A symmetric random walk is the discrete-time analogue to Brownian motion. Consider the coin-toss probability space with $\P(\omega_j = H) = p$ and define the random variables
+\begin{equation*}
+	X_j = 
+	\begin{cases}
+		1 & \text{if } \omega_j = H \\
+		-1 & \text{if } \omega_j = T
+	\end{cases}
+\end{equation*}
+
+Let $M_0 = 0$ and define
+\begin{equation*}
+	M_n = \sum^n_{j = 1} X_j, \quad n = 1,2,...
+\end{equation*}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}
+\begin{axis}[thick,
+	height=7cm, width=10cm,
+    axis lines=middle,
+    xmin=0, xmax=6,
+    ymin=-1, ymax=4,
+    xlabel={$x$}, ylabel={$M$},
+    ticks = none,
+    xlabel style={at=(current axis.right of origin), anchor=west}, 
+    ylabel style={at=(current axis.above origin), anchor=south}
+]
+	\addplot [only marks] coordinates {(1,1)(2,2)(3,1)(4,0)};
+	\draw (0,0) -- (1,1) node[above left] {$X_1 = 1$};	
+	\draw (1,1) -- (2,2) node[above] {$X_2 = 1$};
+	\draw (2,2) -- (3,1) node[above right] {$X_3 = -1$};	
+	\draw (3,1) -- (4,0) node[above right] {$X_4 = -1$};	
+	\draw (5,1.5) node {$M_4 = 0$};
+\end{axis}
+\end{tikzpicture}
+\caption{Example of a simple random walk.}
+\end{figure}
+
+\indent If $p = \frac{1}{2}$ then we say that the process $\left\{ M_n \right\}^\infty_{n = 0}$ is called a \underline{symmetric random walk} with values $M_n \in \{0, \pm 1, \pm 2, ... \}$. If $p \neq \frac{1}{2}$ then the process is an \underline{asymmetric random walk}.
+\end{definition}
+
+\indent We should note that when we examine random walks we are considering potentially infinite coin toss sequences $\omega_1\omega_2\cdots$ so that our sample space $\Omega$ is no longer finite. It turns out that most of our results that we had built around finite probability spaces still hold, but in order to be fully rigorous some of the definitions, theorems, proofs, etc. may require some modification.\footnote{This would be examined more deeply in a course on Measure Theory.}
+
+\begin{theorem} {\bf A symmetric random walk is Markovian and a martingale.} 
+
+\begin{proof} To prove a process is Markovian/a martingale we must first convince ourselves that this process is adapted. First note that our symmetric random walk
+\begin{equation*}
+	M_n = \sum^n_{j = 1} X_j
+\end{equation*}
+
+is a function of $X_j$. Each $X_j$ only depends on the $j^\text{th}$ coin toss (and is independent of the previous $j - 1$ coin tosses). Therefore, we may see that $M_n$ depends only on the first $n$ coin tosses by its construction as a sum of $X_1,\cdots,X_n$. That is, $\{M_n\}$ is an adapted process. \\
+
+\indent We will first consider the Markov property. In order to show the Markov property recall that we require, for arbitrary function $f$ and stochastic process $Y$,
+\begin{equation*}
+	\E_n[f(X_{n + 1})] = g(X_n)
+\end{equation*}
+
+for some function $g$. Note that from the definition of the random walk $M_n$ we have
+\begin{equation*}
+	\E_n[f(M_{n + 1})] = \E_n[f(M_n + X_{n + 1})]
+\end{equation*}
+
+\indent Since our random walk $M_n$ is adapted and $X_{n + 1}$ is independent of the first $n$ coin tosses (since it is a single coin toss) we have from the Independence Lemma
+\begin{equation*}
+	\E_n[f(M_n + X_{n + 1})] = g(M_n)
+\end{equation*}
+
+such that $g$ is the ordinary expectation
+\begin{align*}
+	g(m) &= \E[f(m + X_{n + 1})] \\
+	&= pf(m + 1) + (1 - p)f(m - 1)
+\end{align*}
+
+for $m \in \{-n, -n + 1, ..., 0, 1,..., n, n - 1, n\}$. Therefore, we have that $\{M_n\}$ is Markovian, as desired. \\
+
+\indent Now, to show that the process $\{M_n\}$ is a martingale we should note that, applying the Markov property\footnote{Recall that the Markov property can overlap with the martingale property. It's not exactly a generalization since some martingales are not Markovian and some Markov process are not martingales, but in some cases the two share properties.} above with the function $f(x) = x$ and substituting $m = M_n$
+\begin{align*}
+	\E_n[M_{n + 1}] &= (M_n + 1)p + (M_n - 1)(1 - p) \\
+	&= pM_n + p + M_n - pM_n - 1 + p \\
+	&= p + M_n - 1 + p \\
+	&= M_n + (p - q) \quad \text{(where $q = 1 - p$)} \\
+	&= M_n + \left( \frac{1}{2} - \frac{1}{2} \right) \quad \text{(since $M_n$ is a symmetric random walk)} \\
+	&= M_n
+\end{align*}
+
+\indent Therefore, since $\{M_n\}$ is both adapted and satisfies the martingale property we have that $\{M_n\}$ is a martingale, as desired. 
+\end{proof} \hfill\\
+
+Examining the above result further note that in the final lines we had stated
+\begin{equation*}
+	\E_n[M_{n + 1}] = M_n + (p - q)
+\end{equation*}
+
+If $p > q$ then 
+\begin{equation*}
+	\E_n[M_{n + 1}] \leq M_n
+\end{equation*}
+
+and so $M_n$ would be a {\em supermartingale} in the case of $\P(\omega_j = H) > \P(\omega_j = T)$. Likewise if $p <  q$
+\begin{equation*}
+	\E_n[M_{n + 1}] \geq M_n
+\end{equation*}
+
+and so $M_n$ would be a {\em submartingale} in the case of $\P(\omega_j = H) < \P(\omega_j = T)$.
+\end{theorem}
+
+\section{First Passage Times}
+
+\begin{definition} Fix an $m \in \Z$ and let $\tau_m$ be the first time our random walk reaches the level $m$. We define this mathematically by
+\begin{equation*}
+	\tau_m = \inf \{n~:~M_n = m\}
+\end{equation*}
+
+\indent If the random walk never reaches the level $m$ then $\tau_m = \infty$ since $\inf \emptyset = \infty$. The value $\tau_m$ is a stopping time and is called the \underline{first passage time of the random walk to the level $m$}. 
+\end{definition}
+
+\indent In our particular context we are interested in the probability distribution of the first passage time $\tau_m$ and we will build some results in order to examine it.
+
+\begin{lemma} Let $M_n$ be a symmetric random walk and define, for $\sigma \in \R$,
+\begin{equation*}
+	S_n = e^{\sigma M_n} \left( \frac{2}{e^\sigma + e^{-\sigma}} \right)^n \quad n = 0,1,...
+\end{equation*}
+
+The process $\{S_n\}^\infty_{n = 0}$ is a martingale.
+
+\begin{proof} First note that $S_n$ is a function of $M_n$ consisting of a sum of random variables depending on the first $n$ coin tosses. Therefore $S_n$ depends only on the first $n$ coin tosses. That is, $\{S_n\}^\infty_{n = 0}$ is adapted. Now, regarding the martingale property, note
+\begin{align*}
+	S_{n + 1} &= e^{\sigma M_{n + 1}} \left( \frac{2}{e^\sigma + e^{-\sigma}} \right)^{n + 1} \\
+	&= e^{\sigma M_n + \sigma X_{n + 1}} \left( \frac{2}{e^{\sigma} + e^{-\sigma}} \right)^{n + 1} \\
+	&= S_n \left( \frac{2}{e^{\sigma} + e^{-\sigma}} \right) e^{\sigma X_{n + 1}}
+\end{align*}
+
+Then, taking the conditional expectation
+\begin{align*}
+	\E_n[S_{n + 1}] &= \E_n \left[ S_n \left( \frac{2}{e^\sigma + e^{-\sigma}} \right) e^{\sigma X_{n + 1}} \right] \\
+	&= S_n \left( \frac{2}{e^\sigma + e^{-\sigma}} \right) \E_n \left[ e^{\sigma X_{n + 1}} \right] \quad \text{(taking out what is known)} \\
+	&= S_n \left( \frac{2}{e^\sigma + e^{-\sigma}} \right) \E \left[ e^{\sigma X_{n + 1}} \right] \quad \text{(since $X_{n + 1}$ is independent of $\omega_1\cdots\omega_n$)} \\
+	&= S_n \left( \frac{2}{e^\sigma + e^{-\sigma}} \right) \left( \frac{1}{2} e^\sigma + \frac{1}{2}e^{-\sigma} \right) \quad \text{(since $p = \frac{1}{2} = q$)} \\
+	&= S_n \left( \frac{2}{e^\sigma + e^{-\sigma}} \right) \left( \frac{e^\sigma + e^{-\sigma}}{2} \right) \\
+	&= S_n
+\end{align*}
+
+Hence the process $\{S_n\}^\infty_{n = 0}$ is a martingale.
+\end{proof}
+\end{lemma}
+
+\indent Consider now the stopped process $S_{n\land\tau_m}$. From the Optional Sampling Theorem we had that a stopped martingale remains a martingale, that is
+\begin{align*}
+	\E_0 [S_{\land\tau_m} ] &\equiv \E_0 \left[ e^{\sigma M_{n\land\tau_m}} \left( \frac{2}{e^\sigma + e^{-\sigma}} \right)^{n\land\tau_m} \right] \\
+	&= S_{0\land\tau_m} \quad \text{(by the martingale property)} \\
+	&= S_0 \quad \text{(since $\tau_m \geq 0$)} \\
+	&= e^{\sigma M_0} \left( \frac{2}{e^\sigma + e^{-\sigma}} \right)^0 \\
+	&= e^{\sigma\cdot 0} \\
+	&= 1 
+\end{align*}
+
+\indent However, we should take a moment to reflect upon the fact that the Optional Sampling Theorem as we had defined it depended on the fact that a given stopping time is bounded. For our purposes we wish to consider unbounded stopping times. An equivalent result holds for unbounded stopping times (i.e. for $\tau = \infty$) but we need some results from Measure Theory to do so. \\
+
+\indent For reasons that will become clear in a moment,\footnote{We wish to apply some measure theoretic results that rely on boundedness in order to swap expectation (integration) with the limit operator. In particular, we require the integrand (the term which we are taking the expectation of) to be bounded.} we seek to bound the terms in the expectation 
+\begin{equation*}
+	\E_0 \left[ e^{\sigma M_{n\land\tau_m}} \left( \frac{2}{e^\sigma + e^{-\sigma}} \right)^{n\land\tau_m} \right]
+\end{equation*}
+
+Note that
+\begin{equation*}
+	\cosh \sigma = \frac{ e^\sigma + e^{-\sigma} }{2}
+\end{equation*}
+
+and that $\cosh \sigma$ attains its minimum at $\sigma = 0$ for $\cosh 0 = 1$
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}
+\begin{axis}[thick,
+	height=6cm, width=10cm,
+    axis lines=middle,
+    xmin=-pi, xmax=pi,
+    ymin=0, ymax=5,
+    xlabel={$\sigma$}, ylabel={},
+    ticks = none,
+    xlabel style={at=(current axis.right of origin), anchor=west}, 
+    ylabel style={at=(current axis.above origin), anchor=south}
+]
+	\addplot[domain=-pi:pi, samples=100] {(pow(e,x) + pow(e, -x))/2};
+\end{axis}
+\end{tikzpicture}
+\caption{Plot of hyperbolic cosine $\cosh \sigma$.}
+\end{figure}
+
+Hence, since $\cosh \sigma > 1$ for all $\sigma > 0$, so
+\begin{align*}
+	\cosh \sigma = \frac{ e^\sigma + e^{-\sigma} }{2} &> 1 \quad \forall\,\sigma > 0 \\
+	\implies 0 < \frac{2}{e^\sigma + e^{-\sigma} } &< 1 
+\end{align*}
+
+Therefore, for fixed $\sigma > 0$ we find
+\begin{align*}
+	\lim_{n\to\infty} \left( \frac{2}{e^\sigma + e^{-\sigma} } \right)^{n\land\tau_m} &= 
+	\begin{cases}
+		\left( \frac{2}{e^\sigma + e^{-\sigma} } \right)^{\tau_m} & \text{if } \tau_m < \infty \\
+		0 & \text{if } \tau_m = \infty
+	\end{cases} \\
+	&= \mathds 1_{\{\tau_m < \infty\}}
+\end{align*}
+
+Now suppose that $m > 0$. We should see
+\begin{equation*}
+	M_{n\land\tau_m} \leq m
+\end{equation*}
+
+since our stopped process $M_{n\land\tau_m}$ is defined to stop the first time it hist the level $m$. Therefore
+\begin{equation*}
+	0 \leq e^{\sigma M_{n\land\tau_m}} \leq e^{\sigma m}
+\end{equation*}
+
+If $\tau_m < \infty$ we have
+\begin{align*}
+	\lim_{n\to\infty} e^{\sigma M_{n\land\tau_m}} &= e^{\sigma M_{\tau_m}} \\
+	&= e^{\sigma m} \quad \text{(since $\tau_m$ is when $M$ reaches $m$)}
+\end{align*}
+
+Therefore, once again assuming $\tau_m < \infty$,
+\begin{align*}
+	\lim_{n\to\infty} e^{\sigma M_{n\land\tau_m}} \left( \frac{2}{e^\sigma + e^{-\sigma} } \right)^{n\land\tau_m} &= \lim_{n\to\infty} e^{\sigma M_{n\land\tau_m}} \lim_{n\to\infty} \left( \frac{2}{e^\sigma + e^{-\sigma} } \right)^{n\land\tau_m} \\
+	&= e^{\sigma m} \left( \frac{2}{e^\sigma + e^{-\sigma} } \right)^{\tau_m}
+\end{align*}
+
+and if $\tau_m = \infty$ then we have that $e^{\sigma M_{n\land\tau_m}}$ is bounded by $e^{\sigma m}$ so
+\begin{align*}
+	0 &\leq \lim_{n\to\infty} e^{\sigma M_{n\land\tau_m}} \left( \frac{2}{e^\sigma + e^{-\sigma} } \right)^{n\land\tau_m} \\
+	&\leq e^{\sigma m} \lim_{n\to\infty} \left( \frac{2}{e^\sigma + e^{-\sigma} } \right)^{n\land\tau_m} \\
+	&\leq e^{\sigma m} \cdot 0 \\
+	&= 0
+\end{align*}
+
+Combining both cases we find
+\begin{equation*}
+	\lim_{n\to\infty} e^{\sigma M_{n\land\tau_m}} \left( \frac{2}{e^\sigma + e^{-\sigma} } \right)^{n\land\tau_m} = \mathds 1_{\{\tau < \infty\}} e^{\sigma m} \left( \frac{2}{e^\sigma + e^{-\sigma} } \right)^{n\land\tau_m}
+\end{equation*}
+
+\indent Using the bounds and limits found above we can consider the limit of the expected value of the stopped process $S_{n\land\tau_m}$. Before doing so we require the \underline{Dominated Convergence Theorem}\footnote{This is a very important result, but for the purposes of this course is only mentioned for completeness and should will not be a focal point for our attention.} (DCT) in order to meaningfully take the limit from the outside of the expectation to the inside
+\begin{equation*}
+	\lim \E[ f(X) ] = \E[\lim f(X)] \quad \text{(requires the Dominated Convergence Theorem)}
+\end{equation*}
+
+\begin{theorem}{\bf Dominated Convergence Theorem (DCT).} Let $\{X_n\}^N_{n = 0}$ be a sequence of random variables. If there exists a random variable $Y$ such that
+\begin{equation*}
+	\E[|Y|] < \infty \quad \text{($Y$ is integrable)} 
+\end{equation*}
+
+and $|X_n| \leq Y$ for all $n \geq 0$. Then, if 
+\begin{equation*}
+	X_n(\omega) \longrightarrow X(\omega) \quad \forall\,\omega\in\Omega
+\end{equation*}
+
+we find that
+\begin{align*}
+	\lim_{n\to\infty} \E[X_n] &= \E[ \lim_{n\to\infty} X_n ] \\
+	&= \E[X]
+\end{align*}
+\end{theorem}
+
+\indent We had gone through all the trouble of bounding and finding the limits of our components of the stopped process $S_{n\land\tau_m}$ so that we could apply the Dominated Convergence Theorem. So
+\begin{align*}
+	\lim_{n\to \infty} \E[S_{n\land\tau_m}] &= \lim_{n\to\infty} \E \left[ e^{\sigma M_{n\land\tau_m}} \left( \frac{2}{e^\sigma + e^{-\sigma}} \right)^{n\land\tau_m} \right] \\
+	&= \E \left[ \lim_{n\to\infty} e^{\sigma M_{n\land\tau_m}} \left( \frac{2}{e^\sigma + e^{-\sigma}} \right)^{n\land\tau_m} \right] \quad \text{(DCT)} \\
+	&= \E \left[ \mathds 1_{\{\tau_m < \infty\}} e^{\sigma m} \left( \frac{2}{e^\sigma + e^{-\sigma} } \right)^{n\land\tau_m} \right] 
+\end{align*}
+
+but recall $\E[S_{n\land\tau_m}] = S_{0\land\tau_m} = S_0 = 1$ so
+\begin{equation*}
+	\E \left[ \mathds 1_{\{\tau_m < \infty\}} e^{\sigma m} \left( \frac{2}{e^\sigma + e^{-\sigma} } \right)^{n\land\tau_m} \right] = 1
+\end{equation*}
+
+for all $\sigma > 0$. Now consider the limit\footnote{In this particular course we use the notation $\lim_{x\downarrow \alpha}$ to denote the limit as $x$ approaches $\alpha$ from the right.} as $\sigma \downarrow 0$. We first see that\footnote{Recalling that $0 < \left( \frac{2}{e^\sigma + e^{-\sigma} } \right) < 1$.}
+\begin{equation*}
+	0 \leq \mathds 1_{\{\tau_m < \infty\}} e^{\sigma m} \left( \frac{2}{e^\sigma + e^{-\sigma} } \right)^{n\land\tau_m} \leq e^{\sigma m}
+\end{equation*}
+
+and taking the limit
+\begin{align*}
+	1 &= \lim_{\sigma\downarrow 0} \E \left[ \mathds 1_{\{\tau_m < \infty\}} e^{\sigma m} \left( \frac{2}{e^\sigma + e^{-\sigma} } \right)^{n\land\tau_m} \right] \quad \text{(since $\E[S_{n\land\tau_m}] = S_0 = 1$)} \\	
+	&= \E \left[ \lim_{\sigma\downarrow 0} \mathds 1_{\{\tau_m < \infty\}} e^{\sigma m} \left( \frac{2}{e^\sigma + e^{-\sigma} } \right)^{n\land\tau_m} \right] \quad \text{(DCT)} \\
+	&= \E \left[ \mathds 1_{\{\tau_m < \infty\}} \lim_{\sigma\downarrow 0} e^{\sigma m} \left( \frac{2}{e^\sigma + e^{-\sigma} } \right)^{n\land\tau_m} \right] \\
+	&= \E \left[ \mathds 1_{\{\tau_m < \infty\}} \right] \\
+	&= \P( \{ \tau_m < \infty \} ) \\
+	\implies \P( \{ \tau_m < \infty \} ) &= 1
+\end{align*}
+
+\indent The conclusion that $\P( \{ \tau_m < \infty \} ) = 1$ informs us that $M_n$ reaches the level $m$ with probability 1 (i.e. it will always reach $m$ given a sufficient\footnote{Potentially infinite?} amount of time). We say that the set of paths $M_n$ which never reach $m$ -- the paths for which the tails persistently outnumber the heads for all $n \to \infty$ -- have measure 0. \\
+
+\indent Hopefully it is clear that if we have negative $m$, $m < 0$, then the previous results hold by symmetry. We now restate our result in a more succinct manner.
+
+\begin{theorem} Let $m$ be a nonzero integer. The symmetric random walk $M_n$ reaches the level $m$ with probability 1 (almost surely). That is, the first passage time to level $m$, denoted $\tau_m$ is finite (almost surely, with probability 1).
+\end{theorem} \hfill\\%
+
+\indent Now, our next goal is to determine the probability distribution of the first passage time $\tau_m$. We consider the moment generating function (mgf) of $\tau_m$
+\begin{equation*}
+	\phi_{\tau_m}(u) = \E[e^{u\tau_m}] 
+\end{equation*}
+
+Recall the series expansion for $e^x$
+\begin{equation*}
+	e^x = 1 + x + \frac{1}{2}x^2 + \frac{1}{2\cdot 3} x^3 + \cdots \geq x
+\end{equation*}
+
+Hence, considering first all $u > 0$ we have
+\begin{equation*}
+	e^{u\tau_m} \geq u \tau_m
+\end{equation*}
+
+Therefore, since $e^{u\tau_m}$ dominates $u\tau_m$ we have that the expectations dominate as well
+\begin{align*}
+	\phi_{\tau_m}(u) &= \E[e^{u\tau_m}] \\
+	&\geq \E [u\tau_m] \\
+	&= u\E[\tau_m]
+\end{align*}
+
+We will later see that this expectation $\E[\tau_m] = \infty$ and so this inequality gives us
+\begin{align*}
+	\phi_{\tau_m}(u) &\geq u\E[\tau_m] = \infty \\
+	\implies \phi_{\tau_m}(u) &= \infty \quad \forall\,u > 0
+\end{align*}
+
+and for $u = 0$ we have that
+\begin{equation*}
+	\phi_{\tau_m}(0) = \E [e^{0\cdot \tau_m}] = 1
+\end{equation*}
+
+So, in summary
+\begin{equation*}
+	\phi_{\tau_m}(u) = \E[e^{u\tau_m}] =
+	\begin{cases}
+		\infty & \text{if } u > 0 \\
+		0 & \text{if } u = 0 \\
+		\text{TBD} & \text{if } u < 0
+	\end{cases}
+\end{equation*}
+
+We consider now the final case of $u < 0$. In this case we let $\alpha = e^u$ so that $0 < \alpha  < 1$ and
+\begin{equation*}
+	\phi_{\tau_m}(u) = \E[e^{u\tau_m}] = \E[\alpha^{\tau_m}]
+\end{equation*} 
+
+To determine this expectation we present the following result
+
+\begin{theorem} Let $m$ be a nonzero integer. The first passage time $\tau_m$ for a symmetric random walk $\{M_n\}$ satisfies
+\begin{equation*}
+	\E[\alpha^{\tau_m}] = \left( \frac{ 1 - \sqrt{(1 - \alpha^2)} }{ \alpha } \right)^{|m|} \quad \forall\,\alpha\in(0,1)
+\end{equation*}
+
+\begin{proof} We have that $M_n$ is a symmetric random walk so then the first passage times $\tau_m$ and $\tau_{-m}$ will have the same distribution (reflected about the time axis). So, without loss of generality, assume $m \in \N$. We've already shown that
+\begin{equation*}
+	\P(\{\tau_m < \infty\}) = 1 \quad \text{almost surely}
+\end{equation*}
+
+and
+\begin{equation*}
+	\E \left[ e^{\sigma m} \left( \frac{2}{ e^\sigma + e^{-\sigma}} \right)^{\tau_m} \right] = 1, \quad \sigma > 0
+\end{equation*}
+
+Now, let $\alpha \in (0,1)$ and solve for the $\sigma$ satisfying\footnote{What is this motivation?}
+\begin{align*}
+	\alpha &= \frac{2}{e^\sigma + e^{-\sigma}} \\
+	\implies \alpha e^\sigma + \alpha e^{-\sigma} &= 2 \\
+	\implies \left( e^{-\sigma} \right) \left( \alpha e^\sigma + \alpha e^{-\sigma}  \right) &= 2e^{-\sigma} \\
+	\implies \alpha + \alpha e^{-2\sigma} &= 2e^{-\sigma} \\
+	\implies \alpha \left(e^{-\sigma}\right)^2 - 2e^{-\sigma} + \alpha &= 0 \\
+	\implies e^{-\sigma} &= \frac{ 2\pm \sqrt{4 - 4\alpha^2} }{ 2\alpha }  \\
+	&= \frac{ 1\pm\sqrt{1 - \alpha^2} }{ \alpha } 
+\end{align*}
+
+\indent We seek a strictly positive solution for $\sigma$, and so we seek to find $\sigma$ such that $e^{-\sigma} < 1$. This suggests to us that we should consider the solution given by the quadratic formula
+\begin{align*}
+	e^{-\sigma} &=  \frac{ 1 - \sqrt{1 - \alpha^2} }{ \alpha }
+\end{align*}
+
+Because we have selected $0 < \alpha \equiv e^u < 1$ we find that
+\begin{equation*}
+	0 < (1 - \alpha)^2 < 1 - \alpha < 1 - \alpha^2
+\end{equation*}
+
+Taking the positive square root we get
+\begin{align*}
+	1 - \alpha &< \sqrt{1 - \alpha^2} \\
+	\implies 1 - \sqrt{1 - \alpha^2} &< \alpha \\
+	\implies \frac{1 - \sqrt{1 - \alpha^2}}{\alpha} &< 1
+\end{align*}
+
+Therefore, we have our solution for $e^{-\sigma}$ is bound 
+\begin{align*}
+	e^{-\sigma} &= \frac{1 - \sqrt{1 - \alpha^2}}{\alpha} < 1 \\
+	\implies -\sigma &< \log 1 = 0 \\
+	\implies \sigma &> 0
+\end{align*}
+
+and so our expression for $e^{-\sigma}$ leads to a feasible solution. Now, recall we found this value by the substitution
+\begin{equation*}
+	\alpha = \frac{2}{e^\sigma + e^{-\sigma}}
+\end{equation*}
+
+Thus, plugging in these values into our original expectation
+\begin{align*}
+	1 &= \E \left[ e^{\sigma m} \left( \frac{2}{ e^\sigma + e^{-\sigma}} \right)^{\tau_m} \right] \\
+	&= \E \left[ \left(e^{-\sigma} \right)^{-m} \alpha^{\tau_m} \right]  \\
+	&= \E \left[ \left( \frac{1 - \sqrt{1 - \alpha^2}}{\alpha} \right)^{-m} \alpha^{\tau_m} \right]  \\
+	&= \E \left[ \left( \frac{\alpha}{1 - \sqrt{1 - \alpha^2}} \right)^m \alpha^{\tau_m} \right] \\
+	&=  \left( \frac{\alpha}{1 - \sqrt{1 - \alpha^2}} \right)^m \E \left[ \alpha^{\tau_m} \right] \quad \text{(this expression is constant)} \\
+	\implies \E \left[\alpha^{\tau_m} \right] &= \left( \frac{1 - \sqrt{1 - \alpha^2}}{\alpha} \right)^m
+\end{align*}
+
+Likewise, for $m < 0$ we find, by symmetry,
+\begin{equation*}
+	\E \left[\alpha^{\tau_m} \right] = \left( \frac{1 - \sqrt{1 - \alpha^2}}{\alpha} \right)^{-m}
+\end{equation*}
+
+Combining these results we find
+\begin{equation*}
+	\E \left[\alpha^{\tau_m} \right] = \left( \frac{1 - \sqrt{1 - \alpha^2}}{\alpha} \right)^{|m|}
+\end{equation*}
+
+as desired.
+\end{proof}
+\end{theorem}
+
+\begin{corollary} Let $m$ be a nonzero integer. The first passage time $\tau_m$ for the symmetric random walk $\{M_n\}$ satisfies
+\begin{equation*}
+	\E[\tau_m] = \infty
+\end{equation*}
+
+\begin{proof} Consider first $m = 1$ and assume that it is valid to interchange differentiation and expectation\footnote{Really, we'd have to go through some results given by the Lebesgue Dominated Convergence Theorem.}. Then
+
+\begin{align*}
+	\E \left[ \tau_1 \alpha^{\tau_1 - 1} \right] &= \frac{\partial}{\partial\alpha} \E \left[ \alpha^{\tau_1} \right] \\
+	&= \frac{\partial}{\partial\alpha} \left( \frac{1 - \sqrt{1 - \alpha^2}}{\alpha} \right)^{|1|} \quad \text{(from our previous theorem)} \\
+	&= \frac{ 1 - \sqrt{1 - \alpha^2} }{ \alpha^2\sqrt{1 - \alpha^2} }
+\end{align*}
+
+\indent Recall that we had defined $\alpha \in (0,1)$. Because of this it is invalid to substitute $\alpha = 1$, however we may consider the limit as $\alpha\uparrow 1$. So
+\begin{align*}
+	\lim_{\alpha\uparrow 1} \E \left[ \tau_1 \alpha^{\tau_1 - 1} \right] &= \lim_{\alpha\uparrow 1} \frac{ 1 - \sqrt{1 - \alpha^2} }{ \alpha^2\sqrt{1 - \alpha^2} } \\
+	&= \lim_{\alpha\uparrow 1} \left( \frac{1}{\alpha^2\sqrt{1 - \alpha^2}} \right) \lim_{\alpha\uparrow 1} \left( 1 - \sqrt{1 - \alpha^2} \right) \\
+	&= \lim_{\alpha\uparrow 1}\left( \frac{1}{\alpha^2} \right) \lim_{\alpha\uparrow 1} \left( \frac{1}{\sqrt{1 - \alpha^2}} \right) \lim_{\alpha\uparrow 1} \left( 1 - \sqrt{1 - \alpha^2} \right) \\
+	&= 1 \cdot  \lim_{\alpha\uparrow 1} \left( \frac{1}{\sqrt{1 - \alpha^2}} \right) \cdot 1 \\
+	&= \infty
+\end{align*}
+
+However, notice that
+\begin{align*}
+	\infty = \lim_{\alpha\uparrow 1} \E[\tau_1 \alpha^{\tau_1 - 1} ] &= \E \left[ \tau_1 \lim_{\alpha\uparrow 1} \alpha^{\tau_1 - 1} \right] \quad \text{(handwaving DCT)} \\
+	\implies \E[\tau_1] &= \infty
+\end{align*}
+
+For $m \geq 1$ we have
+\begin{align*}
+	\tau_m &\geq \tau_1 \\
+	\implies \E[\tau_m] &\geq \E[\tau_1] = \infty
+\end{align*}
+
+and by symmetry we find that for $-m < 0$
+\begin{equation*}
+	\E[\tau_{-m}] = \infty
+\end{equation*}
+
+Therefore for all $m$ we find
+\begin{equation*}
+	\E[\tau_m] = \infty
+\end{equation*}
+
+as desired.
+\end{proof}
+\end{corollary} \hfill\\
+
+Note that the quantity
+\begin{equation*}
+	\E[\alpha^{\tau_m}] = \left(  \frac{ 1 - \sqrt{1 - \alpha^2} }{ \alpha } \right)^{|m|} 
+\end{equation*}
+
+is the \underline{probability generating function} of the first passage time $\tau_m$. \\
+
+\indent Since a random walk may only reach level $m = 1$ on on after an odd number of steps\footnote{Since each step $X_j = \pm 1$.} we have, by definition,\footnote{Recall that $tau_1$ denotes the amount of time taken to reach level $m = 1$.}
+\begin{equation*}
+	\E[\alpha^{\tau_1}] = \sum^\infty_{j = 1} \alpha^{2j - 1} \P(\tau_1 = 2j - 1)
+\end{equation*}
+
+since all even number of steps correspond to $\P(\tau_1 = 2j) = 0$ for $j = 1,2,...$. To find each $\P(\tau_1 = 2j - 1)$ we will perform the Taylor expansion on the function $f(x) = 1 - \sqrt{1 - x}$ and match each coefficient of $\alpha^{2j - 1}$ in the series to those in the expectation immediately above. Recall the general form of the Taylor series for a infinitely differentiable function
+\begin{equation*}
+	f(x) = \sum^\infty_{j = 0} \frac{1}{j!} f^{(j)} (0) x^j
+\end{equation*}
+
+We have the $j^\text{th}$ derivative of our function $f(x) = 1 - \sqrt{1 - x}$ 
+\begin{align*}
+	f^{(j)}(x) &= \frac{ d^j }{ dx^j }f(x) \\
+	&= \frac{1\cdot3\cdot\cdots\cdot(2j - 3)}{2^j} (1 - x)^{-\frac{2j - 1}{2}} \quad j = 1,2,...
+\end{align*}
+
+Then, evaluating the $j^\text{th}$ derivative at 0
+\begin{align*}
+	f^{(j)}(0) &= \frac{1\cdot3\cdot\cdots\cdot(2j - 3)}{2^j} \quad j = 1,2,... \\
+	&=  \frac{1\cdot3\cdot\cdots\cdot(2j - 3)}{2^j} \cdot \frac{2\cdot4\cdot\cdots\cdot(2j - 2)}{2^{j - 1}(j - 1)!  } \\
+	&= \left( \frac{1}{2} \right)^{2j - 1} \frac{ (2j - 2)! }{ (j - 1)! }
+\end{align*}
+
+Hence
+\begin{align*}
+	f(x) = 1 - \sqrt{1 - x} &= \sum^\infty_{j = 0} \frac{1}{j!} f^{(j)} (0) x^j \\
+	&= \sum^\infty_{j = 1} \frac{1}{j!} \left( \frac{1}{2} \right)^{2j - 1} \frac{ (2j - 2)! }{ (j - 1)! } x^j \\
+	&= \sum^\infty_{j = 1} \left( \frac{1}{2} \right)^{2j - 1} \frac{ (2j - 2)! }{ j!(j - 1)! } x^j
+\end{align*}
+
+Then
+\begin{align*}
+	\frac{ 1 - \sqrt{1 - \alpha^2} }{ \alpha } &= \frac{ f(\alpha^2) }{ \alpha } \\
+	&= \frac{1}{\alpha} \sum^\infty_{j = 1} \left( \frac{1}{2} \right)^{2j - 1} \frac{ (2j - 2)! }{ j!(j - 1)! } \left(\alpha^2\right)^j \\
+	&= \frac{1}{\alpha} \sum^\infty_{j = 1} \left( \frac{1}{2} \right)^{2j - 1} \frac{ (2j - 2)! }{ j!(j - 1)! } \alpha^{2j} \\
+	&= \sum^\infty_{j = 1} \left( \frac{1}{2} \right)^{2j - 1} \frac{ (2j - 2)! }{ j!(j - 1)! } \alpha^{2j - 1} \\
+	&= \sum^\infty_{j = 1} \left( \frac{\alpha}{2} \right)^{2j - 1} \frac{ (2j - 2)! }{ j!(j - 1)! } 
+\end{align*}
+
+equating this with our expectation
+\begin{equation*}
+	\E[\alpha^{\tau_1}] = \sum^\infty_{j = 1} \alpha^{2j - 1} \P(\tau_1 = 2j - 1)
+\end{equation*}
+
+we find
+\begin{align*}
+	\sum^\infty_{j = 1} \alpha^{2j - 1} \P(\tau_1 = 2j - 1) &= \sum^\infty_{j = 1} \left( \frac{\alpha}{2} \right)^{2j - 1} \frac{ (2j - 2)! }{ j!(j - 1)! }  \\
+	\implies \P(\tau_1 = 2j - 1) &= \left( \frac{1}{2} \right)^{2j - 1} \frac{ (2j - 2)! }{ j!(j - 1)! }
+\end{align*}
+
+\indent How can we interpret this result? That is, how can we interpret this probability that our random walk $\{M_n\}$ will reach level $m = 1$ in $2j - 1$ steps? The term $\frac{ (2j - 2)! }{ j!(j - 1)! }$ counts the number of paths with $2j - 1$ steps that only reach level $m = 1$ by the $(2j - 1)^\text{th}$ step so that
+\begin{equation*}
+	\tau_1 = 2j - 1
+\end{equation*}
+
+\indent The term $\left( \frac{1}{2} \right)^{2j - 1}$ is the probability of each of these particular paths of $2j - 1$ steps. We may may generalize (but we do not) these results to asymmetric random walks.
+
+\begin{theorem} Let $\tau_1$ be the first passage time of to level $m = 1$ of an asymmetric random walk with probability $p$ of an up step and $q = 1 - p$ of a down step. Then
+\begin{equation*}
+	\P(\tau_1 = 2j - 1) \frac{ (2j - 2)! }{ j!(j - 1)! } p^jq^{j - 1}
+\end{equation*}
+
+for $j = 1,2,...$.
+\end{theorem}
+
+\section{Reflection Principle}
+
+\indent Let $M_n$ be an asymmetric random walk with probability $p$ of an up step and $q = 1 - p$ of a down step. We can consider the start of the random walk to be at value $M_0 = a$ instead of $M_0 = 0$. A sample path of our process $M_n$ can be presented by plotting the points $(j, M_j)$ for $0 \leq j \leq N$
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}
+\begin{axis}[thick,
+	height=7cm, width=14cm,
+    axis lines=middle,
+    xmin=0, xmax=15,
+    ymin=-1, ymax=6,
+    xlabel={$x$}, ylabel={$M$},
+    ticks = none,
+    xlabel style={at=(current axis.right of origin), anchor=west}, 
+    ylabel style={at=(current axis.above origin), anchor=south}
+]
+	\addplot [only marks] coordinates {(0,5)(1,4)(2,5)(3,4)(4,3)(5,2)(6,1)(7,0)(8,-1)(9,0)(10,1)(11,0)(12,1)(13,2)};
+	\draw (0,5) node	 [above right] {$(0,a)$};
+	\draw (0,5) -- (1,4);
+	\draw (1,4) -- (2,5);
+	\draw (2,5) -- (8,-1);
+	\draw (8,-1) -- (10,1);
+	\draw (10,1) -- (11,0);
+	\draw (11,0) -- (13,2) node[above right] {$(n,b)$};
+\end{axis}
+\end{tikzpicture}
+\caption{Sample path of a random walk with $M_0 = a$.}
+\end{figure}
+
+\indent Denote $N_n(a,b)$ the total number of possible paths from the point $(0,a)$ to the point $(n,b)$. Denote the set of sample paths of a random walk as the set of vectors of the form
+\begin{equation*}
+	\vec{m} = (m_0, m_1, m_2, ...)
+\end{equation*}
+
+such that $m_0 = a$ and $m_{i + 1} - m_i = \pm 1$. That is, each $m_i$ denotes the  $i^\text{th}$ position of the random walk. Any vector $\vec{m}$ can be thought of as a sample path of our random walk. Given our asymmetric random walk we have that the probability that the first $n$ steps follow a particular path $\vec{m}$ is 
+\begin{equation*}
+	p^rq^l
+\end{equation*}
+
+where $r$ denotes the number of up steps and $l$ denotes the number of down steps
+\begin{align*}
+	r &= \# \{ i~:~m_{i + 1} - m_i = 1 \} \\
+	l &= \# \{ i~:~m_{i + 1} - m_i = -1  \}
+\end{align*}
+
+Take note that we require
+\begin{align*}
+	r + l &= n \quad \text{(total number of steps)} \\
+	r - l &= b - a \quad \text{(net upward steps)}
+\end{align*}
+
+We can solve this system for $r$ and $l$ to yield
+\begin{align*}
+	r &= \frac{1}{2}[n + (b - a)] \\
+	l &= \frac{1}{2}[n - (b - a)]
+\end{align*}
+
+Therefore, the total number of possible sample paths $N_n(a,b)$ from $(0,a)$ to $(n,b)$ is\footnote{It's difficult for me to interpret how we arrive to ${{n}\choose{r}}$.}
+\begin{equation*}
+	N_n(a,b) = {{n}\choose{r}} = {{n}\choose{\frac{n + b - a}{2}}}
+\end{equation*}
+
+Then
+\begin{align*}
+	\P(M_n = b~|~M_0 = a) &= {{n}\choose{\frac{n + b - a}{2}}} p^r q^l \\
+	&= {{n}\choose{\frac{n + b - a}{2}}} p^{\frac{1}{2}(n + b - a)} q^{\frac{1}{2}(n - b + a)}
+\end{align*}
+
+By symmetry we have that ${{n}\choose{r}} = {{n}\choose{n - r}}$ so
+\begin{equation*}
+	\P(M_n = b~|~M_0 = a) = {{n}\choose{ \frac{1}{2}(n - (b - a)) }} p^{\frac{1}{2}(n + b - a)} q^{\frac{1}{2}(n - b + a)}
+\end{equation*}
+
+where the above formula makes sense if $\frac{1}{2}(n + (b - a))$ is a positive integer, otherwise the probability becomes is 0. Suppose that we are given $M_0 = a$ and $M_n = b$: The random walk may or may not have reached the origin between the nodes at 0 to $n$. Define $N^0_n(a,b)$ to be the number of paths from $(0,a)$ to $(n,b)$ that reach or cross the $x$-axis. \\
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\end{document}

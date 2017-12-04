@@ -1,0 +1,552 @@
+% --------------------------------------------------------------
+% This is all preamble stuff that you don't have to worry about.
+% Head down to where it says "Start here"
+% --------------------------------------------------------------
+ 
+\documentclass[12pt]{article}
+ 
+\usepackage[margin=1in]{geometry} 
+\usepackage{bm} % bold in mathmode \bm
+\usepackage{amsmath,amsthm,amssymb,mathtools}
+\usepackage{dsfont} % for indicator function \mathds 1
+\usepackage{tikz,pgf,pgfplots}
+\usepackage{enumerate} 
+\usepackage[multiple]{footmisc} % for an adjascent footnote
+\usepackage{graphicx,float} % figures
+
+\newtheorem{definition}{Definition}
+\let\olddefinition\definition
+\renewcommand{\definition}{\olddefinition\normalfont}
+\newtheorem{lemma}{Lemma}
+\let\oldlemma\lemma
+\renewcommand{\lemma}{\oldlemma\normalfont}
+\newtheorem{proposition}{Proposition}
+\let\oldproposition\proposition
+\renewcommand{\proposition}{\oldproposition\normalfont}
+\newtheorem{corollary}{Corollary}
+\let\oldcorollary\corollary
+\renewcommand{\corollary}{\oldcorollary\normalfont}
+\newtheorem{theorem}{Theorem}
+\let\oldtheorem\theorem
+\renewcommand{\theorem}{\oldtheorem\normalfont}
+
+\newcommand\norm[1]{\left\lVert#1\right\rVert} % \norm command 
+
+%%% PLOTTING PARAMETERS
+\tikzstyle{bag} = [text width=7em, text centered] %binomial tree node width
+\tikzstyle{end} = []
+%%%
+
+%% set noindent by default and define indent to be the standard indent length
+\newlength\tindent
+\setlength{\tindent}{\parindent}
+\setlength{\parindent}{0pt}
+\renewcommand{\indent}{\hspace*{\tindent}}
+
+\newcommand*{\vv}[1]{\vec{\mkern0mu#1}} % \vec command
+
+%% DAVIDS MACRO KIT %%
+\newcommand{\R}{\mathbb R}
+\newcommand{\N}{\mathbb N}
+\newcommand{\Z}{\mathbb Z}
+\renewcommand{\P}{\mathbb P}
+\newcommand{\Q}{\mathbb Q}
+\newcommand{\E}{\mathbb E}
+\newcommand{\var}{\mathrm{Var}}
+\newcommand{\indist}{\,{\buildrel \mathcal D \over \sim}\,}
+
+\newcommand{\bigtau}{\text{{\large $\bm \tau$}}}
+
+\begin{document}
+ 
+% --------------------------------------------------------------
+%                         Start here
+% --------------------------------------------------------------
+ 
+\title{Mathematical \& Computational Finance I\\Lecture Notes}
+\author{Probability Theory on Coin Toss Space}
+\date{February 2 2016 \\ Last update: \today{}}
+\maketitle
+
+% SECTION: 
+\section{Markov Processes}
+
+\indent Recall that last time wee looked at the example of a simple lookback option. We had shown that the joint $\{S_n,M_n\}^N_{n = 0}$ process, with
+\begin{equation*}
+	M_n = \max_{0 \leq k \leq n} S_k
+\end{equation*}
+
+with time $N$ payoff
+\begin{equation*}
+	V_N = M_N - S_N
+\end{equation*}
+
+is Markovian. We had shown that $V_N = \nu(s,m)$ exists by the Markov property, and by the Independence Lemma
+\begin{equation*}
+	\nu_n(s,m) = \frac{1}{1 + r}\left[ \tilde{p} \nu_{n + 1}(us, \max \{ m, us \}) + \tilde{q}\nu_{n + 1}(ds,m)\right] \quad n = 0, 1,..., N - 1
+\end{equation*}
+
+\indent In general, if we have $V_N = \nu_N(S_N, M_N)$ then the multiple time step Markov property of $\{S_N,M_N\}$ and the risk-neutral pricing formula gives us
+\begin{equation*}
+	V_n = \nu_n(S_n, M_n) = \tilde{\E}_n \left[ \frac{\nu_N(S_N, M_N)}{(1 + r)^{N - n}} \right]
+\end{equation*}
+
+\indent Note that the Markov property doesn't actually give us what the function is and in order to make a computable algorithm we rely on the Independence Lemma. \\
+
+\underline{Example}: Derive the general recursive algorithm for calculating the time $n$ price of a derivative security whose payoff depends on the asset price at time $N$ and its maximum price to time $N$. \\
+
+\underline{Solution}: Suppose that for time time $n \in \{0,..., N - 1\}$ we have computed the function $\nu_{n + 1}$
+\begin{equation*}
+	V_{n + 1} = \nu_{n + 1}(S_{n + 1}, M_{n + 1})
+\end{equation*}
+
+then, write
+\begin{align*}
+	V_n &= \frac{1}{1 + r}\tilde{\E}_n[V_{n + 1}] \quad \text{(from risk-neutral pricing)} \\
+	&= \frac{1}{1 + r} \tilde{\E}_n \left[ \nu_{n + 1}(S_{n +1},M_{n + 1}) \right] \\
+	&= \frac{1}{1 + r} \tilde{\E}_n \left[ \nu_{n + 1} \left( S_n \frac{S_{n + 1}}{S_n}, \max \left\{M_n, S_n \frac{S_{n + 1}}{S_n} \right\} \right) \right]
+\end{align*}
+
+\indent However, we have that $\frac{S_{n + 1}}{S_n}$ is independent of the first $n$ coin tosses with the rest of the terms adapted to the first $n$ tosses. Therefore, by the independence Lemma
+\begin{equation*}
+	V_n = \nu_n(S_n, M_n)
+\end{equation*}
+
+where $\nu_n(s, m)$ is the ordinary expectation
+\begin{align*}
+	\nu_n(s, m) &= \tilde{\E} \left[ \nu_{n + 1} \left( s \frac{S_{n + 1}}{S_n}, \max \left\{m, s \frac{S_{n + 1}}{S_n} \right\} \right) \right]  \\
+	&= \frac{1}{1 + r} [\tilde{p}\nu_{n + 1}(us, \max \{m, us \}) + \tilde{q}\nu_{n + 1}(ds, \max \{ m, ds \})]
+\end{align*}
+
+\indent Note that $M_n \geq S_n$ so we only need to know the function $\nu_n(s, m)$ when $m \geq s$. However, when $m \geq s$ and if $d \leq 1$ we have $\max \{ m, ds\} = m$, so
+\begin{equation*}
+	\nu_n(s, m) = \frac{1}{1 + r}[ \tilde{p}\nu_{n + 1}(us, \max \{ m, us \}) + \tilde{q}\nu_{n + 1}(ds, m)]
+\end{equation*}
+
+for $m \geq s > 0$ and $N = 0, ..., N - 1$. \\
+
+\begin{theorem} Let $\{X_n\}^N_{n = 0}$ be a Markov process under $\tilde{\P}$. Suppose that for some function $\nu_N(x)$ the payoff at time $N$ of a derivative security is $\nu_N(X_N)$. Then, for each $n = \{0,..., N\}$ the price $V_n$ of the derivative security is some function $\nu_n$ of $X_n$
+\begin{equation*}
+	V_n = \nu_n(X_n) \quad n = 0, 1, ..., N
+\end{equation*}
+
+\indent Furthermore, there exists a recursive algorithm for computing $\nu_n$ whose exact formula depends on the underlying Markovian process $\{X_n\}^N_{n = 0}$.\footnote{I think we interpret this as that we are guaranteed a function of the time $n$ process $X_n$ of a security whose time $N$ payoff is a function of the same process $X_N$.}
+\end{theorem}
+
+\underline{Example}: Consider an $N$-period binomial model. An {\em Asian option} has a payoff based on the average of the stock price, i.e.,
+\begin{equation*}
+	V_N = f \left( \frac{1}{1 + N} \sum^N_{n = 0} S_n \right)
+\end{equation*}
+
+where $f$ is determined by the details of the derivative contract \\
+
+{\bf (A)} Define
+\begin{equation*}
+	Y_n = \sum^n_{k = 0} S_k
+\end{equation*}
+
+and use the Independence Lemma to show that the two-dimensional process $\{S_n, Y_n\},~n=0,1,..., N$ is Markovian. \\
+
+\underline{Solution}:
+\begin{enumerate}[(i)]
+	\item Adapted? Note that $S_n$ and $Y_n = \sum^n_{k = 0} S_k$ depend only on the first $n$ coin tosses, therefore $\{S_n, Y_n\}^N_{n = 0}$ is adapted. 
+	\item Markov property? Let $h$ be an arbitrary function $h(s, y)$. We must show that there exists a function $g$ such that
+	\begin{equation*}
+		\E_n[h(S_{n + 1}, Y_{n + 1})] = g(S_n, Y_n) \quad 0 \leq n \leq N
+	\end{equation*}
+	
+	Write
+	\begin{align*}
+		S_{n + 1} &= S_n\frac{S_{n + 1}}{S_n} \\
+		Y_{n + 1} &= Y_n + S_{n + 1} \\
+		&= Y_n + S_n\frac{S_{n + 1}}{S_n}
+	\end{align*}
+	
+	then we have that $\frac{S_{n + 1}}{S_n}$ is independent of the first $n$ coin tosses with the remaining terms adapted to the first $n$ coin tosses. So
+	\begin{equation*}
+		g(S_n, Y_n) = \E_n[h(S_{n + 1}, Y_{n + 1})] = \E_n \left[ h \left( S_n \frac{S_{n + 1}}{S_n}, Y_n + S_n\frac{S_{n + 1}}{S_n} \right) \right]
+	\end{equation*}
+	
+	Now, using the Independence Lemma to find $g$ as the ordinary expectation
+	\begin{align*}
+		g(s,y) &= \E \left[ h \left( S_n \frac{S_{n + 1}}{S_n}, Y_n + S_n\frac{S_{n + 1}}{S_n} \right) \right] \\
+		&= ph(us, y + us) + qh(ds, y + ds)
+	\end{align*}
+	
+	Therefore, the process $\{S_n, Y_n\}^N_{n = 0}$ is Markovian by definition. We note that this holds under $\tilde{\P}$ and arbitrary measure $\P$.
+\end{enumerate}
+
+{\bf (B)} According to Theorem 2.5.8 the price $V_n$ of the Asian option at time $n$ is some function $\nu_n$ of $S_n$ and $Y_n$, i.e.,
+\begin{equation*}
+	V_n = \nu_n(S_n, Y_n) \quad n = 0, 1,..., N
+\end{equation*}
+
+\indent Give a formula for $\nu_N(s,y)$ and prove an algorithm for computing $\nu_n(s,y)$ in terms of $\nu_{n + 1}$ in terms of $\nu_{n + 1}$. \\
+
+\underline{Solution}: With terminal condition
+\begin{equation*}
+	V_N = f\left( \frac{1}{N + 1} Y_N \right)
+\end{equation*}
+
+and assuming we have some function $\nu_{n + 1}(s,y)$ such that $V_{n+ 1} = \nu_{n + 1}(S_{n + 1}, Y_{n + 1})$ for $0 \leq n \leq N - 1$ then
+\begin{align*}
+	V_n &= \tilde{\E}_n \left[ \frac{1}{1 + r} V_{n + 1} \right] \quad \text{(from risk-neutral pricing)} \\
+	&= \tilde{\E}_n \left[ \frac{1}{1 + r}\nu_{n + 1}(V_{n + 1}, Y_{n + 1}) \right] \quad \text{(by definition of $V_{n + 1}$)} \\
+	&= \nu_n(S_n, Y_n) \quad \text{(by the Markov property from part {\bf (A))}} \\
+\end{align*}
+
+where by the Independence Lemma we had that
+\begin{equation*}
+	\nu_n(s,y) = \frac{1}{1 + r}[ \tilde{p}\nu_{n + 1}(us, y + us) + \tilde{q}\nu_{n + 1}(ds, y + ds)]
+\end{equation*}
+
+\subsection{Examples \& Exercises}
+
+\underline{Example}: Dividend-paying stock. \\
+
+\indent Consider a binomial asset pricing model except that after each movement in the stock price a dividend is paid and the value of the stock is reduced according to the dividend. Define
+\begin{equation*}
+	Y_{n + 1}(\omega_1\cdots\omega_n\omega_{n + 1}) = 
+	\begin{cases}
+		u & \text{if } \omega_{n + 1} = H \\
+		d & \text{if } \omega_{n + 1} = T
+	\end{cases}
+\end{equation*}
+
+\indent Consider a random variable $A_{n + 1}(\omega_1\cdots\omega_n\omega_{n + 1}) \in (0, 1)$ and the dividend paid at time $n + 1$ is $A_{n +1}Y_{n + 1}S_n$. After the dividend is paid the stock price at time $n + 1$ is\footnote{We can think of $Y_{n + 1}S_n$ is the price that the stock {\em would have been} had a dividend not been paid and $A_{n + 1}$ as the proportion of the assets paid as the dividend.}
+\begin{equation*}
+	S_{n + 1} = (1 - A_{n + 1})Y_{n + 1}S_n
+\end{equation*}
+
+\indent An agent who begins with initial capital $X_0$ and at each time $n$ takes position $\Delta_n$ shares in the risky asset, where $\Delta_n$ depends only on the first $n$ coin tosses, has a portfolio value governed by the wealth equation
+\begin{align*}
+	X_{n + 1} &= \Delta_nS_{n + 1} + (1 + r)(X_n - \Delta_nS_n) + \Delta_nA_{n + 1}Y_{n + 1}S_n \\
+	&= \Delta_n(1 - A_{n + 1})Y_{n + 1}S_n + (1 + r)(X_n - \Delta_nS_n) + \Delta_nA_{n + 1}Y_{n + 1}S_n \\
+	&= \Delta_nY_{n + 1}S_n + (1 + r)(X_n - \Delta_nS_n)
+\end{align*}
+
+{\bf (A)} Show that the discounted wealth process is a martingale under the risk-neutral measure. \\
+
+\underline{Solution}: 
+\begin{enumerate}[(i)]
+	\item Adapted? We proceed by induction. First, $P(0)~:~X_0$ is constant and so its adapted. Now, assume $P(n)~:~X_n$ is holds, that is, $X_n$ depends on the first $n$ coin tosses $\omega_1\cdots\omega_n$. Then, we have that from the equation above $X_{n + 1}$ depends only on the first $n + 1$ coin tosses since $\Delta_n$ and $S_n$ depend on the first $n$ coin tosses and $Y_{n + 1}$ depends only on the $(n + 1)^\text{th}$ coin toss. Hence, $P(n + 1)~:X_{n + 1}$ is adapted, holds. Therefore, by induction, we have that $X_n$ is adapted, as desired.
+	\item Martingale property? We have
+	\begin{align*}
+		\tilde{\E}_n \left[ \frac{X_{n + 1}}{(1 + r)^{n + 1}} \right] &= \tilde{\E}_n \left[ \frac{\Delta_nY_{n + 1}S_n + (1 + r)(X_n - \Delta_nS_n)}{(1 + r)^{n + 1}} \right] \quad \text{(by definition)} \\
+		&= \tilde{\E}_n \left[ \frac{\Delta_nY_{n + 1}S_n}{(1 + r)^{n + 1}} \right] + \tilde{\E}_n \left[ \frac{(1 + r)(X_n - \Delta_nS_n)}{(1 + r)^{n + 1}} \right] \quad \text{(linearity)} \\
+		&= \tilde{\E}_n \left[ \frac{\Delta_nY_{n + 1}S_n}{(1 + r)^{n + 1}} \right] + \tilde{\E}_n \left[ \frac{X_n}{(1 + r)^n} \right] - \tilde{\E}_n \left[ \frac{ \Delta_nS_n }{(1 + r)^n} \right] \quad \text{(linearity again)} \\
+		&= \frac{\Delta_nS_n}{(1 + r)^{n + 1}} \tilde{\E}_n \left[ Y_{n + 1} \right] + \frac{X_n}{(1 + r)^n} - \frac{ \Delta_nS_n }{(1 + r)^n} \quad \text{(adaptedness)}
+	\end{align*}
+	
+	but $Y_{n + 1}$ is independent of the first $n$ coin tosses, so $\tilde{E}_n [Y_{n + 1}] = \tilde{E} [Y_{n + 1}]$, hence
+	\begin{align*}
+		\tilde{\E}_n \left[ \frac{X_{n + 1}}{(1 + r)^{n + 1}} \right] &= \frac{\Delta_nS_n}{(1 + r)^{n + 1}} \tilde{\E} \left[ Y_{n + 1} \right] + \frac{X_n}{(1 + r)^n} - \frac{ \Delta_nS_n }{(1 + r)^n} \\
+		&= \frac{\Delta_nS_n}{(1 + r)^{n + 1}} \left( \tilde{\E} \left[ Y_{n + 1} \right] - 1 \right) + \frac{X_n}{(1 + r)^n} \\
+		&= \frac{\Delta_nS_n}{(1 + r)^{n + 1}} \left( \frac{\tilde{p}u + \tilde{q}d}{1 + r} - 1 \right) + \frac{X_n}{(1 + r)^n} \\
+	\end{align*}
+	
+	but
+	\begin{align*}
+		\frac{\tilde{p}u + \tilde{q}d}{1 + r} - 1 &= \frac{\tilde{p}u + \tilde{q}d - (1 + r)}{1 + r} \\
+		&= \frac{\frac{(1 + r) - d}{u - d}u + \frac{u - (1 + r)}{u - d}d - (1 + r)}{1 + r} \\
+		&= \frac{\frac{(1 + r)u - du + ud - (1 + r)d}{u - d} - (1 + r)}{1 + r} \\
+		&= \frac{ \frac{u - d}{u - d}(1 + r) - (1 + r)}{1 + r} \\
+		&= 0
+	\end{align*}
+	
+	so
+	\begin{align*}
+		\tilde{\E}_n \left[ \frac{X_{n + 1}}{(1 + r)^{n + 1}} \right] &= \frac{\Delta_nS_n}{(1 + r)^{n + 1}} \left( \frac{\tilde{p}u + \tilde{q}d}{1 + r} - 1 \right) + \frac{X_n}{(1 + r)^n} \\
+		&= \frac{X_n}{(1 + r)^n}
+	\end{align*}
+	
+	as desired.
+\end{enumerate}
+
+{\bf (B)} Show that the risk-neutral pricing formula still applies. \\
+
+\underline{Solution}: We define recursively, backwards in time,
+\begin{equation*}
+	V_n(\omega_1\cdots\omega_n) = \frac{1}{1 + r}[\tilde{p}V_{n + 1}(\omega_1\cdots\omega_n H) + \tilde{q}V_{n + 1}(\omega_1\cdots\omega_n T)] \quad n = 0,...,N - 1
+\end{equation*}
+
+Then, with $X_0 = V_0$ constant and $X_{n + 1}$ defined by 
+\begin{equation*}
+	X_{n + 1} = \Delta_nY_{n + 1}S_n + (1 + r)(X_n - \Delta_nS_n)
+\end{equation*}
+
+and $\Delta_n$ defined the usual way we claim that
+\begin{equation*}
+	X_n(\omega_1\cdots\omega_n) = V_n(\omega_1\cdots\omega_n) \quad n = 0, ..., N,~ \forall_{\omega \in \Omega}
+\end{equation*}
+
+\indent We proceed inductively. We begin with $P(0)~:~X_0 = V_0$ is true by definition. Now, assume that $P(n)~:~X_n = V_n$ holds for $0 \leq n \leq N - 1$ for arbitrary fixed $\omega_1\cdots\omega_n$. For $P(n + 1)$ begin with $\omega_{n + 1} = H$
+\begin{align*}
+	X_{n + 1}(H) &= \Delta_nY_{n + 1}(H)S_n + (1 + r)(X_n - \Delta_nS_n) \\
+	&= \frac{V_{n + 1}(H) - V_{n + 1}(T)}{(u - d)S_n}uS_n + (1 + r)\left[ X_n - \frac{V_{n + 1}(H) - V_{n + 1}(T)}{(u - d)S_n} S_n \right] \quad \text{(definition of $\Delta_n$)} \\
+	&= \frac{V_{n + 1}(H) - V_{n + 1}(T)}{(u - d)S_n}uS_n + (1 + r)\left[ V_n - \frac{V_{n + 1}(H) - V_{n + 1}(T)}{(u - d)S_n} S_n \right] \quad \text{(inductive hypothesis)} \\
+	&= \frac{V_{n + 1}(H) - V_{n + 1}(T)}{(u - d)S_n}uS_n + (1 + r)V_n - (1 + r)\frac{V_{n + 1}(H) - V_{n + 1}(T)}{(u - d)S_n} S_n \\
+	&= \frac{V_{n + 1}(H) - V_{n + 1}(T)}{(u - d)S_n}S_n(u - (1 + r)) + (1 + r)V_n \\
+	&= (V_{n + 1}(H) - V_{n + 1}(T)) \frac{u - (1 + r)}{u - d} + (1 + r)V_n \\
+	&= \tilde{q}V_{n + 1}(H) - \tilde{q}V_{n + 1}(T) + (1 + r)V_n \\
+	&= \tilde{q}V_{n + 1}(H) - \tilde{q}V_{n + 1}(T) + (1 + r)\frac{\tilde{p}V_{n + 1}(H) + \tilde{q}V_{n + 1}(T)}{1 + r} \quad \text{(from risk-neutral pricing)} \\
+	&= \tilde{q}V_{n + 1}(H) - \tilde{q}V_{n + 1}(T) + \tilde{p}V_{n + 1}(H) + \tilde{q}V_{n + 1}(T) \\
+	&= (\tilde{p} + \tilde{q})V_{n + 1}(H) \\
+	&= V_{n + 1}(H)
+\end{align*}
+
+\indent Similarly, we can show that $X_{n + 1}(\omega_1\cdots\omega_n T) = V_{n + 1}(\omega_1\cdots\omega_n T)$. Therefore, we have that $P(n)~:~X_n = V_n$ holds for all $0 \leq n \leq N$ by induction. Finally, define
+\begin{equation*}
+	V'_n = \tilde{\E}_n \left[ \frac{V_N}{(1 + r)^{N - n}} \right] \quad  n = 0, 1, ..., N - 1
+\end{equation*}
+
+From this we get the sequence/process
+\begin{equation*}
+	V'_0, \frac{V'_1}{1 + r}, \cdots, \frac{V'_{N - 1}}{(1 + r)^{N - 1}}, \frac{V_N}{(1 + r)^N}
+\end{equation*}
+
+is a $\tilde{\P}$-martingale since
+\begin{align*}
+	\tilde{\E}_n \left[ \frac{V'_{n + 1}}{(1 + r)^{n + 1}} \right] &= \tilde{\E}_n \left[ \frac{1}{(1 + r)^{n + 1}} \tilde{\E}_{n + 1} \left[ \frac{V'_N}{(1 + r)^{N - (n + 1)}} \right] \right] \quad \text{(risk-neutral pricing)} \\
+	&= \tilde{\E}_n \left[ \frac{V_N}{(1 + r)^N} \right] \quad \text{(tower property)} \\
+	&= \frac{1}{(1 + r)^n} \tilde{\E}_n \left[ \frac{V_N}{(1 + r)^{N - n}} \right] \\
+	&= \frac{V'_n}{(1 + r)^n} 
+\end{align*}
+
+and by Assignment 2, Exercise 2.8 we have that $X_n = V_n = V'_n$ for all $n$. Therefore we have that the risk-neutral pricing formula still holds, as desired. \\
+
+{\bf (C)} Show that the discounted stock price is {\em not} a martingale under the risk-neutral measure. However, if $A_{n + 1} = a \in (0, 1)$ regardless of the value of $n$ and the outcome of the coin tosses then $\frac{S_n}{(1 - a)^n(1 + r)^n}$ is a martingale under the risk-neutral measure. \\
+
+\underline{Solution}: Note that for $n = 0, 1,..., N - 1$ we have
+\begin{align*}
+	\tilde{\E}_n \left[ \frac{S_{n + 1}}{(1 + r)^{n + 1}} \right] &= \tilde{\E}_n \left[ \frac{(1 - A_{n + 1})Y_{n + 1}S_n}{(1 + r)^{n + 1}} \right] \quad \text{(by definition)} \\
+	&= \frac{S_n}{(1 + r)^{n + 1}} \tilde{\E}_n [(1 - A_{n + 1})Y_{n + 1}] \quad \text{(adaptedness)} \\
+	&= \frac{S_n}{(1 + r)^{n + 1}} \tilde{\E} [(1 - A_{n + 1})Y_{n + 1}] \quad \text{(Independence Lemma)} \\
+	&= \frac{S_n}{(1 + r)^{n + 1}} [\tilde{p}(1 - A_{n + 1}(H))u + \tilde{q}(1 - A_{n + 1})(T))d] \\
+	&= \frac{S_n}{(1 + r)^{n + 1}} [\tilde{p}u - \tilde{p}A_{n + 1}(H)u + \tilde{q}d - \tilde{q}A_{n + 1}(T)d] \\
+	&= \frac{S_n}{(1 + r)^{n + 1}} [\tilde{p}u + \tilde{q}d] - \frac{S_n}{(1 + r)^{n + 1}}[\tilde{p}A_{n + 1}(H)u + \tilde{q}A_{n + 1}(T)d] \\
+	&= \frac{S_n}{(1 + r)^n} \frac{\tilde{p}u + \tilde{q}d}{1 + r} - \frac{S_n}{(1 + r)^{n + 1}}[\tilde{p}A_{n + 1}(H)u + \tilde{q}A_{n + 1}(T)d] \\
+	&= \frac{S_n}{(1 + r)^n} \frac{ \frac{(1 + r) - d}{u - d}u + \frac{u - (1 + r)}{u - d}d}{1 + r} - \frac{S_n}{(1 + r)^{n + 1}}[\tilde{p}A_{n + 1}(H)u + \tilde{q}A_{n + 1}(T)d] \\
+	&= \frac{S_n}{(1 + r)^n} \frac{ \frac{(1 + r)u - du + ud - (1 + r)d}{u - d} }{1 + r} - \frac{S_n}{(1 + r)^{n + 1}}[\tilde{p}A_{n + 1}(H)u + \tilde{q}A_{n + 1}(T)d] \\
+	&= \frac{S_n}{(1 + r)^n} - \frac{S_n}{(1 + r)^{n + 1}}[\tilde{p}A_{n + 1}(H)u + \tilde{q}A_{n + 1}(T)d] \\
+\end{align*}
+
+but
+\begin{equation*}
+	 \frac{S_n}{(1 + r)^n} - \frac{S_n}{(1 + r)^{n + 1}}[\tilde{p}A_{n + 1}(H)u + \tilde{q}A_{n + 1}(T)d] < \frac{S_n}{(1 + r)^n}
+\end{equation*}
+
+since $\frac{S_n}{(1 + r)^{n + 1}}[\tilde{p}A_{n + 1}(H)u + \tilde{q}A_{n + 1}(T)d] > 0$. That is, the discounted asset price with dividends is no longer a $\tilde{\P}$-martingale. However, if we consider the process $\frac{S_n}{(1 - a)^n(1 + r)^n}$ with $A_{n + 1} = a \in (0, 1$ for all $n$ we have
+\begin{align*}
+	\tilde{\E}_n \left[ \frac{S_{n + 1}}{(1 - a)^{n + 1}(1 + r)^{n + 1}} \right] &= \frac{(1 - a)S_n}{(1 - a)^{n + 1}(1 + r)^{n + 1}} \tilde{\E}_n[Y_{n + 1}] \quad \text{(since } S_{n + 1} = (1 - a)S_nY_{n + 1}) \\
+	&= \frac{(1 - a)S_n}{(1 - a)^{n + 1}(1 + r)^{n + 1}} \tilde{\E}[Y_{n + 1}] \quad \text{(Independence Lemma)} \\
+	&= \frac{(1 - a)S_n}{(1 - a)^{n + 1}(1 + r)^{n + 1}} \left[ (1 + r)\frac{\tilde{p}u + \tilde{q}d}{1 + r} \right] \\
+	&= \frac{S_n}{(1 - a)^n(1 + r)^n}
+\end{align*}
+
+Hence, the process $\frac{S_n}{(1 - a)^n(1 + r)^n}$ is a $\tilde{\P}$-martingale. \\
+
+\underline{Example}: Put-call parity. \\
+
+\indent Consider a stock that pays no dividends in an $N$-period binomial model. A European call has payoff $C_N = (S_N - K)^+$ at time $N$ and a European put has time $N$ payoff $P_N = (K - S_N)^+$. The price of the call and put, denoted $C_n$ and $P_n$ respectively, are given by the risk-neutral pricing formula. \\
+
+\indent A {\em forward contract} to buy one share of the stock at time $N$ for delivery price $K$ has payoff $F_N = S_N - K$ and its price at earlier times is denoted by $F_n$ and given by the risk-neutral pricing formula. \\
+
+{\bf (A)} If at time zero we buy one forward contract and one put option and hold them until expiry, explain why the payoff we receive is the same as the payoff of the call. That is, show that
+\begin{equation*}
+	C_N = F_N + P_N
+\end{equation*}
+
+\underline{Solution}: Note that
+\begin{equation*}
+	P_N = 
+	\begin{cases}
+		K - S_N & \text{if } K > S_N \\
+		0 & \text{if } K \leq S_N
+	\end{cases}
+\end{equation*}
+
+and
+\begin{equation*}
+	C_N = 
+	\begin{cases}
+		0 & \text{if } K > S_N \\
+		K - S_N & \text{if } K \leq S_N
+	\end{cases}
+\end{equation*}
+
+Therefore
+\begin{align*}
+	F_N + P_N &= 
+	\begin{cases}
+		(S_N - K) + (K - S_N) & \text{if } K > S_N \\
+		(S_N - K) + (0) & \text{if } K \leq S_N
+	\end{cases} \\
+	&= 
+	\begin{cases}
+		0 & \text{if } K > S_N \\
+		S_N - K & \text{if } K \leq S_N
+	\end{cases} \\
+	&= C_N
+\end{align*}
+
+{\bf (B)} Using the risk-neutral pricing formulae for $C_n, P_n$ and $F_n$ and the properties of conditional expectations show that $C_n = F_n + P_n$ for $0 \leq n \leq N$. \\
+
+\underline{Solution}: Note
+\begin{align*}
+	F_n + P_n &= \tilde{\E}_n \left[ \frac{F_N}{(1 + r)^{N - n}} \right] + \tilde{\E}_n \left[ \frac{P_N}{(1 + r)^{N - n}} \right] \quad \text{(risk-neutral pricing)} \\
+	&= \tilde{\E}_n \left[ \frac{F_N + P_N}{(1 + r)^{N - n}} \right] \quad \text{(linearity)} \\
+	&= \tilde{\E}_n \left[ \frac{C_N}{(1 + r)^{N - n}} \right] \quad \text{(from {\bf (A)})} \\
+	&= C_n \quad \text{(risk-neutral pricing)}
+\end{align*}
+
+{\bf (C)} Using the fact that the discounted stock price is a $\tilde{\P}$-martingale show that $F_0 = S_0 - \frac{K}{(1 + r)^N}$. \\
+
+\underline{Solution}: Note
+\begin{align*}
+	F_0 &= C_0 - P_0 \quad \text{(from {\bf (B)})} \\
+	&= \tilde{\E}_0 \left[ \frac{ C_N }{(1 + r)^N} \right] - \tilde{\E}_0 \left[ \frac{ P_N }{(1 + r)^N} \right] \quad \text{(risk-neutral pricing)} \\
+	&= \tilde{\E}_0 \left[ \frac{ C_N - P_N }{(1 + r)^N} \right] \quad \text{(linearity)} \\
+	&= \tilde{\E}_0 \left[ \frac{ S_N - K }{(1 + r)^N} \right] \quad \text{(since } C_N - P_N = F_N = S_N - K) \\
+	&= \tilde{\E}_0 \left[ \frac{ S_N }{(1 + r)^N} \right] - \frac{K}{(1 + r)^N} \quad \text{(linearity)} \\
+	&= S_0 - \frac{K}{(1 + r)^N} \quad \text{(martingale property)}
+\end{align*}
+
+{\bf (D)} Suppose we begin at time zero with $F_0$, buy one share of the risk asset, borrowing the necessary money to do so, and make no further trades. Show that at time $N$ we have the portfolio valued at $F_N$.\footnote{This is called {\bf static replication} of the forward contract. If you sell the forward contract for $F_0$ at time zero you can use this static replication to hedge the short position in the forward contract.)} \\
+
+\underline{Solution}: Consider the following portfolio: At time $t = 0$
+\begin{enumerate}
+	\item Borrow $\frac{K}{(1 + r)^N}$ from the bank account
+	\item Use the cash
+	\begin{equation*}
+		F_0 + \frac{K}{(1 + r)^N} = \left(S_0 - \frac{K}{(1 + r)^N}\right) + S_0 = S_0
+	\end{equation*}
+	
+	to buy one share of the stock.
+\end{enumerate}
+
+Then, at time $t = N$
+\begin{enumerate}
+	\item We owe $K$ on the loan
+	\item The stock position is worth $S_N$
+	\item The net value of the portfolio is then
+	\begin{equation*}
+		X_N = S_N - K = F_N
+	\end{equation*}
+\end{enumerate}
+
+{\bf (E)} The {\bf forward price} of the stock at time zero is define to be the value of $K$ that causes the forward contract to have price zero at time zero. The forward price in this model is $(1 + r)^NS_0$. \\
+
+\indent Show that, at time zero, the price of a call struck at the forward price is the same as the price of a put stuck at the forward price. This fact is known as {\bf put-call parity}. \\
+
+\underline{Solution}: Let $F(0, S_0)$, the forward price, be such that $K = F(0, S_0)$ the price of the forward contract at time zero is $F_0 = 0$. That is,
+\begin{equation*}
+	0 = F_0 = S_0 - \frac{ F(0, S_0) }{ (1 + r)^N } \quad \text{(since } F_n = S_n - \frac{K}{(1 + r)^{N - n}})
+\end{equation*}
+
+implying that $S_0 = \frac{F(0, S_0)}{(1 + r)^N}$. Solving for $F(0, S_0)$ gives us
+\begin{equation*}
+	F(0, S_0) = (1 + r)^NS_0
+\end{equation*}
+
+as desired. Now, at time zero the prices of a call and put option struck at $K = F(0, S_0) = (1 + r)^NS_0)$ is
+\begin{align*}
+	C_0 &= \tilde{\E} \left[ \frac{ (S_N - (1 + r)^NS_0)^+ }{ (1 + r)^N } \right] \\
+	P_0 &= \tilde{\E} \left[ \frac{ ((1 + r)^NS_0 - S_N)^+ }{ (1 + r)^N } \right]
+\end{align*}
+
+Then
+\begin{align*}
+	C_0 - P_0 &= \tilde{\E} \left[ \frac{ (S_N - (1 + r)^NS_0)^+ }{ (1 + r)^N } \right] - \tilde{\E} \left[ \frac{ ((1 + r)^NS_0 - S_N)^+ }{ (1 + r)^N } \right] \\
+	&= \tilde{\E} \left[ \frac{ (S_N - (1 + r)^NS_0)^+ - ((1 + r)^NS_0 - S_N)^+ }{ (1 + r)^N } \right] \quad \text{(linearity)} \\
+	&= \tilde{\E} \left[ \frac{ S_N - (1 + r)^NS_0 }{ (1 + r)^N } \right] \quad \text{(since } C_N - P_N = S_N - K) \\
+	&= \tilde{\E} \left[ \frac{ S_N }{ (1 + r)^N } \right] - S_0 \quad \text{(linearity)} \\
+	&= S_0 - S_0 \quad \text{(martingale property of $S_n$)} \\
+	&= 0
+\end{align*}
+
+So, we have that $C_0 = P_0$ when $K = (1 + r)^NS_0$. \\
+
+{\bf (F)} If we choose $K = (1 + r)^NS_0$ we have $C_0 = P_0$. Do we have $C_n = P_n$ for every $n$? \\
+
+\underline{Solution}: By party {\bf (B)} we have
+\begin{align*}
+	C_n - P_n = F_n &= \tilde{\E}_n \left[ \frac{ S_N - (1 + r)^NS_0 }{ (1 + r)^{N - n} } \right] \\
+	&= \tilde{\E}_n \left[ \frac{ S_N }{ (1 + r)^{N - n} } \right] - (1 + r)^nS_0 \\
+	&= S_n - (1 + r)^nS_0 
+\end{align*}
+
+and $S_n - (1 + r)^nS_0$ is not necessarily equal to 0 for all $n$ and all coin toss sequences $\omega_1\cdots\omega_n$ since
+\begin{equation*}
+	S_n(\omega_1\cdots\omega_n) = u^{\#H(\omega_1\cdots\omega_n)} d^{\#T(\omega_1\cdots\omega_n)} S_0
+\end{equation*}
+
+and $0 < d < 1 + r < u$. \\
+
+\underline{Example}: Choose options \\
+
+\indent Let $1 \leq m \leq N - 1$ and $K > 0$ be given. A {\bf chooser option} is a contract sold at time zero that gives the owner the right to receive either a call or a put option at time $m$. The owner of the chooser may wait until time $m$ before choosing. The call or put chosen expires at time $N$ with strike $K$. \\
+
+\indent Show that the time-zero price of a chooser option is the sum of the time-zero price of a put, expiring at time $N$ and having strike price $K$, and a call expiring at time $m$ having strike price $\frac{K}{(1 + r)^{N - m}}$. \\
+
+\underline{Solution}: At time $t = m$ the invest will be given the right to receive the call option if the time $m$ price $C_m > P_m$. That is, the time $m$ price of the call expiring at $N$ exceeds the time $m$ price of the put expiring at $N$. Otherwise the investor would choose the put option. \\
+
+\indent The holder of the chooser can, at time $t = m$, sell the option that was chosen. Therefore, the time zero price of the chooser option is
+\begin{equation*}
+	V_0 = \tilde{\E} \left[ \frac{ \max \{ C_m, P_m \} }{ (1 + r)^m } \right]
+\end{equation*}
+
+and using the put-call parity result from the previous exercise, write
+\begin{align*}
+	\max \{ C_m, P_m \} &= \max \{ F_m + P_m, P_m \} \\
+	&= P_m + \max \{ F_m, 0 \} \\
+	&= P_m + \max \left\{ S_m - \frac{ K }{ (1 + r)^{N - m} }, 0 \right\}
+\end{align*}
+
+Hence
+\begin{align*}
+	V_0 &= \tilde{\E} \left[ \frac{ \max \{ C_m, P_m \} }{ (1 + r)^m } \right] \\
+	&= \tilde{\E} \left[ \frac{ P_m + \max \left\{ S_m - \frac{ K }{ (1 + r)^{N - m} }, 0 \right\} }{ (1 + r)^m } \right] \\
+	&= \tilde{\E} \left[ \frac{ P_m }{ (1 + r)^m } \right] + \tilde{\E} \left[ \frac{ \max \left\{ S_m - \frac{ K }{ (1 + r)^{N - m} }, 0 \right\} }{ (1 + r)^m } \right] \\
+	&= \tilde{\E} \left[ \frac{ 1 }{ (1 + r)^m } \tilde{\E}_m \left[ \frac{ (K - S_N)^+ }{ (1 + r)^{N - m}} \right] \right] + \tilde{\E} \left[ \frac{ \max \left\{ S_m - \frac{ K }{ (1 + r)^{N - m} }, 0 \right\} }{ (1 + r)^m } \right] \quad \text{(definition of $P_m$)} \\
+	&= \tilde{\E} \left[ \tilde{\E}_m \left[ \frac{ (K - S_N)^+ }{ (1 + r)^N} \right] \right] + \tilde{\E} \left[ \frac{ \max \left\{ S_m - \frac{ K }{ (1 + r)^{N - m} }, 0 \right\} }{ (1 + r)^m } \right] \\
+	&= \tilde{\E} \left[ \frac{ (K - S_N)^+ }{ (1 + r)^N} \right] + \tilde{\E} \left[ \frac{ \max \left\{ S_m - \frac{ K }{ (1 + r)^{N - m} }, 0 \right\} }{ (1 + r)^m } \right] \quad \text{(tower property)} \\
+	&= P_0(N, K) + C_0 \left(m, \frac{K}{(1 + r)^{N - m}} \right) 
+\end{align*}
+
+which is the sum of the price at the time zero price of a put option with expiry at time $N$ and strike $K$ and the time zero price of a call option with expiry at time $m$ and strike $\frac{K}{(1 + r)^{N - m}}$.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\end{document}

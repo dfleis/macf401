@@ -1,0 +1,659 @@
+% --------------------------------------------------------------
+% This is all preamble stuff that you don't have to worry about.
+% Head down to where it says "Start here"
+% --------------------------------------------------------------
+ 
+\documentclass[12pt]{article}
+ 
+\usepackage[margin=1in]{geometry} 
+\usepackage{bm} % bold in mathmode \bm
+\usepackage{amsmath,amsthm,amssymb,mathtools}
+\usepackage{dsfont} % for indicator function \mathds 1
+\usepackage{tikz,pgf,pgfplots}
+\usepackage{enumerate} 
+\usepackage[multiple]{footmisc} % for an adjascent footnote
+\usepackage{graphicx,float} % figures
+\usepackage{framed} % surround a text with a box 
+
+\newtheorem{definition}{Definition}
+\let\olddefinition\definition
+\renewcommand{\definition}{\olddefinition\normalfont}
+\newtheorem{lemma}{Lemma}
+\let\oldlemma\lemma
+\renewcommand{\lemma}{\oldlemma\normalfont}
+\newtheorem{proposition}{Proposition}
+\let\oldproposition\proposition
+\renewcommand{\proposition}{\oldproposition\normalfont}
+\newtheorem{corollary}{Corollary}
+\let\oldcorollary\corollary
+\renewcommand{\corollary}{\oldcorollary\normalfont}
+\newtheorem{theorem}{Theorem}
+\let\oldtheorem\theorem
+\renewcommand{\theorem}{\oldtheorem\normalfont}
+
+%%% PLOTTING PARAMETERS
+\tikzstyle{bag} = [text width=7em, text centered] %binomial tree node width
+\tikzstyle{end} = []
+%%%
+
+%% set noindent by default and define indent to be the standard indent length
+\newlength\tindent
+\setlength{\tindent}{\parindent}
+\setlength{\parindent}{0pt}
+\renewcommand{\indent}{\hspace*{\tindent}}
+
+\newcommand*{\vv}[1]{\vec{\mkern0mu#1}} % \vec command
+
+%% DAVIDS MACRO KIT %%
+\newcommand{\R}{\mathbb R}
+\newcommand{\N}{\mathbb N}
+\newcommand{\Z}{\mathbb Z}
+\renewcommand{\P}{\mathbb P}
+\newcommand{\Q}{\mathbb Q}
+\newcommand{\E}{\mathbb E}
+\newcommand{\var}{\mathrm{Var}}
+\newcommand{\Var}{\mathrm{Var}}
+\newcommand{\cov}{\mathrm{Cov}}
+\newcommand{\Cov}{\mathrm{Cov}}
+\newcommand{\indist}{\,{\buildrel \mathcal D \over \sim}\,}
+
+\newcommand{\bigtau}{\text{{\large $\bm \tau$}}}
+
+\begin{document}
+ 
+% --------------------------------------------------------------
+%                         Start here
+% --------------------------------------------------------------
+ 
+\title{Mathematical \& Computational Finance I\\Lecture Notes}
+\author{American Derivative Securities: Stopping Times}
+\date{March 3 2016 \\ Last update: \today{}}
+\maketitle
+
+% SECTION: 
+\section{Stopping Times}
+
+\indent In our discussion of American options we introduced the fact that the time\footnote{Presumably the optimal time?} an American option should be exercised is dependent on the outcome of a coin toss sequence (i.e. random). Consider our previous example of an American put option written on a risky asset $S_0 = 4, r = \frac{1}{4}$ with parameters $u = 2, d = \frac{1}{2}, \tilde{p} = \frac{1}{2}$, strike $K = 5$, and $N = 2$ steps. We may build the asset tree
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[sloped]
+  \node (a) at ( 0,0) [bag] {$S_0 = 4$};
+  \node (b) at ( 4,-1.5) [bag] {$S_1(T) = 2$};
+  \node (c) at ( 4,1.5) [bag] {$S_1(H) = 8$};
+  \node (d) at ( 8,-3) [bag] {$S_2(TT) = 1$};
+  \node (e) at ( 8,0) [bag] {$S_2(HT) = S_2(TH) = 4$};
+  \node (f) at ( 8,3) [bag] {$S_2(HH) = 16$};
+  \draw [->] (a) to node [below] {} (b);
+  \draw [->] (a) to node [above] {} (c);
+  \draw [->] (c) to node [below] {} (f);
+  \draw [->] (c) to node [above] {} (e);
+  \draw [->] (b) to node [below] {} (e);
+  \draw [->] (b) to node [above] {} (d);
+\end{tikzpicture}
+\caption{Asset price tree $S_n$.}
+\end{figure}
+
+Then, with payoff function
+\begin{equation*}
+	g(s) = K - s
+\end{equation*}
+
+we found the option tree to be
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[sloped]
+  \node (a) at ( 0,0) [bag] {$V_0 = 1.36$};
+  \node (b) at ( 4,-1.5) [bag] {$V_1(T) = 3$};
+  \node (c) at ( 4,1.5) [bag] {$V_1(H) = \frac{2}{5}$};
+  \node (d) at ( 8,-3) [bag] {$V_2(TT) = 4$};
+  \node (e) at ( 8,0) [bag] {$V_2(HT) = V_2(TH) = 1$};
+  \node (f) at ( 8,3) [bag] {$V_2(HH) = 0$};
+  \draw [->] (a) to node [below] {} (b);
+  \draw [->] (a) to node [above] {} (c);
+  \draw [->] (c) to node [below] {} (f);
+  \draw [->] (c) to node [above] {} (e);
+  \draw [->] (b) to node [below] {} (e);
+  \draw [->] (b) to node [above] {} (d);
+\end{tikzpicture}
+\caption{American price tree $V_n$.}
+\end{figure}
+
+where early exercise is only assumed to be performed (i.e. optimal) on the node corresponding to $\omega_1 = T$. \\
+
+\indent So, if $\omega_1 = T$ then the optimal investor (long party) should exercise the option at $n = 1$, and terminates the option. If $\omega_1 = H$ then the investor should not exercise: At this point the option is out of the money so it makes no sense to do so. If $\omega_2 = H$ then the put expires worthless. If $\omega_2 = T$ then the owner exercises (there is no choice) to receive $g(4) = 5 - 4 = 1$. \\
+
+Let $\tau$ be a random time at which we exercise our option. Then we may write
+\begin{align*}
+	\tau(HH) &= \infty \quad \text{(option expires without exercise)} \\
+	\tau(HT) &= 2 \\
+	\tau(TH) &= 1 \\
+	\tau(TT) &= 1
+\end{align*}
+
+\indent We call such a random time $\tau$ a \underline{stopping time}. What about at node $n = 0$? If we knew in prior to purchasing this option (at time $n = 0$) that the first coin toss $\omega_1 = H$ then we would exercise immediately to receive
+\begin{equation*}
+	g(S_0) = 5 - S_0 = 5 - 4 = 1
+\end{equation*}
+
+\indent This is a better outcome than the next best payoff $V_2(HT) = 1$ due to time value of money. That is, if we were able to known the coin toss sequence in advance we would choose to exercise at time $\rho$ defined by
+\begin{align*}
+	\rho(HH) &= 0 \\
+	\rho(HT) &= 0 \\
+	\rho(TH) &= 1 \\
+	\rho(TT) &= 2
+\end{align*}
+
+\indent However, using $\rho$ is an exercise strategy requires perfect knowledge of future coin toss sequence. This is not a particularly useful tool for us since (1) We like to have our processes be adapted to our coin toss sequences and (2) This can't be implemented in the real-world. The idea is that an exercise strategy at some node $n$ should only be dependent on the information available to us at node $n$. \\
+
+\begin{definition} In an $N$-period binomial model a \underline{stopping time} is a random variable $\tau$ taking values in $\{0,1,...,N\}\cup\{\infty\}$ that satisfies the condition that if
+\begin{equation*}
+	\tau(\omega_1\cdots\omega_n\omega_{n + 1}\cdots\omega_N) = n
+\end{equation*}
+
+then
+\begin{equation*}
+	\tau(\omega_1\cdots\omega_n\omega_{n + 1}'\cdots\omega_N') = n
+\end{equation*}
+
+for all continuations of a coin toss sequence $\omega_{n + 1}'\cdots\omega_N'$. That is, the value of a stopping time at time $n$ will be invariant to the coin toss sequence after the $n^\text{th}$ coin toss.
+\end{definition}
+
+\indent The definition of a stopping time gives us that stopping a process (or, equivalently for our purposes, exercising an option) is only based on the information available up to time $n$. \\
+
+
+\begin{definition} Let the process $\{Y_n\}^\infty_{n = 0}$ be a stochastic process and $\tau = \tau(\omega_1\cdots\omega_n\omega_{n + 1}\cdots\omega_N)$ be a stopping time. Define the \underline{stopped process}
+\begin{equation*}
+	X_n = Y_{n\land \tau}
+\end{equation*}
+
+where $n\land \tau := \min(n,\tau)$. That is, Once we reach $n\land\tau = \min(n,\tau)$ our index for the process $Y_n$ will stay constant, thereby making the process constant for times beyond its stopping time.
+\end{definition}
+
+\underline{Example:} Consider the previous American option example and let $Y_n = \frac{V_n}{(1 + r)^n}$ be the discounted option value with stopping times\footnote{In this case it is clear what the stopping times ought to be since we figured them out above. Will it always be so obvious?}
+\begin{align*}
+	\tau(HH) &= \infty \\
+	\tau(HT) &= 2 \\
+	\tau(TH) &= 1 \\
+	\tau(TT) &= 1
+\end{align*}
+
+Note that regardless of the coin sequence we can that find
+\begin{align*}
+	Y_{0\land\tau} &= Y_{\min(0,\tau)} \\
+	&= Y_0 \quad \text{(since $\tau$ will be at least 1)} \\
+	&= \frac{V_0}{(1 + r)^0} \\
+	&= 1.36 \quad \forall~\tau\in \{1,1,2,\}\cup\{\infty\} \\
+	Y_{1\land\tau}(\omega_1) &= Y_1(\omega_1) \quad \text{(since $\tau$ will be at least 1)} \\
+	&= \frac{V_1(\omega_1)}{(1 + r)^1} 
+\end{align*}
+
+\indent However, we cannot state this for $Y_{2\land\tau}$ since $2\land\tau$ will depend on the particular coin toss sequence. Specifically, if we get $TT$ or $HH$ then $2\land\tau \neq 2$. That is,
+\begin{align*}
+	2\land\tau(HH) &= 2 \\
+	2\land\tau(HT) &= 2 \\
+	2\land\tau(TH) &= 1 \\
+	2\land\tau(TT) &= 1
+\end{align*}
+
+Hence, with option valuation function $v_n(S_n)$ as given by the earlier tree,
+\begin{align*}
+	Y_{2\land\tau}(HH) &= Y_2(HH) = \frac{V_2(HH)}{(1 + r)^2} = 0 \\
+	Y_{2\land\tau}(HT) &= Y_2(HT) = \frac{V_2(HT)}{(1 + r)^2} = \frac{16}{25}v_2(4) = 0.64 \\
+	Y_{2\land\tau}(TH) &= Y_1(T) = \frac{V_1(T)}{(1 + r)^1} = \frac{4}{5}v_1(2) = 2.40 \\
+	Y_{2\land\tau}(TT) &= Y_1(T) = \frac{V_1(T)}{(1 + r)^1} = \frac{4}{5}v_1(2) = 2.40
+\end{align*}
+
+\indent We see that if $\omega_1 = T$ then the process is stopped at time 1 and continues with the stopped value regardless of the value for $\tau$. \\
+
+We had shown that in our previous example\footnote{From the last set of notes.} that the discounted American put price process given by
+\begin{equation*}
+	Y_n = \left(\frac{4}{5}\right)^n v_n(S_n)
+\end{equation*}
+
+is a $\tilde{\P}$-supermartingale. However, note we can compute the conditional expectations for our stopped process $Y_{n\land\tau}$ given by the current example
+\begin{align*}
+	\tilde{\E}_1\left[ Y_{2\land\tau} \right](T) &= \tilde{p} Y_{2\land\tau}(TH) + \tilde{q} Y_{2\land\tau}(TT) \\
+	&= \frac{1}{2}(2.40) + \frac{1}{2}(2.40) \\
+	&= 2.40 \\
+	&= Y_1(T) \\
+	&= Y_{1\land\tau} 
+\end{align*}
+
+while we had already shown\footnote{In the previous notes.} that all other cases $\tilde{\E}_1\left[ Y_2 \right](H) = Y_2$ and $\tilde{\E}\left[Y_1\right] = Y_0$ giving us
+\begin{align*}
+	\tilde{\E}_1\left[Y_{2\land\tau}\right](H) &= Y_{1\land\tau}(H) \\
+	\tilde{\E}\left[Y_{1\land\tau}\right] &= Y_{0\land\tau} \quad \text{(since we had shown $Y_{1\land\tau} = Y_1,~Y_{0\land\tau} = Y_0$)}
+\end{align*}
+
+\indent Therefore, $Y_{n\land\tau}$ is a $\tilde{\P}$-martingale. In general, we can show that\footnote{But I don't think we do?} under the risk-neutral measure $\tilde{\P}$ a discounted American derivative security price process is a supermartingale. If this discounted price process is stopped {\em at the optimal exercise time} then we can show that it becomes a $\tilde{\P}$-martingale. Apparently, this property is due to the structure of our American option pricing algorithm.\footnote{In general, we cannot claim that stopping a supermartingale does not create a martingale.}
+
+\begin{theorem} {\bf Optional Sampling Theorem.} Let $\{X_n\}$ be a super (sub) martingale and $\tau$ a stopping time. Then the stopped process $\{X_{n\land\tau}\}$ is also a super (sub) martingale.\footnote{Recall that martingales are both super- \& submartingales, so this result agrees with the example above.} That is, for a stopping time $\tau$,
+\begin{equation*}
+	\E_n[X_{n + 1}] = X_n \implies \E_n[X_{(n + 1)\land\tau}] = X_{n\land\tau}
+\end{equation*}
+\end{theorem}
+
+\underline{Example:} Consider the binomial asset pricing model with the typical parameters $S_0 = 4, N = 2, u = 2, d = \frac{1}{2}, r = \frac{1}{4}$. Consider the discounted {\bf asset} price process
+\begin{equation*}
+	X_n = \frac{S_n}{(1 + r)^n}
+\end{equation*}
+
+and the stopping time given by
+\begin{align*}
+	\tau(HH) &= \infty \\
+	\tau(HT) &= 2 \\
+	\tau(TH) &= 1 \\
+	\tau(TT) &= 1
+\end{align*}
+
+\indent Show that the stopped discounted asset price process $\{X_{n\land\tau}\}$ is a $\tilde{\P}$-martingale. First construct the (discounted) asset price tree
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[sloped]
+  \node (a) at ( 0,0) [bag] {$X_0 = 4$};
+  \node (b) at ( 4,-1.5) [bag] {$X_1(T) = 1.60$};
+  \node (c) at ( 4,1.5) [bag] {$X_1(H) = 6.40$};
+  \node (d) at ( 8,-3) [bag] {$X_2(TT) = 0.64$};
+  \node (e) at ( 8,0) [bag] {$X_2(HT) = X_2(TH) = 2.56$};
+  \node (f) at ( 8,3) [bag] {$X_2(HH) = 10.24$};
+  \draw [->] (a) to node [below] {} (b);
+  \draw [->] (a) to node [above] {} (c);
+  \draw [->] (c) to node [below] {} (f);
+  \draw [->] (c) to node [above] {} (e);
+  \draw [->] (b) to node [below] {} (e);
+  \draw [->] (b) to node [above] {} (d);
+\end{tikzpicture}
+\caption{Discounted asset price tree $X_n$.}
+\end{figure}
+
+From this we find that
+\begin{align*}
+	X_{2\land\tau}(HH) &= X_2(HH) = 10.24 \\
+	X_{2\land\tau}(HT) &= X_2(HT) = 2.56  \\
+	X_{2\land\tau}(TH) &= X_1(T) = 1.60 \\
+	X_{2\land\tau}(TT) &= X_1(T) = 1.60 \\
+	X_{1\land\tau}(H) &= X_1(H) = 6.40 \\
+	X_{1\land\tau}(T) &= X_1(T) = 1.60 \\
+	X_{0\land\tau} &= X_0 = 4
+\end{align*}
+
+So that we have the tree
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[sloped]
+  \node (a) at ( 0,0) [bag] {$X_{0\land\tau} = 4$};
+  \node (b) at ( 4,-2) [bag] {$X_{1\land\tau}(T) = 1.60$};
+  \node (c) at ( 4,2) [bag] {$X_{1\land\tau}(H) = 6.40$};
+  \node (d) at ( 8,-3) [bag] {$X_{2\land\tau}(TT) = 1.60$};
+  \node (e) at ( 8,-1) [bag] {$X_{2\land\tau}(TH) = 1.60$};
+  \node (f) at ( 8,1) [bag] {$X_{2\land\tau}(HT) = 2.56$};
+  \node (g) at ( 8,3) [bag] {$X_{2\land\tau}(HH) = 10.24$};
+  \draw [->] (a) to node [below] {} (b);
+  \draw [->] (a) to node [above] {} (c);
+  \draw [->] (b) to node [below] {} (d);
+  \draw [->] (b) to node [above] {} (e);
+  \draw [->] (c) to node [below] {} (f);
+  \draw [->] (c) to node [above] {} (g);
+\end{tikzpicture}
+\caption{Stopped discounted asset price tree $X_{n\land\tau}$.}
+\end{figure}
+
+and computing our expectations we find that
+\begin{align*}
+	\tilde{\E}_1[X_{2\land\tau}](H) &= \tilde{p}X_{2\land\tau}(HH) + \tilde{q}X_{2\land\tau}(HT) \\
+	&= \frac{1}{2}(10.24) + \frac{1}{2}(2.56) \\
+	&= 6.40 \\
+	&= X_{1\land\tau}(H) \\
+	\tilde{\E}_1[X_{2\land\tau}](T) &= \tilde{p}X_{2\land\tau}(TH) + \tilde{q}X_{2\land\tau}(TT) \\
+	&= \frac{1}{2}(1.60) + \frac{1}{2}(1.60) \\
+	&= 1.60 \\
+	&= X_{1\land\tau}(T) \\
+	\tilde{\E}[X_{1\land\tau}] &= \tilde{p}X_{1\land\tau}(H) + \tilde{q}X_{1\land\tau}(T) \\ 
+	&= \frac{1}{2}(6.40) + \frac{1}{2}(1.60) \\
+	&= 4 \\
+	&= X_{0\land\tau}
+\end{align*}
+
+Therefore, the discounted asset price process $X_{n\land\tau}$ is a $\tilde{\P}$-martingale, as desired.\footnote{Well, we should also show that this process is also adapted to get full marks! This is easy to do since stopping the process introduces no dependence on future coin tosses.} \\
+
+\indent It is important to note that if we were to use some random time $\rho$ to stop our process then the stopped process $\{X_{n\land\rho}\}^N_{n = 0}$ is {\bf no longer a martingale}\footnote{This is a claim worthy of proof but I don't think that we present such a proposition.} under $\tilde{\P}$. This implies that stopping times preserve the martingale property since arbitrary times do not. Why is this important to us?
+\begin{enumerate}[(1)]
+	\item Preserving the martingale property gives us all the nice results that we worked hard to prove before.
+	\item {\em Something else about how stopping times can be used to produce martingales from derivative security processes}.
+\end{enumerate}
+
+\section{General American Derivative Securities}
+
+Consider the $N$-period binomial model with $0 < d < 1 + r < u$. Suppose that the {\em intrinsic value} $g$ of an American derivative security is now path dependent.\footnote{We assumed before that our American derivatives were not path dependent.} Now, define $\mathcal S_n$ to be the set of all stopping times $\tau$ that take the values in the set
+\begin{equation*}
+	\tau \in \{n, n + 1, ..., N\}\cup \{\infty\}
+\end{equation*}
+
+\indent We should note that $\mathcal S_0$ contains every stopping time and $\mathcal S_N$ contains only the stopping times in $\{N\}\cup\{\infty\}$. \\
+
+\begin{definition} For each $n = 0,1,...,N$ let $G_n$ be a random variable depending on the first $n$ coin tosses. 
+\begin{enumerate}[(i)]
+	\item An \underline{American derivative security with intrinsic value process} $G_n$ is a contract that can be exercised at any time prior to and including time $N$ (or not exercised at all). If exercised at time $n$ the security pays value $G_n$.
+	\item We define the price process $V_n$ for such an American derivative security by the \underline{American} \underline{risk-neutral pricing formula} given by
+	\begin{equation*}
+		V_n = \max_{\tau \in \mathcal S_n} \tilde{\E}_n \left[ \mathds 1_{\{\tau \leq N\}} \frac{1}{(1 + r)^{\tau - n}} G_{\tau} \right] \quad n = 0,1,...,N
+	\end{equation*}
+	
+	That is, the time $n$ price is the price for which $\tau$ maximizes\footnote{This $\tau$ of the set $\mathcal S_n$ of all stopping times taking values $\{n, n + 1, ..., N\} \cup \{\infty\}$.} the time $n$ conditional expectation of the discounted intrinsic value.
+\end{enumerate}
+\end{definition}
+
+\indent Suppose we have such an American option that has not been exercised at times $0,1,...,n - 1$. At time $n$ the long party is permitted to exercise immediately or choose to wait until a later date (up to $N$). We require that the date on which the option is exercised may only depend on the path taken up to the exercise date and not beyond it. Furthermore, we wish the exercise date to be a stopping time $\tau \in \mathcal S_n$. That is, a stopping time $\tau$ taking values in $\{n, n + 1,..., N\}\cup \{\infty\}$. If the option is never exercised ($\tau = \infty$) then the payoff is 0 (e.g. expires out of the money). We include the indicator function $\mathds 1_{\{\tau\leq N\}}$ for this scenario so that
+\begin{equation*}
+	\mathds 1_{\{\tau \leq N\}} \frac{1}{(1 + r)^{\tau - n}} G_{\tau} = 0
+\end{equation*}
+
+on paths where the option is never exercised: $\tau = \infty$. Now, suppose a long party chooses to exercise according to some $\tau \in \mathcal S_n$. The value of the derivative at time $n$ is the risk-neutral discounted expected value of the payoff given by $G_\tau$. From our pricing formula above we see that the long party wishes to select $\tau$ in order to maximize this expectation. \\
+
+Then, we have that
+\begin{equation*}
+	V_N = \max (G_N, 0)
+\end{equation*}
+
+since, with $\mathcal S_N$ the set of stopping times $\tau$ in the set $\{N\}\cup\{\infty\}$,
+\begin{align*}
+	V_N &= \max_{\tau \in \mathcal S_N} \tilde{\E}_N \left[ \mathds 1_{\{\tau \leq N\}} \frac{1}{(1 + r)^{\tau - N}} G_{\tau} \right] \\
+	&= \max_{\tau \in \mathcal S_N} \left( \mathds 1_{\{\tau \leq N\}} \frac{1}{(1 + r)^{\tau - N}} G_{\tau} \right)
+\end{align*}
+
+and since $\tau \in \mathcal S_N$ must be either $\tau = N$ or $\tau = \infty$ we may find
+\begin{align*}
+	\mathds 1_{\{\tau \leq N\}} \frac{1}{(1 + r)^{\tau - N}} G_{\tau} &=
+	\begin{cases}
+		G_N & \text{if } \tau = N \\
+		0 & \text{if } \tau = \infty
+	\end{cases} \\
+	\implies \mathds 1_{\{\tau \leq N\}} \frac{1}{(1 + r)^{\tau - N}} G_{\tau} &= \mathds 1_{\{\tau = N\}} G_N
+\end{align*}
+
+To find the $\tau$ which maximizes this value we should choose $\tau = \tau(\omega_1\cdots\omega_N)$ such that
+\begin{equation*}
+	\tau(\omega_1\cdots\omega_N) = 
+	\begin{cases}
+		N & \text{if } G_N(\omega_1\cdots\omega_N) > 0 \\
+		\infty & \text{if } G_N(\omega_1\cdots\omega_N) < 0 
+	\end{cases}
+\end{equation*}
+
+so that
+\begin{equation*}
+	\max_{\tau \in \mathcal S_N} \left( \mathds 1_{\{\tau \leq N\}} \frac{1}{(1 + r)^{\tau - N}} G_{\tau} \right) = 
+	\begin{cases}
+		G_N & \text{if } G_N(\omega_1\cdots\omega_N) > 0~(\implies \tau = N) \\
+		0 & \text{if } G_N(\omega_1\cdots\omega_N) < 0~(\implies \tau = \infty) 
+	\end{cases}
+\end{equation*}
+
+and if $G_N(\omega_1\cdots\omega_N) = 0$ then it does not matter whether we select $\tau = N$ or $\tau = \infty$ since in both cases the expectation is 0. \\
+
+\underline{Example:} Non-path-dependent American derivatives. Consider the binomial asset pricing model with $N = 2, u = 2, d = \frac{1}{2}, r = \frac{1}{4}$, and $S_0 = 4$ with an American put option with strike $K = 5$. \\
+
+Denote the intrinsic value function 
+\begin{equation*}
+	G_n(S_n) = 5 - S_n
+\end{equation*}
+
+We may build the asset tree
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[sloped]
+  \node (a) at ( 0,0) [bag] {$S_0 = 4$};
+  \node (b) at ( 4,-1.5) [bag] {$S_1(T) = 2$};
+  \node (c) at ( 4,1.5) [bag] {$S_1(H) = 8$};
+  \node (d) at ( 8,-3) [bag] {$S_2(TT) = 1$};
+  \node (e) at ( 8,0) [bag] {$S_2(HT) = S_2(TH) = 4$};
+  \node (f) at ( 8,3) [bag] {$S_2(HH) = 16$};
+  \draw [->] (a) to node [below] {} (b);
+  \draw [->] (a) to node [above] {} (c);
+  \draw [->] (c) to node [below] {} (f);
+  \draw [->] (c) to node [above] {} (e);
+  \draw [->] (b) to node [below] {} (e);
+  \draw [->] (b) to node [above] {} (d);
+\end{tikzpicture}
+\caption{Asset price tree $S_n$.}
+\end{figure}
+
+and the intrinsic value tree
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[sloped]
+  \node (a) at ( 0,0) [bag] {$G_0 = 1$};
+  \node (b) at ( 4,-1.5) [bag] {$G_1(T) = 3$};
+  \node (c) at ( 4,1.5) [bag] {$G_1(H) = -3$};
+  \node (d) at ( 8,-3) [bag] {$G_2(TT) = 4$};
+  \node (e) at ( 8,0) [bag] {$G_2(HT) = G_2(TH) = 1$};
+  \node (f) at ( 8,3) [bag] {$G_2(HH) = -11$};
+  \draw [->] (a) to node [below] {} (b);
+  \draw [->] (a) to node [above] {} (c);
+  \draw [->] (c) to node [below] {} (f);
+  \draw [->] (c) to node [above] {} (e);
+  \draw [->] (b) to node [below] {} (e);
+  \draw [->] (b) to node [above] {} (d);
+\end{tikzpicture}
+\caption{Intrinsic value tree $G_n$.}
+\end{figure}
+
+\indent Then, with $V_N = \max \{G_N, 0\} = \max \{5 - S_N, 0\}$ we have the terminal nodes of our derivative price tree
+\begin{align*}
+	V_2(HH) &= 0 \\
+	V_2(HT) &= 1 \\
+	V_2(TH) &= 1 \\
+	V_2(TT) &= 4
+\end{align*}
+
+Now, using our American risk-neutral pricing formula
+\begin{equation*}
+	V_n = \max_{\tau \in \mathcal S_n} \tilde{\E}_n \left[ \mathds 1_{\{\tau \leq N\}} \frac{1}{(1 + r)^{\tau - n}} G_{\tau} \right]
+\end{equation*}
+
+we consider step $N = 1$ so that
+\begin{equation*}
+	V_1(H) = \max_{\tau \in \mathcal S_1} \tilde{\E}_1 \left[ \mathds 1_{\{\tau \leq 2\}} \left(\frac{4}{5}\right)^{\tau - 1} G_{\tau} \right](H)
+\end{equation*}
+
+\indent We seek to maximize this conditional expectation over $\mathcal S_1$ the set of stopping times $\tau$ taking values in $\{1,2\}\cup\{\infty\}$. It is reasonable for us to assume that to maximize our conditional expectation we should have the stopping times\footnote{Note that we cannot stop at time 0 since 0 does not appear in the values for $\tau$ by construction of $\mathcal S_1$.}
+\begin{align*}
+	\tau(HH) &= \infty \\
+	\tau(HT) &= 2
+\end{align*}
+
+since never exercising is the optimal strategy given $\omega_1 = H, \omega_2 = H$ and exercising at time 2 is the optimal strategy given $\omega_1 = H, \omega_2 = T$. With these values for $\tau$ we calculate our conditional expectation
+\begin{align*}
+	V_1(H) &= \tilde{\E}_1 \left[ \mathds 1_{\{\tau \leq 2\}} \left(\frac{4}{5}\right)^{\tau - 1} G_{\tau} \right](H) \\
+	&= \tilde{\P}(HH|\omega_1 = H)\mathds 1_{\{\tau(HH) \leq 2\}} \left(\frac{4}{5}\right)^{\tau(HH) - 1}G_{\tau(HH)}(HH)~+  \\
+	&\hphantom{{}={---------------}} \tilde{\P}(HT|\omega_1 = H)\mathds 1_{\{\tau(HT) \leq 2\}} \left(\frac{4}{5}\right)^{\tau(HT) - 1}G_{\tau(HT)}(HT) \\
+	&= 0 + \frac{1}{2}\cdot1\cdot\left(\frac{4}{5}\right)^{2 - 1}G_2(HT) \\
+	&= \frac{1}{2}\cdot\frac{4}{5}\cdot1 \\
+	&= \frac{4}{10} = \frac{2}{5} = 0.40
+\end{align*}
+
+\indent This matches with our earlier result found when evaluating $V_1(H)$ in the previous set of notes! We can do the same for $V_1(T)$ so that
+\begin{equation*}
+	V_1(T) = \max_{\tau \in \mathcal S_1} \tilde{\E}_1 \left[ \mathds 1_{\{\tau \leq 2\}} \left(\frac{4}{5}\right)^{\tau - 1} G_{\tau} \right](T)
+\end{equation*}
+
+\indent We found earlier that this value $V_1(T) = 3$ according to our recursive algorithm. First note that we are not permitted to have $\tau(TH) = 1$ and $\tau(TT) = 2$ since these are not stopping times according to our definition.\footnote{If $\tau(\omega_1\cdots\omega_n\omega_{n + 1}\cdots\omega_N) = n \implies \tau(\omega_1\cdots\omega_n\omega'_{n + 1}\cdots\omega'_N) = n$. In this case we have $\tau(\omega_1\omega_2) = \tau(TH) = 1$ and $\tau(\omega_1\omega'_2) = \tau(TT) = 2$, and trivially $1 \neq 2$.} Likewise, $\tau(TH) = 2$ and $\tau(TT) = 1$ cannot be stopping times. However, suppose we use naive stopping times
+\begin{align*}
+	\tau(TH) &= 2 \\
+	\tau(TT) &= 2
+\end{align*}
+
+Clearly these values for $\tau$ are indeed stopping times, so
+\begin{align*}
+	V_1(T) &= \tilde{\E}_1 \left[ \mathds 1_{\{\tau \leq 2\}} \left(\frac{4}{5}\right)^{\tau - 1} G_{\tau} \right](T) \\
+	&= \tilde{\P}(TH|\omega_1 = T)\mathds 1_{\{\tau(TH) \leq 2\}} \left(\frac{4}{5}\right)^{\tau(TH) - 1}G_{\tau(TH)}(TH)~+  \\
+	&\hphantom{{}={---------------}} \tilde{\P}(TT|\omega_1 = T)\mathds 1_{\{\tau(TT) \leq 2\}} \left(\frac{4}{5}\right)^{\tau(TT) - 1}G_{\tau(TT)}(TT) \\
+	&= \frac{1}{2}\cdot1\cdot\left(\frac{4}{5}\right)^{2 - 1}\cdot G_2(TH) + \frac{1}{2}\cdot1\cdot\left(\frac{4}{5}\right)^{2 - 1}\cdot G_2(TT) \\
+	&= \frac{2}{5}\left( G_2(TH) + G_2(TT)\right)\\
+	&= \frac{2}{5}(1 + 4) \\
+	&= 2
+\end{align*}
+
+\indent However, we already know that the value for $V_1(T) = 3$, so clearly some other stopping times will maximize this expectation. Furthermore, we can show that 
+\begin{align*}
+	\tau(TH) = 1,~\tau(TT) = 1 \\
+	\tau(TH) = 2,~\tau(TT) = \infty \\
+	\tau(TH) = \infty,~\tau(TT) = 2 \\
+	\tau(TH) = \infty,~\tau(TT) = \infty
+\end{align*}
+
+are also permissible stopping times. We suspect from our previous calculations that exercising this option at time 1 is the optimal action. Therefore we suspect $\tau(TH) = 1$ and $\tau(TT) = 1$ to be our maximizing stopping times. So, with these values for $\tau$,
+\begin{align*}
+	V_1(T) &= \tilde{\E}_1 \left[ \mathds 1_{\{\tau \leq 2\}} \left(\frac{4}{5}\right)^{\tau - 1} G_{\tau} \right](T) \\
+	&= \tilde{\P}(TH|\omega_1 = T)\mathds 1_{\{\tau(TH) \leq 2\}} \left(\frac{4}{5}\right)^{\tau(TH) - 1}G_{\tau(TH)}(TH)~+  \\
+	&\hphantom{{}={---------------}} \tilde{\P}(TT|\omega_1 = T)\mathds 1_{\{\tau(TT) \leq 2\}} \left(\frac{4}{5}\right)^{\tau(TT) - 1}G_{\tau(TT)}(TT) \\
+	&= \frac{1}{2}\cdot1\cdot\left(\frac{4}{5}\right)^{1 - 1}\cdot G_1(T) + \frac{1}{2}\cdot1\cdot\left(\frac{4}{5}\right)^{1 - 1}\cdot G_1(T)  \\
+	&= \frac{1}{2}(G_1(T) + G_1(T)) \\
+	&= G_1(T) \\
+	&= 3
+\end{align*}
+
+which matches with the previous result for $V_1(T)$. If we wish, we could perform these calculations for the remaining permissible stopping times, but this is tedious and we choose to skip this process. If we were to do so we would find all other conditional expectations would be $< 3$, confirming our pricing formula. Now, for $n = 0$ we have the pricing formula
+\begin{equation*}
+	V_0 = \tilde{\E}_0 \left[ \mathds 1_{\{\tau \leq 2\}} \left(\frac{4}{5}\right)^{\tau - 0} G_{\tau} \right] 
+\end{equation*}
+
+where now $\mathcal S_0$ is the set of all stopping times $\tau$ in $\{0,1,2\}\cup\{\infty\}$. It turns out that there are 26 possible sets of stopping times $\tau(HH),\tau(HT),\tau(TH),\tau(TT)$ to maximize over\footnote{Should this be obvious why it's 26?}. This is clearly tedious to maximize over, so lets skip a step. We can show that the stopping times
+\begin{equation*}
+	\tau(HH) = \infty,~\tau(HT) = 2,~\tau(TH) = \tau(TT) = 1
+\end{equation*}
+
+maximize our expectation. Computing this
+\begin{align*}
+	V_0 &= \tilde{\E}_0 \left[ \mathds 1_{\{\tau \leq 2\}} \left(\frac{4}{5}\right)^{\tau - 0} G_{\tau} \right] \\
+	&= \tilde{\P}(HH)\mathds 1_{\{\tau(HH) \leq 2\}} \left(\frac{4}{5}\right)^{\tau(HH)} G_{\tau(HH)}(HH)~+ \\
+	&\hphantom{{}={-----}} \tilde{\P}(HT)\mathds 1_{\{\tau(HT) \leq 2\}} \left(\frac{4}{5}\right)^{\tau(HT)} G_{\tau(HT)}(HT)~+ \\
+	&\hphantom{{}={-----}} \tilde{\P}(TH)\mathds 1_{\{\tau(TH) \leq 2\}} \left(\frac{4}{5}\right)^{\tau(TH)} G_{\tau(TH)}(TH)~+ \\
+	&\hphantom{{}={-----}} \tilde{\P}(TT)\mathds 1_{\{\tau(TT) \leq 2\}} \left(\frac{4}{5}\right)^{\tau(TT)} G_{\tau(TT)}(TT) \\
+	&= 0 + \frac{1}{4}\left(\frac{4}{5}\right)^2G_2(HT) + \frac{1}{4}\left(\frac{4}{5}\right)^1G_1(T) + \frac{1}{4}\left(\frac{4}{5}\right)^1G_1(T) \\
+	&= \frac{1}{4}\left[ \frac{16}{25}\cdot 1 + \frac{4}{5}\cdot3 + \frac{4}{5}\cdot 3 \right] \\
+	&= 1.36
+\end{align*}
+
+as was found before. \\
+
+\begin{theorem} The American derivative security price process defined by the American risk-neutral pricing formula
+\begin{equation*}
+	V_n = \max_{\tau \in \mathcal S_n} \tilde{\E}_n \left[ \mathds 1_{\{\tau\leq N\}} \frac{1}{(1 + r)^{\tau - n}} G_\tau \right] \quad n = 0,1,...,N
+\end{equation*}
+
+has the following properties
+\begin{enumerate}[(i)]
+	\item $V_n \geq \max(G_n, 0)$. That is, if we are able to replicate $V_n$ then we are successfully hedged for all possible cash flows.
+	\item The discounted process $\frac{V_n}{(1 + r)^n}$ is a $\tilde{\P}$-supermartingale. That is, a hedging portfolio for the process $V_n$ exists.\footnote{I don't quite see why this must be the case.}
+	\item If $Y_n$ is any other process satisfying $(i)-(ii)$ then
+	\begin{equation*}
+		Y_n \geq V_n \quad \forall\,n = 0,1,...,N
+	\end{equation*}
+	We say that $V_n$ is the ``smallest'' process satisfying $(i)$ and $(ii)$.
+\end{enumerate}
+
+\begin{proof} {\em (Proof of $(i)$)} Let $n$ be fixed and let $\hat{\tau}$ be some value in $\mathcal S_n$ such that $n \leq N$ and $\hat{\tau}$ takes the value of $n$ independently of the coin tosses (i.e. $\hat{\tau} = n~\forall\,\omega \in \Omega$). Then, the expectation of the indicator function for this $\hat{\tau}$ is
+\begin{align*}
+	\tilde{\E}_n \left[ \mathds 1_{\{\hat{\tau} \leq N\}} \frac{1}{(1 + r)^{\hat{\tau} - n}} G_{\hat{\tau}} \right] &= \tilde{\E}_n \left[ 1 \cdot \frac{1}{(1 + r)^{n - n}} G_{n} \right] \\
+	&= \tilde{\E}_n \left[ 1 \cdot 1 \cdot G_{n} \right] \\
+	&= \tilde{\E}_n [G_n] \\
+	&= G_n
+\end{align*}
+
+By the definition of $V_n$ and the fact that $\hat{\tau} \in \mathcal S_n$ we have that
+\begin{align*}
+	V_n &= \max_{\tau \in \mathcal S_n} \tilde{\E}_n \left[ \mathds 1_{\{\tau\leq N\}} \frac{1}{(1 + r)^{\tau - n}} G_\tau \right] \\
+	\implies V_n &\geq \tilde{\E}_n \left[ \mathds 1_{\{\hat{\tau} \leq N\}} \frac{1}{(1 + r)^{\hat{\tau} - n}} G_{\hat{\tau}} \right] \\
+	&= G_n
+\end{align*}
+
+\indent Now, if we take some other $\bar{\tau} \in \mathcal S_n$ such that $\bar{\tau} = \infty$ independently of the $n$ coin tosses then, by the same argument, we have
+\begin{align*}
+	V_n &= \max_{\tau \in \mathcal S_n} \tilde{\E}_n \left[ \mathds 1_{\{\tau\leq N\}} \frac{1}{(1 + r)^{\tau - n}} G_\tau \right] \\
+	\implies V_n &\geq \tilde{\E}_n \left[ \mathds 1_{\{\bar{\tau} \leq N\}} \frac{1}{(1 + r)^{\bar{\tau} - n}} G_{\bar{\tau}} \right] \\
+	&= \tilde{\E}_n [0] \quad \forall\,\omega\in\Omega \\
+	&= 0
+\end{align*}
+
+Therefore, combining these two results we have
+\begin{equation*}
+	V_n \geq \max \{ G_n, 0\}
+\end{equation*}
+
+as desired.
+\end{proof}
+
+\begin{proof} {\em (Proof of $(ii)$)} Let $n$ be fixed and suppose that $\tau^*\in \mathcal S_{n + 1}$ is a stopping time satisfying the maximizing conditional expectation:
+\begin{equation*}
+	V_{n + 1} = \tilde{\E}_{n + 1} \left[ \mathds 1_{\{\tau^*\leq N\}} \frac{1}{(1 + r)^{\tau^* - (n + 1)}} G_{\tau^*} \right] 
+\end{equation*}
+
+But note that $S_{n + 1} \subset S_n$ so that $\tau^* \in \mathcal S_n$. Then
+\begin{equation*}
+	V_n \geq \tilde{\E}_{n} \left[ \mathds 1_{\{\tau^*\leq N\}} \frac{1}{(1 + r)^{\tau^* - n}} G_{\tau^*} \right] 
+\end{equation*}
+
+and conditioning with respect to the next time step $n + 1$ 
+\begin{align*}
+	V_n &\geq \tilde{\E}_{n} \left[ \mathds 1_{\{\tau^*\leq N\}} \frac{1}{(1 + r)^{\tau^* - n}} G_{\tau^*} \right]  \\
+	&= \tilde{\E}_{n} \left[ \tilde{\E}_{n + 1} \left[ \mathds 1_{\{\tau^*\leq N\}} \frac{1}{(1 + r)^{\tau^* - n}} G_{\tau^*} \right] \right] \\
+	&= \tilde{\E}_{n} \left[ \frac{1}{1 + r} \tilde{\E}_{n + 1} \left[ \mathds 1_{\{\tau^*\leq N\}} \frac{1}{(1 + r)^{\tau^* - (n + 1)}} G_{\tau^*} \right] \right] \\
+	&= \tilde{\E}_{n} \left[ \frac{1}{1 + r} V_{n + 1} \right]  \\
+	\implies \frac{V_n}{(1 + r)^n} &\geq \tilde{\E}_n \left[ \frac{V_{n + 1}}{(1 + r)^{n + 1}} \right]
+\end{align*}
+
+That is, the discounted price process $\left\{ \frac{V_n}{(1 + r)^n} \right\}^N_{n = 0}$ is a $\tilde{\P}$-supermartingale, as desired.
+\end{proof}
+
+\begin{proof} {\em (Proof of $(iii)$)} Let $Y_n$ be any other process satisfying $(i)$ and $(ii)$. For fixed $n \leq N$ let $\tau \in \mathcal S_n$ be a stopping time. Since $Y_k$ satisfies $(i)$ we have that
+\begin{equation*}
+	Y_n \geq \max (G_n, 0) 
+\end{equation*}
+
+Now, we also find
+\begin{align*}
+	\mathds 1_{\{\tau \leq N\}} G_\tau &\leq \mathds 1_{\{\tau \leq N\}} \max(G_\tau, 0) \\
+	&\leq \mathds 1_{\{\tau \leq N\}} \max (G_{N \land \tau}, 0) + \mathds 1_{\{\tau = \infty\}}\max (G_{N\land\tau}, 0) \\
+	&= \max (G_{N\land \tau},0) \\
+	&\leq Y_{N\land \tau} \quad \text{(from immediately above)} \\
+	\implies \tilde{\E}_n \left[ \mathds 1_{\{\tau \leq N\}} G_\tau \right] &\leq \tilde{\E}_n \left[ Y_{N\land \tau} \right] \\
+	\implies \tilde{\E}_n \left[ \mathds 1_{\{\tau \leq N\}} \frac{1}{(1 + r)^{N\land\tau}} G_\tau \right] &\leq \tilde{\E}_n \left[ \frac{Y_{N\land \tau}}{(1 + r)^{N\land\tau}} \right]
+\end{align*}
+
+\indent From $(ii)$ we have that $\left\{ \frac{Y_n}{(1 + r)^n} \right\}^N_{n = 0}$ is a $\tilde{\P}$-supermartingale and so using the Optimal Sampling Theorem we have that the stopped process $\left\{ \frac{Y_{n\land\tau}}{(1 + r)^{n\land\tau}} \right\}^N_{n = 0}$ is also $\tilde{\P}$-supermartingale, so
+\begin{align*}
+	\tilde{\E}_n \left[ \mathds 1_{\{\tau \leq N\}} \frac{1}{(1 + r)^{\tau}} G_\tau \right] &= \tilde{\E}_n \left[ \mathds 1_{\{\tau \leq N\}} \frac{1}{(1 + r)^{N\land\tau}} G_\tau \right] \\
+	&\leq \tilde{\E}_n \left[ \frac{Y_{N\land \tau}}{(1 + r)^{N\land\tau}} \right] \quad \text{(from immediately above)} \\
+	&\leq \frac{Y_{n\land\tau}}{(1 + r)^{n\land\tau}} \quad \text{(supermartingale property)} \\
+	&= \frac{Y_n}{(1 + r)^n} \quad \text{(since } \tau \in \mathcal S_n = \{n, n + 1,..., N\}\cup\{\infty\}) \\
+	\implies \tilde{\E}_n \left[ \mathds 1_{\{\tau \leq N\}} \frac{1}{(1 + r)^{\tau}} G_\tau \right] &\leq \frac{Y_n}{(1 + r)^n} \\
+	\implies \tilde{\E}_n \left[ \mathds 1_{\{\tau \leq N\}} \frac{1}{(1 + r)^{\tau - n}} G_\tau \right] &\leq Y_n
+\end{align*}
+
+Recall from the American risk-neutral pricing formula that
+\begin{equation*}
+	V_n = \max_{\tau \in \mathcal S_n} \tilde{\E}_n \left[ \mathds 1_{\{\tau \leq N\}} \frac{1}{(1 + r)^{\tau - n}} G_\tau  \right]
+\end{equation*}
+
+But we had just shown that $\tilde{\E}_n \left[ \mathds 1_{\{\tau \leq N\}} \frac{1}{(1 + r)^{\tau - n}} G_\tau \right] \leq Y_n$. Therefore, for arbitrary $0 \leq n \leq N$
+\begin{equation*}
+	V_n \leq Y_n \quad \forall\,\tau\in\mathcal S_n
+\end{equation*}
+
+as desired.
+\end{proof}
+\end{theorem}
+
+
+
+
+
+
+
+
+
+
+
+\end{document}

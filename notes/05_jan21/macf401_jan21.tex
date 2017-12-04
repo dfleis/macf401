@@ -1,0 +1,490 @@
+% --------------------------------------------------------------
+% This is all preamble stuff that you don't have to worry about.
+% Head down to where it says "Start here"
+% --------------------------------------------------------------
+ 
+\documentclass[12pt]{article}
+ 
+\usepackage[margin=1in]{geometry} 
+\usepackage{bm} % bold in mathmode \bm
+\usepackage{amsmath,amsthm,amssymb,mathtools}
+\usepackage{dsfont} % for indicator function \mathds 1
+\usepackage{tikz,pgf,pgfplots}
+\usepackage{enumerate} 
+\usepackage[multiple]{footmisc} % for an adjascent footnote
+\usepackage{graphicx,float} % figures
+\usepackage{csvsimple,longtable,booktabs} % load csv as a table
+\usepackage{listings,color} % for code snippets
+
+\newtheorem{definition}{Definition}
+\let\olddefinition\definition
+\renewcommand{\definition}{\olddefinition\normalfont}
+\newtheorem{lemma}{Lemma}
+\let\oldlemma\lemma
+\renewcommand{\lemma}{\oldlemma\normalfont}
+\newtheorem{proposition}{Proposition}
+\let\oldproposition\proposition
+\renewcommand{\proposition}{\oldproposition\normalfont}
+\newtheorem{corollary}{Corollary}
+\let\oldcorollary\corollary
+\renewcommand{\corollary}{\oldcorollary\normalfont}
+\newtheorem{theorem}{Theorem}
+\let\oldtheorem\theorem
+\renewcommand{\theorem}{\oldtheorem\normalfont}
+
+\newcommand\norm[1]{\left\lVert#1\right\rVert} % \norm command 
+
+%%% PLOTTING PARAMETERS
+\pgfmathsetseed{1952} % for Brownian Motion plotting
+\newcommand{\Emmett}[5]{% points, advance, rand factor, options, end label
+\draw[#4] (0,0)
+\foreach \x in {1,...,#1}
+{   -- ++(#2,rand*#3)
+}
+node[right] {#5};
+}
+
+\pgfplotsset{every axis/.append style={},
+    cmhplot/.style={mark=none,line width=1pt,->},
+    soldot/.style={only marks,mark=*},
+    holdot/.style={fill=white,only marks,mark=*},
+}
+
+\tikzset{>=stealth}
+
+\pgfmathdeclarefunction{gauss}{2}{%
+  \pgfmathparse{1/(#2*sqrt(2*pi))*exp(-((x-#1)^2)/(2*#2^2))}%
+}
+
+\tikzstyle{bag} = [text width=6em, text centered]
+\tikzstyle{end} = []
+%%%
+
+%% set noindent by default and define indent to be the standard indent length
+\newlength\tindent
+\setlength{\tindent}{\parindent}
+\setlength{\parindent}{0pt}
+\renewcommand{\indent}{\hspace*{\tindent}}
+
+\newcommand*{\vv}[1]{\vec{\mkern0mu#1}} % \vec command
+
+%% DAVIDS MACRO KIT %%
+\newcommand{\R}{\mathbb R}
+\newcommand{\N}{\mathbb N}
+\newcommand{\Z}{\mathbb Z}
+\renewcommand{\P}{\mathbb P}
+\newcommand{\Q}{\mathbb Q}
+\newcommand{\E}{\mathbb E}
+\newcommand{\var}{\mathrm{Var}}
+\newcommand{\indist}{\,{\buildrel \mathcal D \over \sim}\,}
+
+\newcommand{\bigtau}{\text{{\large $\bm \tau$}}}
+
+\begin{document}
+ 
+% --------------------------------------------------------------
+%                         Start here
+% --------------------------------------------------------------
+ 
+\title{Mathematical \& Computational Finance I\\Lecture Notes}
+\author{Probability Theory on Coin Toss Space}
+\date{January 21 2016 \\ Last update: \today{}}
+\maketitle
+
+% SECTION: 
+\section{Probability Theory}
+
+\subsection{Conditional Expectation}
+
+Suppose $X$ is a random variable on the coin toss sample space 
+\begin{equation*}
+	\Omega = \{\omega:\omega = \omega_1\cdots\omega_n,~\omega_i \in \{H, T\}\}
+\end{equation*}
+
+where $\P(\omega_i = H) = p$. For 
+\begin{equation*}
+	X(\omega) = X(\omega_1\cdots\omega_N)
+\end{equation*}
+
+we can estimate $X$ (or some function of $X$) using only the first $n$ coin tosses for $n \leq N$. We think of the observations of the coin tosses up until time $n \leq N$ as the information available at time $n$.
+
+\begin{definition} For $1 \leq n \leq N$ let $\omega_1\cdots\omega_n$ be given. There are $2^{N - n}$ possible continuations of $\omega_{n + 1}\cdots\omega_N$. Write
+\begin{align*}
+	\#H(\omega_{n + 1}\cdots\omega_N) &= \text{number of heads} \\
+	\#T(\omega_{n + 1}\cdots\omega_N) &= \text{number of tails}
+\end{align*}
+
+Define the random variable, for $X = X(\omega_1\cdots\omega_n\cdots\omega_N)$,
+\begin{align*}
+	\E_n[X](\omega_1\cdots\omega_n) &= \sum_{\omega_{n + 1} \cdots \omega_N} \P(\omega_{n + 1}\cdots\omega_N) X(\omega_1\cdots\omega_N) \\
+	&= \sum_{\omega_{n + 1}\cdots\omega_N} p^{\#H(\omega_{n + 1}\cdots\omega_N)}(1 - p)^{\#T(\omega_{n + 1}\cdots\omega_N)}X(\omega_1\cdots\omega_N)
+\end{align*}
+
+\indent That is, we sum over all possible continuations of the coin toss sequence. We say that $\E_n[X]$ is the \underline{conditional expectation} of $X$ based on the information at time $n$.
+\end{definition}
+
+\begin{definition} Let $X = X(\omega_1\cdots\omega_N)$ be a random variable depending on the first $N$ coin tosses. In the two extreme cases $n = 0$ and $n = N$ we define the conditional expectation as
+\begin{align*}
+	\E_0[X] &= \E[X] \quad \text{(no information ordinary expectation)} \\
+	\E_N[X] &= X \quad \text{(full information)}
+\end{align*}
+\end{definition}
+
+\subsubsection{Properties of Conditional Expectation}
+
+Let $N$ be a positive integer and $X, Y$ be random varaibles depending on the first $N$ coin tosses. Let $0 \leq n \leq N$ be given. Then
+
+\begin{enumerate}
+	\item For constants $c_1, c_2 \in \R$
+	\begin{equation*}
+		\E_n[c_1X + c_2Y] = c_1\E_n[X] + c_2\E_n[Y] \quad \text{linearity}
+	\end{equation*}
+	\item If $X$ only depends on the first $n$ coin tosses
+	\begin{equation*}
+		\E_n[XY] = X\E_n[Y] \quad \text{taking out what is known/adaptedness of $X$}
+	\end{equation*}
+	\item If $0 \leq n \leq m \leq N$ then
+	\begin{equation*}
+		\E_n[\E_m[X]] = \E_n[X] \quad \text{tower property}
+	\end{equation*}
+	
+	in particular, $\E[\E_m[X]] = \E[X]$.
+	\item If $X$ only depends on $\omega_{n + 1}\cdots\omega_N$ then
+	\begin{equation*}
+		\E_n[X] = \E[X] \quad \text{independence}
+	\end{equation*}
+	\item If $\phi$ is a convex function then
+		\begin{equation*}
+		\phi(\E_n[X]) \leq \E_n[\phi(X)] \quad \text{conditional Jensen's inequality}
+	\end{equation*}
+\end{enumerate}
+
+\subsection{Martingales}
+
+In the binomial asset pricing model with $\tilde{p} = \frac{1 + r - d}{u - d}$ we saw that
+\begin{align*}
+	V_n(\omega_1\cdots\omega_n) &= \frac{1}{1 + r}[\tilde{p}V_{n + 1}(\omega_1\cdots\omega_n H) + \tilde{q}V_{n + 1}(\omega_1\cdots\omega_n T)] \\
+	S_n(\omega_1\cdots\omega_n) &= \frac{1}{1 + r}[\tilde{p}S_{n + 1}(\omega_1\cdots\omega_n H) + \tilde{q}S_{n + 1}(\omega_1\cdots\omega_n T)]
+\end{align*}
+
+for $n = 0, 1, ..., N - 1$. These equations can be rewritten using the definition of conditional expectation under the risk-neutral probability measure $\tilde{\P}$ as
+\begin{align*}
+	V_n(\omega_1\cdots\omega_n) &= \tilde{\E}_n\left[ \frac{V_{n + 1}}{1 + r} \right](\omega_1\cdots\omega_n) \\
+	S_n(\omega_1\cdots\omega_n) &= \tilde{\E}_n\left[ \frac{S_{n + 1}}{1 + r} \right](\omega_1\cdots\omega_n)
+\end{align*}
+
+where $\tilde{\E}_n[\cdot]$ denotes the conditional expectation at time $n$ with respect to the risk-neutral probability measure. Dividing both sides if the second equation by $(1 + r)^n$ gives us
+\begin{equation*}
+	\frac{S_n}{(1 + r)^n} = \tilde{\E}_n\left[ \frac{S_{n + 1}}{(1 + r)^{n + 1}} \right]
+\end{equation*}
+
+Define the discounted asset price process
+\begin{equation*}
+	\bar{S}_n := \frac{S_n}{(1 + r)^n}
+\end{equation*}
+
+Then, the discounted asset price process satisfies
+\begin{equation*}
+	\bar{S}_n = \tilde{\E}_n[\bar{S}_{n + 1}]
+\end{equation*}
+
+\indent We say that this relationship between a process and its conditional expectation is called the \underline{martingale property}. For the discounted asset price the martingale property is a consequence of using the risk-neutral (martingale) probability measure $\tilde{\P}$ (i.e. this relationship would not hold under the real-world measure). \\
+
+\indent The martingale property of the discounted asset price tells us that the best estimate for $\bar{S}_{n + 1}$ given the information at time $n$ is $\bar{S}_n$ (critically, only under $\tilde{\P}$). In general, if $X, Y$ are random variables on a probability space $(\Omega,\P)$ we have\footnote{I don't really know how to interpret this is in terms of martingales.}
+\begin{equation*}
+	\E_\P[(Y - g(X))^2] \geq \E_\P[(Y - \E[Y|X])^2]
+\end{equation*}
+
+\indent This implies that $\E_\P[Y|X]$ is the best estimate, in mean-square terms, of $Y$ which is itself a function of $X$. In our notation, if $X_i = \omega_i,~i = 1,..., n$ are the outcomes of the first $n$ tosses.
+\begin{equation*}
+	\tilde{\E}[(\bar{S}_{n + 1} - g(\omega_1,...,\omega_n))] \geq \tilde{\E}[(\bar{S}_{n + 1} - \tilde{\E}_n[\bar{S}_{n + 1}])^2] = \tilde{\E}_n[(\bar{S}_{n + 1} - \bar{S}_n)^2]
+\end{equation*}
+
+\begin{definition} Consider the binomial asset pricing model and let $M_0, M_1, ..., M_N$ be a sequence of random variables. The sequence $\{M_n\}^N_{n = 0}$ is called an \underline{adapted stochastic process} if 
+\begin{enumerate}
+	\item $M_0$ is a constant (deterministic) and
+	\item For each $n \in \{1, ..., N\}$ the random variable $M_n$ depends only on the first $n$ coin tosses.
+\end{enumerate}
+\end{definition}
+
+\indent Adapted processes are extremely important in financial modelling of asset pricing, portfolio process, and other quantities. An adapted process does not ``look into the future'' or use ``future information'' to determine its current value today.
+
+\begin{definition} Consider the binomial asset pricing model with a given probability measure $\P$ (can be real-world, risk-neutral, or something else). A stochastic process $\{M_n\}^N_{n = 0}$ is a \underline{$\P$-martingale} if
+\begin{enumerate}
+	\item $\{M_n\}_{n = 0}^N$ is adapted
+	\item $M_n = \E^\P_n[M_{n + 1}]$ for $n = 0, ..., N - 1$
+\end{enumerate}
+
+where $\P$ can be the risk neutral, real world, or some other measure.
+\end{definition}
+
+\indent Note that both properties are necessarily required to demonstrated that a process is a martingale. Although the first criteria is sometimes trivial it is important to mention (we'll lose a mark on an exam!). \\
+
+\indent We may relax the equality in the martingale property to inequalities in order to define two important classes of processes.
+
+\begin{definition} Consider the binomial asset pricing model with a given probability measure $\P$. A stochastic process $\{M_n\}^N_{n = 0}$ is a \underline{$\P$-submartingale} if
+\begin{enumerate}
+	\item $\{M_n\}_{n = 0}^N$ is adapted
+	\item $M_n \leq \E^\P_n[M_{n + 1}]$ for $n = 0, ..., N - 1$
+\end{enumerate}
+\end{definition}
+
+\begin{definition} Consider the binomial asset pricing model with a given probability measure $\P$. A stochastic process $\{M_n\}^N_{n = 0}$ is a \underline{$\P$-supermartingale} if
+\begin{enumerate}
+	\item $\{M_n\}_{n = 0}^N$ is adapted
+	\item $M_n \geq \E^\P_n[M_{n + 1}]$ for $n = 0, ..., N - 1$
+\end{enumerate}
+\end{definition}
+
+A process is a martingale if it is both a submartingale and a supermartingale. \\
+
+\underline{Example}: On a finite probability space $(\Omega, \P)$ suppose that $\{X_n\}^N_{n = 0}$ and $\{Y_n\}^N_{n = 0}$ are $\P$-supermartingales. For $n = 0, ... N$ define $Z_n = (aX_n + bY_n)$ for real numbers $a, b \geq 0$. Prove that $Z_n$ is a supermartingale under $\P$. \\
+
+\underline{Solution}:
+\begin{enumerate}[(i)]
+	\item For every $n = 0, 1, ..., N$ we have that $Z_n = (aX_n + bY_n)$ depends only on the first $n$ coin tosses since $X_n$ and $Y_n$ depend only on the first $n$ coin tosses. That is, $\{Z_n\}$ is an adapted process.
+	\item For any $n \in \{0, ... , N - 1\}$, since $\{X_n\}$ and $\{Y_n\}$ are supermartingales, we have that $aX_n \geq \E_n[aX_{n + 1}]$ and $bY_n \geq \E_n[bY_{n + 1}]$. From linearity of conditional expectation we find
+	\begin{equation*}
+		\E_n[Z_{n + 1}] = \E_n[aX_{n + 1} + bY_{n + 1}] = \E_n[aX_{n + 1}] + \E_n[bY_{n + 1}] \leq aX_n + bY_n = Z_n
+	\end{equation*}
+\end{enumerate}
+
+Therefore, $\{Z_n\}$ satisfies the definition of a $\P$-supermartingale. \\
+
+\underline{Example}: On a finite probability space $(\Omega, \P)$ suppose that $\{X_n\}^N_{n = 0}$ and $\{Y_n\}^N_{n = 0}$ are $\P$-supermartingales. For $n = 0, ..., N$ define $Z_n = (X_n \land Y_n)$ for real numbers $a$ and $b$, where the notation $x \land y$ denotes the minimum of $x$ and $y$. Prove that $Z_n$ is a supermartingale under $\P$. \\
+
+\underline{Solution}:
+\begin{enumerate}[(i)]
+	\item $Z_n = (X_n \land Y_n)$ depends only on the first $n$ coin tosses since $X_n$ and $Y_n$ depend only on the first $n$ coin tosses. That is, $\{Z_n\}$ is an adapted process.
+	\item For any $n \in \{0, ..., N - 1\}$
+	\begin{align*}
+		\E_n[Z_{n + 1}] &= \E_n[X_{n + 1} \land Y_{n + 1})] \\
+		&\leq \E_n[X_{n + 1}] \quad (\text{since } Z_{n + 1} = \min  \{X_{n + 1}, Y_{n + 1}\} \leq X_{n + 1}) \\
+		&\leq X_n
+	\end{align*}
+	
+	Similarly, we find that 
+	\begin{equation*}
+		\E_n[Z_{n + 1}] \leq Y_n
+	\end{equation*}
+	
+	Hence
+	\begin{equation*}
+		\E_n[Z_{n + 1}] \leq (X_{n + 1} \land Y_{n + 1}) = Z_n
+	\end{equation*}
+	
+	since
+	\begin{equation*}
+		z \leq x \quad \text{and} \quad z \leq y \implies z \leq (x \land y)
+	\end{equation*}
+\end{enumerate}
+
+Therefore, $\{Z_n\}$ is a $\P$-supermartingale by definition. \\
+
+
+\underline{Example}: On a finite probability space $(\Omega, \P)$ suppose that $\{X_n\}^N_{n = 0}$ is a $\P$-submartingale. Prove that $(X_n - a)^+$ is a submartingale for any constant $a$. \\
+
+\underline{Solution}: Define $Z_n = (X_n - a)^+ = \max \{X_n - a, 0\}$ for $n = 0,..., N$.
+\begin{enumerate}[(i)]
+	\item Clearly $Z_n$ depends only on the first $n$ coin tosses since $X_n$ only depends on the first $n$ coin tosses and $a$ is a constant. Therefore, $\{Z_n\}$ is an adapted process.
+	\item For any $n \in \{0, ..., N - 1\}$ since by definition $Z_{n + 1} = \max \{X_{n + 1} - a, 0 \} \geq X_{n + 1} - a$, thus
+	\begin{align*}
+		\E_n[Z_{n + 1}] &\geq \E_n[X_{n + 1} - a] \\
+		&= \E_n[X_{n + 1}] - a \\
+		&\geq X_n - a \quad \text{(by definition of the submartingale } X_n)	
+	\end{align*}
+	
+	Also, $Z_{n + 1} \geq 0$ which implies that
+	\begin{equation*}
+		\E_n[Z_{n + 1}] \geq 0
+	\end{equation*}
+	
+	Hence, combining both results
+	\begin{equation*}
+		\E_n[Z_{n + 1}] \geq \max \{ X_n - a, 0 \} = (X_n - a)^+ = Z_n
+	\end{equation*}
+\end{enumerate}
+
+Therefore, by definition, $\{Z_n\}$ is a $\P$-submartingale.
+
+\subsubsection{Martingales Over Multiple Time Steps}
+
+The martingale property holds over multiple time steps:
+
+\begin{theorem} If $\{M_n\}_{n = 0}^N$ is a $\P$-martingale then
+\begin{equation*}
+	M_n = \E_n[M_m]
+\end{equation*}
+
+for all $0 \leq n \leq m \leq N$.
+\begin{proof}
+\begin{align*}
+	\E_n[M_m] &= \E_n[\E_{m - 1}[M_m]] \quad \text{(applying the tower property)} \\
+	&= \E_n[M_{m - 1}] \quad \text{(martingale property over one time step)}
+\end{align*}
+
+\indent Since the one-step martingale property holds we suspect that we may proceed inductively on $m$. Define $P(m):~\E_n[M_m] = M_n$. For $P(1)$ we see that
+\begin{equation*}
+	P(0):~\E_n[M_{n + 1}] = M_n
+\end{equation*}
+
+is true by definition of the one-step martingale property. Now, assume that our inductive hypothesis holds, that is,
+\begin{equation*}
+	P(k):~\E_n[M_{n + k}] = M_n
+\end{equation*}
+
+
+For $P(k + 1)$ we find
+\begin{align*}
+	P(k + 1):~\E_n[M_{n + k + 1}] &= \E_n[\E_{n + 1}[M_{n + k + 1}]] \quad \text{(tower property)} \\
+	&= \E_n[M_{n + k}] \quad \text{(martingale property)} \\
+	&= M_n \quad \text{(by our inductive hypothesis)}
+\end{align*}
+
+\indent Therefore $P(k + 1)$ holds. We may conclude that $P(m)$ is true for arbitrary $m$ such that $0 \leq n \leq m \leq N$, as desired.
+\end{proof}
+\end{theorem}
+
+\begin{corollary} If $\{M_n\}_{n = 0}^N$ is a $\P$-martingale then
+\begin{equation*}
+	M_0 = \E[M_n]
+\end{equation*}
+
+for every $n = 0, ..., N$.
+
+\begin{proof} Using the previous result with $n = 0$ and $m = n$ we find
+\begin{equation*}
+	\E[M_n] \equiv \E_0[M_n] = M_0
+\end{equation*}
+
+as desired.
+\end{proof}
+\end{corollary}
+
+\indent In general, we do not expect risky asset processes to be martingales with respect to the real-world measure. That is, the real-world/physical probabilities under $\P$ should not be such that $S_n$ is a martingale. If it were the case that $S_n$ was a martingale with respect to the real-world measure then there would be no incentive for risk-taking: The one-period expected return is zero! In the real world we hope that the expected asset prices should rise faster than the bank account to appropriately compensate investors for the extra risk.
+
+\begin{theorem} Consider the general binomial asset-pricing model with $0 < d < 1 + r < u$. Let the risk-neutral probabilities be given by
+\begin{equation*}
+	\tilde{p} = \frac{(1 + r) - d}{u - d}, \quad \tilde{q} = \frac{u - (1 + r)}{u - d}
+\end{equation*}
+
+Then, the discounted asset price process $\left\{ \frac{ S_n }{(1 + r)^n} \right\}_{n = 0}^N$ is a $\tilde{\P}$-martingale.
+
+\begin{proof} First, we see that $\frac{S_n}{(1 + r)^n}$ depends only on the first $n$ coin tosses by construction of the binomial mode. Therefore the discounted price process is adapted. \\
+
+Taking the expectation with respect to the risk neutral measure
+\begin{align*}
+	\tilde{\E}_n\left[ \frac{S_{n + 1}}{(1 + r)^{n + 1}} \right] &= \frac{1}{(1 + r)^n}\frac{1}{1 + r} \tilde{\E}_n [\tilde{p}S_{n + 1}(\omega_1\cdots\omega_n H) + \tilde{q}S_{n + 1}(\omega_1 \cdots \omega_n T)] \\
+	&= \frac{1}{(1 + r)^n}\frac{1}{1 + r} (\tilde{p} uS_n + \tilde{q} d S_n) \\
+	&= \frac{S_n}{(1 + r)^n}\frac{1}{1 + r} (\tilde{p} u + \tilde{q} d)	
+\end{align*}
+
+but
+\begin{align*}
+	\tilde{p}u + \tilde{q}d &= \left(\frac{(1 + r) - d}{u - d}\right)u + \left(\frac{u - (1 + r)}{u - d}\right)d \\
+	&= \frac{1}{u - d} \left[(1 + r)u - du + ud - (1 + r)d \right] \\
+	&= \frac{1}{u - d} \left[(1 + r)u - (1 + r)d \right] \\
+	&= \frac{u - d}{u - d}(1 + r) \\
+	&= 1 + r
+\end{align*} 
+
+so
+\begin{align*}
+\tilde{\E}_n\left[ \frac{S_{n + 1}}{(1 + r)^{n + 1}} \right] &= \frac{S_n}{(1 + r)^n}\frac{1}{1 + r} (\tilde{p} u + \tilde{q} d) \\
+	&= \frac{S_n}{(1 + r)^n} \frac{1}{1 + r}(1 + r) \\
+	&= \frac{S_n}{(1 + r)^n}
+\end{align*}
+
+as desired.
+\end{proof}
+\end{theorem}
+
+\subsubsection{Portfolio Processes}
+
+In the binomial model with $N$ coin tosses suppose at each time $n$ the investor
+\begin{enumerate}
+	\item Takes a position $\Delta_n$ shares of stock.
+	\item Holds the position until time $n + 1$.
+	\item Based on the outcome of the $(n + 1)^{\text{th}}$ coin toss takes a new position at time $(n + 1)$ of $\Delta_{n + 1}$ shares.
+	\item Portfolio is rebalanced by either (a) Liquidating shares and investing the proceeds in the bank account or (b) Reducing the bank account (borrowing more if necessary) and buying additional shares. \\
+	
+	$\implies$ The portfolio process $\{\Delta_0,\Delta_1,...,\Delta_{N - 1}\}$ is adapted.
+\end{enumerate}
+
+If the investor has initial wealth $X_0$ at time 0 then the wealth at time $n$ is 
+\begin{equation*}
+	X_{n + 1} = \Delta_nS_{n + 1} + (1 + r)(X_n - \Delta_nS_n)
+\end{equation*}
+
+for $n = 0,..., N - 1$. We call this equation the \underline{wealth equation}. Note that $X_n$ depends only on the first $n$ coin tosses so the wealth process $\{X_n\}_{n = 0}^N$ is adapted.
+
+\begin{theorem} Consider the binomial model with $N$ periods and $0 < d < 1 + r < u$. Let $\Delta_0,..., \Delta_{N - 1}$ be an adapted portfolio process and $X_0$ be constant. Then the wealth process $\{X_n\}_{n = 0}^N$ define by the wealth equation is a discounted martingale. That is,
+\begin{equation*}
+	\frac{X_n}{(1 + r)^n} = \tilde{\E}_n \left[ \frac{X_{n + 1}}{(1 + r)^{n + 1}} \right]
+\end{equation*}
+
+for $n = 0, ... N - 1$.
+
+\begin{proof} From the wealth equation we have
+\begin{align*}
+	\tilde{\E}_n \left[ \frac{X_{n + 1}}{(1 + r)^{n + 1}} \right] &= \tilde{\E}_n \left[ \frac{\Delta_nS_{n + 1} + (1 + r)(X_n - \Delta_nS_n)}{(1 + r)^{n + 1}} \right] \\
+	&= \tilde{\E}_n \left[ \frac{1}{(1 + r)^{n + 1}} \Delta_nS_{n + 1} \right] + \tilde{\E}_n \left[ \frac{1}{(1 + r)^n} (X_n - \Delta_nS_n) \right] \\
+	&= \Delta_n \tilde{\E}_n \left[ \frac{S_{n + 1}}{(1 + r)^{n + 1}} \right] + \frac{X_n}{(1 + r)^n} - \Delta_n \frac{S_n}{(1 + r)^n} \quad \text{(taking out what is known)} \\
+	&= \Delta_n \frac{S_n}{(1 + r)^n} + \frac{X_n}{(1 + r)^n} - \Delta_n \frac{S_n}{(1 + r)^n} \quad \text{(since $\frac{S_{n + 1}}{(1 + r)^{n + 1}}$ is a martingale)} \\
+	&= \frac{X_n}{(1 + r)^n}
+\end{align*}
+
+as desired.
+\end{proof}
+\end{theorem}
+
+\begin{corollary} An immediate consequence of the previous theorem is that, under the conditions of the previous theorem,
+\begin{equation*}
+	\tilde{\E}\left[ \frac{X_n}{(1 + r)^n} \right] = X_0
+\end{equation*}
+
+for $n = 0,..., N$.
+\end{corollary}
+
+This corollary implies that there can be no arbitrage in the binomial model!\footnote{I'm not quite sure I see this...}
+
+\section{Fundamental Theorem of Asset Pricing}
+
+\begin{theorem} {\bf First Fundamental Theorem of Asset Pricing.} If there exists a risk neutral probability measure then arbitrage is not possible.
+\end{theorem}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\end{document}

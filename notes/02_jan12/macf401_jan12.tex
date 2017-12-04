@@ -1,0 +1,348 @@
+% --------------------------------------------------------------
+% This is all preamble stuff that you don't have to worry about.
+% Head down to where it says "Start here"
+% --------------------------------------------------------------
+ 
+\documentclass[12pt]{article}
+ 
+\usepackage[margin=1in]{geometry} 
+\usepackage{bm} % bold in mathmode \bm
+\usepackage{amsmath,amsthm,amssymb,mathtools}
+\usepackage{dsfont} % for indicator function \mathds 1
+\usepackage{tikz,pgf,pgfplots}
+\usepackage{enumerate} 
+\usepackage[multiple]{footmisc} % for an adjascent footnote
+\usepackage{graphicx,float} % figures
+\usepackage{csvsimple,longtable,booktabs} % load csv as a table
+\usepackage{listings,color} % for code snippets
+
+\newtheorem{definition}{Definition}
+\let\olddefinition\definition
+\renewcommand{\definition}{\olddefinition\normalfont}
+\newtheorem{lemma}{Lemma}
+\let\oldlemma\lemma
+\renewcommand{\lemma}{\oldlemma\normalfont}
+\newtheorem{proposition}{Proposition}
+\let\oldproposition\proposition
+\renewcommand{\proposition}{\oldproposition\normalfont}
+\newtheorem{corollary}{Corollary}
+\let\oldcorollary\corollary
+\renewcommand{\corollary}{\oldcorollary\normalfont}
+\newtheorem{theorem}{Theorem}
+\let\oldtheorem\theorem
+\renewcommand{\theorem}{\oldtheorem\normalfont}
+
+\newcommand\norm[1]{\left\lVert#1\right\rVert} % \norm command 
+
+%%% PLOTTING PARAMETERS
+\pgfmathsetseed{1952} % for Brownian Motion plotting
+\newcommand{\Emmett}[5]{% points, advance, rand factor, options, end label
+\draw[#4] (0,0)
+\foreach \x in {1,...,#1}
+{   -- ++(#2,rand*#3)
+}
+node[right] {#5};
+}
+
+\pgfplotsset{every axis/.append style={},
+    cmhplot/.style={mark=none,line width=1pt,->},
+    soldot/.style={only marks,mark=*},
+    holdot/.style={fill=white,only marks,mark=*},
+}
+
+\tikzset{>=stealth}
+
+\pgfmathdeclarefunction{gauss}{2}{%
+  \pgfmathparse{1/(#2*sqrt(2*pi))*exp(-((x-#1)^2)/(2*#2^2))}%
+}
+
+\tikzstyle{bag} = [text width=6em, text centered]
+\tikzstyle{end} = []
+%%%
+
+%% set noindent by default and define indent to be the standard indent length
+\newlength\tindent
+\setlength{\tindent}{\parindent}
+\setlength{\parindent}{0pt}
+\renewcommand{\indent}{\hspace*{\tindent}}
+
+\newcommand*{\vv}[1]{\vec{\mkern0mu#1}} % \vec command
+
+%% DAVIDS MACRO KIT %%
+\newcommand{\R}{\mathbb R}
+\newcommand{\N}{\mathbb N}
+\newcommand{\Z}{\mathbb Z}
+\renewcommand{\P}{\mathbb P}
+\newcommand{\Q}{\mathbb Q}
+\newcommand{\E}{\mathbb E}
+\newcommand{\var}{\mathrm{Var}}
+\newcommand{\indist}{\,{\buildrel \mathcal D \over \sim}\,}
+
+\newcommand{\bigtau}{\text{{\large $\bm \tau$}}}
+
+\begin{document}
+ 
+% --------------------------------------------------------------
+%                         Start here
+% --------------------------------------------------------------
+ 
+\title{Mathematical \& Computational Finance I\\Lecture Notes}
+\author{Binomial No-Arbitrage Pricing Model}
+\date{January 12 2016 \\ Last update: \today{}}
+\maketitle
+
+% SECTION: 
+\section{One-Period Binomial Model}
+
+\indent Let $S_0$ be the price of one share of stock at time $t = 0$. Assume that $S_0 > 0$ and that after one time period that the price can go up by a factor of $u$ or down by a factor of $d$. That is, $S_0$ can either go up to $S^u_1 = uS_0$ or down to $S^d_1 = dS_0$. We may think of the price at time step $1$ as depending on the outcome of a coin toss (either $H$ or $T$). So,
+\begin{align*}
+	S_1(H) &= S^u_1 = uS_0 \\
+	S_1(T) &= S^d_1 = dS_0
+\end{align*}
+
+Assume now that the probability of heads is given by $p$ and tails is $q = 1 - p$, then\footnote{For now we assume (without proof) that $d < u$. This will be later proven to be the case in a no-arbitrage world.}
+\begin{align*}
+	u &= \frac{S_1(H)}{S_0} \\
+	d &= \frac{S_1(T)}{S_0}
+\end{align*}
+
+\indent Suppose that there is a constant interest rate $r$ over a time period and that $\$1$ invested in the risk-free bank account at time zero will grow to $\$1\cdot(1 + r)$ after one time period.
+
+\begin{definition} The \underline{one-period binomial model} consists of
+\begin{enumerate}
+	\item An initial stock price $S_0$ 
+	\item A risk-free bank account which pays interest at a rate of $r$ per period
+	\item A finite probability space $\Omega = \{H, T\}$ and a probability measure $\P$ specified by $\P(H) = p$ and $\P(T) = 1 - p$
+	\item A random variable $S_1$ taking values
+	\begin{equation*}
+		S_1(\omega) = 
+		\begin{cases}
+			uS_0 & \text{if } \omega = H \\
+			dS_0 & \text{if } \omega = T
+		\end{cases}
+	\end{equation*}
+	representing the price of the stock after one time period
+\end{enumerate}
+\end{definition}
+
+\indent We assume that we can borrow from the bank account at the same rate: Borrow $\$1$ at time zero then repay $\$1\cdot(1 + r)$ after one time period. We require $r \geq -1$ (usually specifying $r \geq 0$). \\
+
+\subsection{Arbitrage}
+
+In an efficient market there should be no way to earn a riskless profit.
+
+\begin{definition} A trading strategy which
+\begin{enumerate}
+	\item Requires no initial investment
+	\item Has zero probability of losing money
+	\item Has a positive probability of profit
+\end{enumerate}
+
+is called an \underline{arbitrage strategy}.
+\end{definition}
+
+\indent Real markets sometimes present arbitrage opportunities but these are expected to quickly disappear in a sufficiently efficient market. \\
+
+{\bf Axiom}: {\em There are no arbitrage strategies in the one-period binomial model}.
+
+\begin{theorem} There are no arbitrage strategies in the one period binomial model if and only if
+\begin{equation*}
+	0 < d < 1 + r < u
+\end{equation*}
+
+\begin{proof} $(\implies)$ {\em If there are no arbitrage strategies then $0 < d < 1 + r < u$.} \\
+
+\indent Assume that $d \geq 1 + r$. That is, it is always preferable to buy the stock since the riskless rate will be less than the down factor. Now, at time $t = 0$, borrow $S_0$ from the bank account and use it to buy 1 unit of $S$. At time $t = 1$ we will repay the loan for $(1 + r)\cdot S_0$. We finance this repayment by selling the stock for $S_1$. \\
+
+\indent If $\omega = T$ then $S^d_1 = dS_0$. Thus, the net profit is $dS_0 - (1 + r)S_0 = S_0(d - (1 + r)) \geq 0$. Where the $\geq 0$ follows from the hypothesis. \\
+
+\indent If $\omega = H$ then $S^u_1 = uS_0$. Thus, the net profit is $uS_0 - (1 + r)S_0 = S_0(u - (1 + r)) > S_0(u - (1 + r)) \geq 0$. \\
+
+\indent So, there is no possibility of a loss in both states of $\omega$. Contradicts our axiom! Therefore we have that $d < 1 + r$. \\
+
+\indent Assume now that $u \leq 1 + r$. That is, it is always preferable to invest in the bank account than to buy the risky stock. At time $t = 0$ short sell 1 unit of the stock to receive $\$S_0$. Invest the short proceeds into the bank account. At time $t = 1$ this will accumulate to $(1 + r)S_0$. Return the shorted stock by buying 1 unit in the market for $S_1$. \\
+
+\indent If $\omega = H$ then $S_1 = S^u_1 = uS_0$. Thus, the net profit is $(1 + r)S_0 - uS_0 = S_0((1 + r) - u) \geq 0$ by hypothesis. \\
+
+\indent If $\omega = T$ then $S_1 = S^d_1 = dS_0$. Thus, the net profit is $(1 + r)S_0 - dS_0 = S_0((1 + r) - d) > S_0((1 + r) - u) \geq 0$. \\
+
+\indent Once again we find that we are guaranteed a net profit. Contradiction! Therefore we have that $u > 1 + r$. So, from the first and second parts we conclude that $0 < d < 1 + r < u$, as desired. \\
+
+$(\Longleftarrow)$ {\em Converse left as an exercise (Exercise 1.1)}
+\end{proof}
+\end{theorem}
+
+\begin{definition} A \underline{European call option} is a contract which gives the owner (long party) the right to buy one share of the stock after one time period for strike price $K$. If $S^d_1 < K < S^u_1$ then
+\begin{enumerate}[]
+	\item If $S \downarrow (\omega = T)$ the holder will not exercise the option since he could buy the stock on the market for $S^d_1 < K$. 
+	\item If $S \uparrow (\omega = H)$ the holder will exercise the option and buy the stock from the short party for $K < S^u_1$. He can then immediately sell the stock and realize a profit of $S^u_1 - K > 0$.
+\end{enumerate}
+
+The payoff of such an option after one time period is
+\begin{equation*}
+	\max \left( S_1 - K, 0 \right) \equiv (S_1 - K)^+
+\end{equation*}
+\end{definition}
+
+\subsection{Arbitrage Pricing Theory}
+
+\indent How much is an option worth at time zero {\em before} we know the price of the stock after one time period? \underline{Arbitrage pricing theory} answers this question by replicating the payoff of the option (in both states $\omega = H, T$ of the world) with a portfolio composed of the stock and the bank account. \\
+
+Under this model we rely on some assumptions
+\begin{enumerate}
+	\item Fractional shares can be bough or sold
+	\item Can borrow (and lend) at the risk free rate $r$
+	\item The purchase price of the stock is the same as its selling price (i.e. no bid-ask spread)
+	\item The stock price takes only two possible values after one time step
+\end{enumerate}
+
+\begin{definition} A \underline{derivative security} is a contract that pays
+\begin{equation*}
+	V_1 = 
+	\begin{cases}
+		V_1(H) = V^u_1 & \text{at time 1 if } \omega = H \\
+		V_1(T) = V^d_1 & \text{at time 1 if } \omega = T
+	\end{cases}
+\end{equation*}
+	
+\indent A European call option is a particular derivative security with $V_1 = (S_1 - K)^+$. A European put option is a derivative security with $V = (K - S_1)^+$. A forward contract is a derivative security with $V = S_1 - K$.
+\end{definition}
+
+\indent Suppose we wish to find the time zero price, $V_0$ , of a derivative security in the binomial model. To do so we replicate the payoff with
+\begin{enumerate}[]
+	\item Initial wealth $X_0$
+	\item Buying $\Delta_0$ shares of stock at time zero
+	\item Holding a cash position of $X_0 - \Delta_0S_0$ for one time period
+\end{enumerate}
+
+After one time period the value of this position is
+\begin{align*}
+	X_1 &= \Delta_0S_1 + (1 + r)(X_0 - \Delta_0S_0) \\
+	&= \Delta_0S_1 + (1 + r)X_0 - (1 + r)\Delta_0S_0 \\
+	&= (1 + r)X_0 + \Delta_0(S_1 - (1 + r)S_0)
+\end{align*}
+
+\indent To replicate the payoff of the derivative at time $t = 1$ with the portfolio we choose $X_0$ and $\Delta_0$ such that
+\begin{align*}
+	X_1(H) &= V_1(H) \\
+	X_1(T) &= V_1(T)
+\end{align*}
+
+Equivalently, if we discount back to time zero,
+\begin{align*}
+	\frac{1}{1 + r}X_1(H) &= \frac{1}{1 + r}V_1(H) \\
+	\frac{1}{1 + r}X_1(T) &= \frac{1}{1 + r}V_1(T)
+\end{align*}
+
+Substituting our equation for $X_1$ into the above equation gives us
+\begin{align*}
+	X_0 + \Delta_0 \left( \frac{S_1(H)}{1 + r} - S_0 \right) &= \frac{1}{1 + r}V_1(H) \\
+	X_0 + \Delta_0 \left( \frac{S_1(T)}{1 + r} - S_0 \right) &= \frac{1}{1 + r}V_1(T) 
+\end{align*}
+
+which gives us a system of two equations in two unknowns $(X_0, \Delta_0)$. Rearranging a bit yields
+\begin{equation*}
+	X_0 = \frac{1}{1 + r}V_1(H) - \Delta_0 \left( \frac{S_1(H)}{1 + r} - S_0 \right)
+\end{equation*}
+
+and substituting into the second equation in our system
+\begin{align*}
+	\frac{1}{1 + r}V_1(H) - \Delta_0 \left( \frac{S_1(H)}{1 + r} - S_0 \right) + \Delta_0 \left( \frac{S_1(T)}{1 + r} - S_0 \right) &= \frac{1}{1 + r}V_1(T) \\
+	\implies \Delta_0 \left( \frac{S_1(T) - S_1(H)}{1 + r} \right) &= \frac{V_1(T) - V_1(H)}{1 + r} \\
+	\implies \Delta_0 = \frac{V_1(H) - V_1(T)}{S_1(H) - S_1(T)}
+\end{align*}
+
+Substituting $\Delta_0$ into our equation for $X_0$ yields
+\begin{equation*}
+	X_0 = \frac{1}{1 + r}V_1(H) - \frac{V_1(H) - V_1(T)}{S_1(H) - S_1(T)} \left( \frac{S_1(H)}{1 + r} - S_0 \right)
+\end{equation*}
+
+\indent Starting at time $t = 0$ the initial wealth $X_0$ needed to replicate the derivative payoff is given by the above equation. We find that $\Delta_0$ is the units of the long stock position in the portfolio with the remaining $X_0 - \Delta_0S_0$ invested in the bank account. That is, starting with $X_0$ invested in the replicating portfolio we find that
+\begin{enumerate}[]
+	\item If the coin toss is $H$ the portfolio will be worth $V_1(H)$
+	\item If the coin toss is $T$ the portfolio will be worth $V_1(T)$
+\end{enumerate}
+
+\indent We could sell the derivative security at time zero and be able to pay the long counterparty the amounts $V_1(H)$ or $V_1(T)$ (for cash-settled options) depending on the outcome of the coin toss. That is, we have hedged a short position in one unit of the derivative security. \\
+
+\indent The price received at time zero for the derivative should be $X_0$, otherwise we would find arbitrage. \\
+
+\indent The initial price, $X_0$, of the derivative security given by the above formula is not particularly informative. We may simplify it by using the substitutions $S_1(H) = uS_0$ and $S_1(T) = dS_0$ by
+\begin{align*}
+	X_0 &= \frac{V_1(H)}{1 + r} - \frac{V_1(H)}{uS_0 - dS_0} \left(\frac{uS_0}{1 + r} - S_0\right) + \frac{V_1(T)}{uS_0 - dS_0}\left( \frac{uS_0}{1 + r} - S_0 \right) \\
+	&= \left[ 1 - \frac{u + (1 + r)}{u - d} \right] \frac{V_1(H)}{1 + r} + \left[ \frac{u - (1 + r)}{u - d}\right]\frac{V_1(T)}{1 + r} \\
+	&= \frac{1 + r - d}{u - d}\frac{V_1(H)}{1 + r} + \left[1 - \frac{1 + r - d}{u - d}\right] \frac{V_1(T)}{1 + r} \\
+	&= \tilde{p}\frac{V_1(H)}{1 + r} + (1 - \tilde{p})\frac{V_1(T)}{1 + r}
+\end{align*}
+
+where $\tilde{p} = \frac{1 + r - d}{u - d}$. We define a probability measure $\tilde{\P}$ on $\Omega = \left\{ H, T \right\}$ by 
+\begin{align*}
+	\tilde{\P}(H) &= \tilde{p} = \frac{1 + r - d}{u - d} \\
+	\tilde{\P}(T) &= 1 - \tilde{p}
+\end{align*}
+
+\indent Then, the initial wealth required to replicate the derivative security payoff using the delta hedging strategy $\Delta_0 = \frac{V_1(H) - V_1(T)}{S_1(H) - S_1(T)}$ is
+\begin{equation*}
+	X_0 = \tilde{p}\frac{V_1(H)}{1 + r} + \tilde{q}\frac{V_1(T)}{1 + r} = \tilde{\E}\left[ \frac{V_1}{1 + r} \right]
+\end{equation*}
+
+where $\tilde{\E}[\cdot]$ indicates expectation with respect to $\tilde{\P}$.
+
+%\begin{figure}[H]
+%\begin{center}
+%\begin{tikzpicture}[sloped]
+%  \node (a) at ( 0,0) [bag] {$S_0$};
+%  \node (b) at ( 4,-1.5) [bag] {$S^0_1$};
+%  \node (c) at ( 4,1.5) [bag] {$S^1_1$};
+%  \node (d) at ( 8,-3) [bag] {$S^0_2$};
+%  \node (e) at ( 8,0) [bag] {$S^1_2$};
+%  \node (f) at ( 8,3) [bag] {$S^2_2$};
+%  \node (g) at ( 12,-4.5) [bag] {$S^0_3$};
+%  \node (h) at ( 12,-1.5) [bag] {$S^1_3$};
+%  \node (i) at ( 12,1.5) [bag] {$S^2_3$};
+%  \node (j) at ( 12,4.5) [bag] {$S^3_3$};
+%  \draw [->] (a) to node [below] {} (b);
+%  \draw [->] (a) to node [above] {} (c);
+%  \draw [->] (c) to node [below] {} (f);
+%  \draw [->] (c) to node [above] {} (e);
+%  \draw [->] (b) to node [below] {} (e);
+%  \draw [->] (b) to node [above] {} (d);
+%  \draw [->] (d) to node [below] {} (g);
+%  \draw [->] (d) to node [above] {} (h);
+%  \draw [->] (e) to node [below] {} (h);
+%  \draw [->] (e) to node [above] {} (i);
+%  \draw [->] (f) to node [below] {} (i);
+%  \draw [->] (f) to node [above] {} (j);
+%\end{tikzpicture}
+%\end{center}
+%\caption{Recombining tree for $M = 3$ steps.}
+%\end{figure}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\end{document}
